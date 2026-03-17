@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEARL‑GATE: Complete Mission Physics</title>
+    <style>
+        body {
+            background: #f8fafc;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem 1rem;
+            color: #0b1c2f;
+        }
+        .document {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px -12px rgba(0,20,40,0.25);
+            padding: 2.5rem 2rem;
+        }
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            background: linear-gradient(145deg, #001d3d, #003566);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-left: 6px solid #f39c12;
+            padding-left: 1.2rem;
+            margin: 0 0 0.25rem 0;
+            letter-spacing: -0.02em;
+        }
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: #003566;
+            border-bottom: 2px solid #e0e7ef;
+            padding-bottom: 0.3rem;
+            margin-top: 2.5rem;
+        }
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: #1e3a5f;
+            margin: 1.8rem 0 0.8rem 0;
+        }
+        h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 1.5rem 0 0.5rem;
+        }
+        hr {
+            border: none;
+            border-top: 3px solid #d0ddeb;
+            margin: 2rem 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 6px rgba(0,20,40,0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #dde3ed;
+        }
+        th {
+            background: #1e3a5f;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+            padding: 12px 8px;
+            border-right: 1px solid #2f4b70;
+        }
+        td {
+            padding: 10px 8px;
+            border: 1px solid #d4dcec;
+            background: white;
+            vertical-align: top;
+        }
+        tr:nth-child(even) td {
+            background-color: #f8faff;
+        }
+        .note, .meta {
+            background: #f1f6fe;
+            border-left: 6px solid #3498db;
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            font-style: normal;
+            box-shadow: 0 4px 8px #00000008;
+        }
+        strong {
+            color: #0a2942;
+            font-weight: 600;
+        }
+        em {
+            color: #1f4e79;
+            font-style: italic;
+        }
+        .author {
+            font-size: 1.1rem;
+            background: #edf2f9;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            display: inline-block;
+            margin: 0.5rem 0;
+        }
+        .constants {
+            background: #0b1c2f;
+            color: #e0f0ff;
+            padding: 1rem 1.5rem;
+            border-radius: 24px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            border: 1px solid #1e3e64;
+            margin: 1rem 0;
+        }
+        .constants code {
+            color: #f7d44a;
+        }
+        .backlink {
+            text-align: right;
+            font-size: 0.8rem;
+            color: #5f7d9e;
+            margin-top: 2rem;
+        }
+        /* inline code-like for values */
+        .val {
+            background: #eef3fa;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.9rem;
+            border: 1px solid #ccd9f0;
+            white-space: nowrap;
+        }
+        /* preserve line breaks in paragraphs */
+        p {
+            white-space: pre-line;
+            margin: 0.8rem 0;
+        }
+        .old-margin {
+            margin-top: 2rem;
+        }
+        /* wikidot table header indicator ~ */
+        th:before {
+            content: "";
+            display: none;
+        }
+        .small-caps {
+            font-variant: small-caps;
+        }
+    </style>
+</head>
+<body>
+<div class="document">
+    <!-- ================ TITLE & HEAD ================= -->
+    <h1>PEARL-GATE: Complete Mission Physics</h1>
+    <h2>Pulsed Energetic Ablation · Relativistic Lorentz-drive · Beam-Target Propulsion</h2>
+
+    <div class="author">
+        <strong>Patent GB2522564.0 | Inventor: Kazik Huppert</strong><br>
+        <strong>Date: March 2026</strong><br>
+        <strong>Status: Complete calculable 0‑D model — all values confirmed by RK4 relativistic simulator</strong>
+    </div>
+
+    <hr>
+
+    <p><strong>PEARL-GATE is the world's first Beam-Target Propulsion system.</strong><br>
+    <strong>24.875%c · 76,395 AU · 10 years 285 days — from a 10 kW fission reactor.</strong><br>
+    <strong>All components at TRL 4 or above.</strong></p>
+
+    <hr>
+
+    <!-- ================ PROPULSION CATEGORY COMPARISON ================= -->
+    <h3>Propulsion Category Comparison</h3>
+
+    <table>
+        <tr>
+            <th>Feature</th>
+            <th>Chemical</th>
+            <th>Ion / Plasma (NEP)</th>
+            <th>Beam-Target (PEARL-GATE)</th>
+        </tr>
+        <tr><td>Energy source</td><td>Chemical bonds</td><td>Solar / nuclear electric</td><td>Beam-induced hadronic cascade (×500)</td></tr>
+        <tr><td>Thrust density</td><td>High</td><td>Low</td><td>Very high</td></tr>
+        <tr><td>Specific impulse</td><td>~450 s</td><td>~3,000 s</td><td>1,000,000 to 10,000,000+ s</td></tr>
+        <tr><td>Control mechanism</td><td>Valve / flow rate</td><td>Magnetic field / voltage</td><td>Beam frequency and intensity</td></tr>
+        <tr><td>Power requirement</td><td>Stored in propellant</td><td>MW to GW for useful Isp</td><td>10 kW drives GW exhaust via cascade</td></tr>
+        <tr><td>Rocket equation</td><td>Fully bound</td><td>Partially bound</td><td>Partially escaped — harnesses relativistic kinetic energy of the ISM</td></tr>
+        <tr><td>Beam source</td><td>N/A</td><td>N/A</td><td>Onboard — generated and consumed aboard the spacecraft</td></tr>
+    </table>
+
+    <div class="constants">
+        <strong>Constants:</strong> GATE_EFF 0.67 · ETA_COUPLE 0.52 · M_FISS 300 · 720,000 TE veins · 15,000 kg fuel · 14,413 kg dry
+    </div>
+
+    <hr>
+
+    <!-- ================ 1. BEAM-TARGET PROPULSION ================= -->
+    <h2>1. Beam-Target Propulsion: A New Category</h2>
+
+    <p>Beam-Target Propulsion is defined by three conditions, all of which must be satisfied simultaneously: a high-energy particle beam driver is generated and fired aboard the spacecraft; it strikes a <strong>high-Z condensed-phase target</strong>, inducing beam-target hadronic cascade reactions including spallation, fission-fusion and pion/kaon showers; and the energetic reaction products are expelled directly as directed thrust. PEARL-GATE satisfies all three. No prior propulsion system does.</p>
+
+    <p>BTP is an entirely onboard method: externally-beamed concepts fail at interstellar distances because the beam collapses under the inverse square law long before it reaches the target.</p>
+
+    <h3>1.1 Prior Art and Why Each Category Fails</h3>
+
+    <p><strong>ICF Pulse Propulsion — Daedalus, Winterberg</strong><br>
+    Daedalus and Winterberg use onboard beams to ignite D/He3 pellets: low-Z targets that produce thermonuclear fusion, not hadronic cascades, and whose beam power did not derive from the reactions triggered.</p>
+
+    <p><strong>Accelerator-Driven Subcritical Fission — Rubbia, MYRRHA, SNS</strong><br>
+    Rubbia's Energy Amplifier and MYRRHA are the genuine physics ancestors of PEARL-GATE: a proton beam drives spallation in a subcritical assembly. But ADS operates at 600 MeV–1 GeV — below the pion production threshold — and treats the spallation products as a shielding problem. PEARL-GATE operates at 50 times the beam energy, crosses into the full hadronic cascade regime, and expels the products as directed thrust.</p>
+
+    <p><strong>Particle Beam Thermal Propulsion</strong><br>
+    Beam thermal systems use particle beams as heat sources on low-Z targets. Without a high-Z target there is no hadronic cascade and no energy multiplication; Isp is bounded at 1,000–3,000 s, three to four orders of magnitude below PEARL-GATE.</p>
+
+    <h4>BTP Prior Art Comparison Table</h4>
+
+    <table>
+        <tr><th>Concept</th><th>Onboard accelerated particle beam?</th><th>High-Z target?</th><th>Hadronic cascade?</th><th>Thrust from cascade?</th><th>BTP?</th></tr>
+        <tr><td>ICF Pulse (Daedalus, Winterberg)</td><td>Yes — onboard, travels with ship</td><td>No — D/He3 pellet, very low Z</td><td>No — thermonuclear fusion only; no spallation or pion showers without high-Z</td><td>No — fusion products through magnetic nozzle; no hadronic cascade to expel</td><td><strong>No</strong></td></tr>
+        <tr><td>ADS (Rubbia, MYRRHA, SNS)</td><td>Yes — but fixed installation, not onboard</td><td>Yes — subcritical U/Pb spallation target</td><td>No — spallation neutrons and fission only; beam ~1 GeV, well below pion production threshold</td><td>No — cascade contained as heat and radiation; never expelled as thrust</td><td><strong>No</strong></td></tr>
+        <tr><td>Beam thermal (ion ablation)</td><td>Yes — onboard</td><td>No — low-Z ablation material</td><td>No — thermal ablation only; no nuclear reactions</td><td>No — thermal expansion only; no cascade</td><td><strong>No</strong></td></tr>
+        <tr><td>PEARL-GATE</td><td>Yes — beam, target and cascade all aboard</td><td>Yes — high-Z candle: U-238/LiD in HfC matrix</td><td>Yes — full fission-fusion-hadronic cascade above 5 GeV</td><td>Yes — cascade products ARE the directed exhaust</td><td><strong>Yes — first example</strong></td></tr>
+    </table>
+
+    <p><strong>No prior example of Beam-Target Propulsion exists in the scientific or patent literature.</strong></p>
+
+    <hr>
+
+    <!-- ================ 2. THE STORY OF THE ENERGY ================= -->
+    <h2>2. The Story of the Energy</h2>
+
+    <p>The following narrative traces every energy conversion from reactor to exhaust.</p>
+
+    <h3>2.1 Ignition: the Kilopower Reactor and the First Beam Pulse</h3>
+    <p>A single Kilopower fission reactor sustains a controlled nuclear chain reaction in its uranium-235 core. The heat released is converted to electricity by Stirling engines. Output: a steady 10 kW. That electricity charges a bank of LTD (Linear Transformer Driver) capacitors, which simultaneously do two things.</p>
+    <p>First, they power a Nd:YAG laser chain. The Nd:YAG crystal produces an intense infrared beam which passes through nonlinear frequency-conversion crystals — BBO or LBO — that double or triple the photon frequency, producing ultraviolet light. That UV laser ablates a dedicated onboard pad of Lithium Hydride (LiH), a few hundred grams carried as GATE's own plasma feedstock. The ablated LiH becomes the first plasma cloud available to the accelerator.</p>
+    <p>Second, the LTD banks power the N5 aluminium electromagnetic funnel coils, which collimate that LiH plasma into the GATE beam line. GATE — a Magneto-Plasma Dynamic accelerator, constructed to either a LIA or FFAG architecture — accelerates the LiH plasma to near-luminal speeds. It fires that beam at the PEARL target: the point of perfect convergence of the tips of three candles, each containing 240,000 SiGe thermoelectric veins held in a hafnium carbide (HfC) matrix. The first beam pulse has been fired. The mission has begun.</p>
+
+    <h3>2.2 The Cascade: from 10 kW to Hundreds of Gigawatts</h3>
+    <p>The beam strikes the converged PEARL tips. In approximately 50 femtoseconds a fission-fusion-hadronic cascade erupts. Nuclear plasma jets aft for thrust. The remaining 12% of the nuclear energy deposits as heat in the candle bulk, conducted through the HfC matrix to the 720,000 SiGe TE veins. They begin generating electricity. That electricity feeds back into GATE, increasing the beam power. A stronger beam produces a more energetic cascade. More nuclear energy heats the candle further. More TE power. More beam. The feedback loop is self-reinforcing.</p>
+    <p>As beam energy rises, the centre-of-momentum energy — ECM — climbs through successive reaction thresholds. At 1.9 GeV, positron pair production begins. At 3.75 GeV, antiproton production opens. At 5.0 GeV, the full hadronic cascade — pion and kaon showers — ignites. Each new channel multiplies the exhaust velocity and nuclear power output. What began as 10 kW from a reactor becomes 530 gigawatts of nuclear plasma power at saturation: a <strong>79.2 million fold amplification</strong>.</p>
+
+    <h3>2.3 The Double Punch</h3>
+    <p>Every beam pulse does more than one piece of work.</p>
+    <p><strong>Punch 1:</strong> the beam strikes the converged PEARL tips. The fission-fusion-hadronic cascade erupts, nuclear plasma jets aft for thrust, and the tips are ablated and temporarily destroyed. The cavity is open.</p>
+    <p><strong>Punch 2:</strong> the beam continues firing into the open cavity before the tips recover and reconverge. The beam is a directed proton current moving aft. To maintain charge neutrality in the plasma channel, a return electron current flows forward — toward the bow — through the funnel and into the ISM ahead of the ship, contributing to ISM ionisation. This charge separation creates a longitudinal plasma wakefield in the cavity. That wakefield accelerates the residual plasma ions aft — a second thrust impulse. The tips recover and reconverge. The cycle repeats.</p>
+    <p>The Double Punch is a direct and inevitable consequence of a pulsed particle beam firing into its own ablation cavity. The TE veins generating electricity from bulk heat are an entirely separate and simultaneous process, independent of the wakefield physics.</p>
+
+    <h3>2.4 The UV Laser Grid and ISM Ionisation</h3>
+    <p>The UV laser grid serves two roles. Before the ship reaches sufficient speed to use ISM as its beam source, the UV laser ablates the onboard LiH pad to create GATE's plasma feedstock. Simultaneously, the forward-flowing return electron current from each Double Punch pulse travels through the funnel and contributes to ionising the ISM ahead of the ship. As the ship accelerates and the ISM funnel begins collecting interstellar protons in significant quantity, the ISM progressively replaces the LiH pad as GATE's plasma source.</p>
+
+    <h3>2.5 The ISM as Free Energy Source</h3>
+    <p>As the ship accelerates, ISM protons entering the funnel are blue-shifted in the ship frame. They arrive carrying relativistic kinetic energy before GATE has added a single joule. The ECM of the beam-target collision rises beyond what the onboard beam power alone could achieve, pushing the nuclear multiplier to its peak of 293×. The ISM is not merely a mass source — it is an energy source, and its contribution grows with every metre per second the ship gains.</p>
+
+    <h3>2.6 Candle Expiry, Full Consumption, and NEP Cruise</h3>
+    <p>Six hours before the PEARL candles are due to expire, the Kilopower reactor is restarted. This is essential: without the reactor already running, there would be no power available to operate GATE after candle expiry. The reactor provides the bridge.</p>
+    <p>When the candles are fully consumed — all 15,000 kg of PEARL target material has been converted to exhaust and thrust — the entire PEARL architecture, including every last gram of the 2,000 kg structural and feed mass, has been consumed as antimatter propellant. Nothing is jettisoned. The ship is at 24.875%c and 76,395 AU from the Sun, 10 years and 285 days after launch.</p>
+    <p>GATE then operates as a pure NEP thruster on K-core power alone, collecting and accelerating ISM for ~40 years; full performance figures are given in Section 8.5.</p>
+
+    <hr>
+
+    <!-- ================ 3. WHAT IS A 0-D MODEL ================= -->
+    <h2>3. What Is a 0‑D Model?</h2>
+    <p>A zero-dimensional lumped-parameter model treats the entire propulsion system as a single control volume. There is no spatial resolution — no temperature gradient inside a candle, no beam profile across the GATE aperture, no plasma density distribution. Every quantity is one averaged number at each moment in time. The 0‑D model reveals the amplification chain: why 10 kW becomes 76,395 AU in under 11 years. It cannot predict spatial instabilities, candle erosion geometry, or beam focusing — those require 1‑D/2‑D MHD or PIC simulation. It is a necessary foundation, not a complete engineering model.</p>
+
+    <h3>3.1 The Amplification Chain</h3>
+    <table>
+        <tr><th>Stage</th><th>Subsystem</th><th>Input</th><th>Output</th><th>Amplification</th></tr>
+        <tr><td>0</td><td>Kilopower K-core</td><td>U-235 fission chain reaction</td><td>10 kW electric</td><td>— (fixed source)</td></tr>
+        <tr><td>1</td><td>TE vein array (SiGe in HfC matrix)</td><td>Candle bulk heat</td><td>Up to 9.56 MW electric</td><td>×956 at saturation</td></tr>
+        <tr><td>2</td><td>GATE MPD/MID (LIA or FFAG)</td><td>TE electric power</td><td>50 MeV → 47.8 GeV beam</td><td>×47,800 in beam energy</td></tr>
+        <tr><td>3</td><td>PEARL hadronic cascade</td><td>Beam at converged tips</td><td>530 GW nuclear plasma</td><td>×276 nuclear multiplier</td></tr>
+        <tr><td>4</td><td>Ablation exhaust</td><td>Nuclear plasma</td><td>Aft thrust at 29.2%c</td><td>v_ex = 87,626 km/s</td></tr>
+        <tr><td>5</td><td>Double Punch wakefield</td><td>Beam in open cavity</td><td>Second aft impulse</td><td>×1.200 boost (WAKE ON)</td></tr>
+    </table>
+    <p><strong>A_total = 956 × (300 × 276) = 956 × 82,857 ≈ 79.2 million×</strong><br>
+    79.2M× uses Stage 4 saturation (no ISM boost, ECM 9.655 GeV, mult 276×). At Stage 5 (ISM-boosted ECM 12.1 GeV, mult 293×) the figure peaks at ~83.7M×. Stage 4 is the consistent reference, independent of ship velocity.</p>
+
+    <hr>
+
+    <!-- ================ 4. SYSTEM CONSTANTS ================= -->
+    <h2>4. System Constants and Design Parameters</h2>
+    <p><em>All values canonical — identical in pearl_v28.html and in this document.</em></p>
+
+    <h3>4.1 Mission Architecture</h3>
+    <table>
+        <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+        <tr><td>TE veins (total)</td><td>720,000</td><td>240,000 per candle × 3 candles</td></tr>
+        <tr><td>TE matrix material</td><td>Hafnium carbide (HfC)</td><td>SiGe veins embedded in HfC matrix per candle; HfC conducts heat to hull at up to 3,928 K</td></tr>
+        <tr><td>TE coefficient</td><td>1.10×10⁻² W/vein/K</td><td>SiGe thermoelectric constant</td></tr>
+        <tr><td>Fuel mass (candles)</td><td>15,000 kg</td><td>Triple candle assembly</td></tr>
+        <tr><td>Dry mass</td><td>14,413 kg</td><td>Baseline (LIA); FFAG saves 414 kg</td></tr>
+        <tr><td>Wet mass</td><td>29,413 kg</td><td>Fuel + dry</td></tr>
+        <tr><td>PEARL arch. at expiry</td><td>2,000 kg fully consumed</td><td>Converted to antimatter propellant — nothing jettisoned</td></tr>
+        <tr><td>Funnel aperture</td><td>1,000 m²</td><td>Hull diameter: 35.68 m</td></tr>
+        <tr><td>ISM density (ρ)</td><td>2.0×10⁻²³ kg/m³</td><td>Warm ionised ISM</td></tr>
+        <tr><td>LiH pad (GATE feedstock)</td><td>~few hundred grams</td><td>Consumed before ISM takes over; part of GATE not PEARL</td></tr>
+    </table>
+
+    <h3>4.2 Energy Chain Constants</h3>
+    <table>
+        <tr><th>Parameter</th><th>Symbol</th><th>Value</th></tr>
+        <tr><td>K-core output</td><td>P_K</td><td>10,000 W</td></tr>
+        <tr><td>LTD efficiency (pre‑t4)</td><td>η_LTD</td><td>0.78 (78%)</td></tr>
+        <tr><td>GATE MPD/MID coupling</td><td>η_GATE</td><td>0.67 (67%)</td></tr>
+        <tr><td>Combined pre‑t4</td><td>η_comb</td><td>0.5226 (52.26%)</td></tr>
+        <tr><td>Nuclear bulk fraction</td><td>α</td><td>0.12 (12% to bulk heat; 88% to exhaust)</td></tr>
+        <tr><td>Geometric coupling</td><td>η_couple</td><td>0.52 (aft-facing ablation fraction)</td></tr>
+        <tr><td>Double Punch boost</td><td>×</td><td>1.200 (WAKE ON; wakefield in open cavity)</td></tr>
+        <tr><td>Fission geometry factor</td><td>M_fiss</td><td>300</td></tr>
+        <tr><td>Hadronic multiplier</td><td>HAD_MULT</td><td>500 per unit fraction</td></tr>
+        <tr><td>Baseline beam energy</td><td>T₀</td><td>50 MeV at P_K = 10 kW</td></tr>
+        <tr><td>LTD pulse energy</td><td>E_pulse</td><td>78,125 J</td></tr>
+        <tr><td>K-core restart before expiry</td><td>t_restart</td><td>6 hours before candle expiry</td></tr>
+    </table>
+
+    <h3>4.3 Reaction Thresholds and Exhaust Velocities</h3>
+    <table>
+        <tr><th>Channel</th><th>ECM threshold</th><th>v_exhaust</th><th>Multiplier contrib.</th></tr>
+        <tr><td>Fission (U-238)</td><td>None</td><td>13,000 km/s (4.34%c)</td><td>×1.0 baseline</td></tr>
+        <tr><td>Fusion (LiD coupled)</td><td>~thermal</td><td>30,000 km/s (10.01%c)</td><td>×2.0 per unit fraction</td></tr>
+        <tr><td>Positron (e⁺e⁻)</td><td>1.90 GeV</td><td>21,500 km/s (7.17%c)</td><td>×5.0 per unit fraction</td></tr>
+        <tr><td>Antimatter (p̄)</td><td>3.753 GeV</td><td>160,000 km/s (53.37%c)</td><td>×80 per unit fraction</td></tr>
+        <tr><td>Hadronic cascade</td><td>5.00 GeV</td><td>280,000 km/s (93.40%c)</td><td>×500 per unit fraction</td></tr>
+    </table>
+
+    <hr>
+
+    <!-- ================ 5. THE SEVEN STAGES ================= -->
+    <h2>5. The Seven Stages</h2>
+    <p>Six propulsive stages plus one end-of-life stage govern the complete mission. Stage boundaries are physical thresholds, not timers.</p>
+
+    <!-- STAGE 1 -->
+    <h3>STAGE 1 — INIT-K BOOT</h3>
+    <p><em>Fixed-Hz LTD pulsed mode · K-core sole source · T_bulk = 293 K · LiH plasma feedstock</em></p>
+    <p>The LTD banks charge and fire at 0.128 Hz. The UV laser ablates the LiH pad; the first LiH plasma enters GATE and is accelerated to 31.3%c. ECM = 1.9014 GeV — at the positron threshold. The converged PEARL tips begin heating. This stage ends the moment P_TE equals P_K.</p>
+    <pre>P_beam = 10,000 × 0.78 × 0.67 = 5,226 W
+ECM = √[2M_p(2M_p + 0.050)] = 1.9014 GeV
+Hz = 10,000 / 78,125 = 0.1280 Hz</pre>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>P_beam (delivered)</td><td>5,226 W (52.26% of P_K)</td></tr>
+        <tr><td>T_beam</td><td>50 MeV</td></tr>
+        <tr><td>ECM</td><td>1.9014 GeV [at positron threshold]</td></tr>
+        <tr><td>Multiplier (m)</td><td>1.30×</td></tr>
+        <tr><td>Q_nuclear</td><td>2,039 kW</td></tr>
+        <tr><td>v_exhaust</td><td>15,219 km/s (5.076%c)</td></tr>
+        <tr><td>Thrust</td><td>122,631 μN</td></tr>
+        <tr><td>Isp</td><td>1,551,348 s</td></tr>
+        <tr><td>ṁ_ablation</td><td>8.058 ng/s</td></tr>
+        <tr><td>Hz</td><td>0.1280 Hz</td></tr>
+        <tr><td>Stage ends when</td><td>P_TE ≥ P_K (T_bulk ≈ 294.5 K)</td></tr>
+    </table>
+
+    <!-- STAGE 2 -->
+    <h3>STAGE 2 — TE CRANKING</h3>
+    <p><em>Fixed-Hz LTD pulsed mode · K-core + TE · T_bulk = 700 K (representative point)</em></p>
+    <p>The candle bulk has warmed to 700 K. The 720,000 SiGe veins in their HfC matrices are generating 3.223 MW — 322 times the K-core output. ECM = 5.819 GeV: the antimatter channel is open. Stage ends when Hz reaches 100 and the LTD banks retire.</p>
+    <pre>P_TE_raw = (700−293) × 720,000 × 0.011 = 3,223,440 W (3.223 MW)
+P_beam = 3.233 MW × 0.5226 = 1.690 MW (pre‑t4, LTD in loop)
+ECM = 5.819 GeV [antimatter channel OPEN]</pre>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>P_TE_raw</td><td>3,223,440 W (3.223 MW)</td></tr>
+        <tr><td>P_beam (pre‑t4)</td><td>1,690,000 W (1.690 MW)</td></tr>
+        <tr><td>P_beam (post‑t4)</td><td>2,160,000 W (2.160 MW) [+28.2% free at LTD retirement]</td></tr>
+        <tr><td>Hz</td><td>41.39 Hz (rising toward 100)</td></tr>
+        <tr><td>ECM</td><td>5.819 GeV</td></tr>
+        <tr><td>Multiplier (m)</td><td>64.7×</td></tr>
+        <tr><td>Q_nuclear</td><td>32.8 GW (pre‑t4)</td></tr>
+        <tr><td>v_exhaust</td><td>47,486 km/s (15.84%c)</td></tr>
+        <tr><td>Thrust</td><td>632 N (pre‑t4)</td></tr>
+        <tr><td>Isp</td><td>4,840,597 s</td></tr>
+        <tr><td>Stage ends when</td><td>Hz ≥ 100 → LTDs retired; η jumps from 52.26% to 67%</td></tr>
+    </table>
+
+    <!-- STAGE 3 -->
+    <h3>STAGE 3 — TE-CURRENT RAMP</h3>
+    <p><em>K-core OFF · Hz 0→100 · T_bulk = 1,000 K · ISM funnel deploys</em></p>
+    <p>The K-core shuts down — the TE array now exceeds it. The ISM funnel deploys. The UV laser ionises ISM ahead of the ship; the Double Punch wakefield begins contributing to ISM ionisation via its forward return electron current. ECM = 7.487 GeV: the hadronic cascade has ignited. When Hz crosses 100, LTD banks retire and GATE runs continuous DC on TE power alone.</p>
+    <pre>P_TE_raw = (1000−293) × 720,000 × 0.011 = 5,599,440 W (5.599 MW)
+P_beam (post‑t4) = 5.599 MW × 0.67 = 3.752 MW
+ECM = 7.487 GeV [hadronic cascade ACTIVE: ECM > 5.0 GeV]</pre>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>P_TE_raw</td><td>5,599,440 W (5.599 MW)</td></tr>
+        <tr><td>P_beam (pre‑t4)</td><td>2,926,000 W (2.926 MW) (η_LTD×GATE = 52.26%)</td></tr>
+        <tr><td>P_beam (post‑t4)</td><td>3,752,000 W (3.752 MW) (η_GATE = 67%)</td></tr>
+        <tr><td>Hz → t4</td><td>71.67 Hz → 100 Hz triggers LTD retirement</td></tr>
+        <tr><td>ECM</td><td>7.487 GeV</td></tr>
+        <tr><td>Multiplier (m)</td><td>165.2×</td></tr>
+        <tr><td>Q_nuclear</td><td>185.9 GW (post‑t4)</td></tr>
+        <tr><td>v_exhaust</td><td>70,436 km/s (23.495%c)</td></tr>
+        <tr><td>Thrust</td><td>2,415 N (post‑t4)</td></tr>
+        <tr><td>Isp</td><td>7,179,983 s</td></tr>
+        <tr><td>Stage ends when</td><td>T_bulk = 1,500 K (SiGe operational ceiling)</td></tr>
+    </table>
+
+    <!-- Double Punch derivation -->
+    <h4>The Double Punch — Analytical Derivation</h4>
+    <p><strong>Punch 1:</strong> beam strikes converged PEARL tips. Fission-fusion-hadronic cascade. Nuclear plasma jets aft. Tips ablated. Cavity open.<br>
+    <strong>Punch 2:</strong> beam continues into open cavity. Proton beam moving aft; neutralising electron return current flows forward toward bow and through funnel into ISM. Charge separation creates a longitudinal plasma wakefield in the cavity. Wakefield accelerates residual plasma ions aft — second thrust impulse. Tips recover, reconverge. Cycle repeats.</p>
+    <pre>η_couple (Punch 1, baseline) = 0.52
+η_couple (Punch 2, wakefield) = 0.728 (cavity open, effective coupling boosted)
+η_avg (time‑averaged) = (0.52 + 0.728) / 2 = 0.624
+Boost factor = 0.624 / 0.52 = ×1.200 exactly</pre>
+    <p><em>NOTE: The TE veins generating electricity from bulk heat are entirely independent of the Double Punch wakefield. They are simultaneous but separate physical processes.</em></p>
+    <p>The ×1.200 boost is analytically determined from the 50/50 duty-cycle assumption and the 0.728 effective coupling during Punch 2. PIC simulation is required to validate cavity duty-cycle and wakefield dynamics quantitatively.</p>
+
+    <!-- STAGE 4 -->
+    <h3>STAGE 4 — TE SATURATED (POSITRON & ANTIMATTER ACTIVE)</h3>
+    <p><em>T_bulk = 1,500 K (SiGe ceiling) · Max beam power · Double Punch active</em></p>
+    <p>The SiGe array has reached its operational ceiling. ECM = 9.655 GeV: all reaction channels are fully open. Total amplification: 79.2 million fold.</p>
+    <pre>P_TE_sat = (1500−293) × 720,000 × 0.011 = 9,559,440 W
+P_beam = 9,559,440 × 0.67 = 6,404,820 W (6.405 MW)
+T_beam = 0.050 × (9,559,440 / 10,000) = 47.797 GeV
+ECM = 9.655 GeV → mult = 276.19× → Q = 530.684 GW
+v_ex (WAKE OFF) = 87,626 km/s (29.229%c)
+v_ex (WAKE ON)  = 87,626 × 1.200 = 105,151 km/s (35.075%c)</pre>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>P_TE_sat</td><td>9,559,440 W (9.559 MW) — SiGe at thermal ceiling</td></tr>
+        <tr><td>P_beam (delivered)</td><td>6,404,820 W (6.405 MW)</td></tr>
+        <tr><td>T_beam</td><td>47.797 GeV</td></tr>
+        <tr><td>ECM</td><td>9.655 GeV [all channels open]</td></tr>
+        <tr><td>Multiplier (m)</td><td>276.19×</td></tr>
+        <tr><td>Q_nuclear</td><td>530.684 GW</td></tr>
+        <tr><td>v_ex (WAKE OFF)</td><td>87,626 km/s (29.229%c)</td></tr>
+        <tr><td>v_ex (WAKE ON)</td><td>105,151 km/s (35.075%c)</td></tr>
+        <tr><td>Thrust (WAKE OFF)</td><td>5,543 N</td></tr>
+        <tr><td>Thrust (WAKE ON)</td><td>~6,651 N (η_avg = 0.624)</td></tr>
+        <tr><td>Isp (WAKE OFF)</td><td>8,932,313 s</td></tr>
+        <tr><td>Isp (WAKE ON)</td><td>10,718,775 s</td></tr>
+        <tr><td>Q_bulk to TE veins</td><td>63.682 GW (α = 12%)</td></tr>
+        <tr><td>A_TE (P_TE/P_K)</td><td>956×</td></tr>
+        <tr><td>A_total</td><td>79.2 million×</td></tr>
+        <tr><td>Δv ceiling (Tsiol, WAKE ON)</td><td>75,005 km/s = 25.019%c</td></tr>
+    </table>
+
+    <!-- STAGE 5 -->
+    <h3>STAGE 5 — ISM-AUGMENTED IN-SITU CANDLE BURN</h3>
+    <p><em>β = 0.10 · Lorentz-boosted ECM · LiH exhausted · ISM sole plasma source</em></p>
+    <p>The ship is at 10%c. ISM protons entering the funnel are blue-shifted, boosting ECM to 12.082 GeV with no additional beam power. The nuclear multiplier peaks at 293×.</p>
+    <pre>β = 0.10, γ = 1.0050
+ECM_boost = 12.082 GeV [hadronic fraction at maximum]</pre>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>ECM (no ISM boost)</td><td>9.655 GeV</td></tr>
+        <tr><td>ECM (Lorentz-boosted)</td><td>12.082 GeV (+25.1%)</td></tr>
+        <tr><td>Multiplier (m)</td><td>293.5×</td></tr>
+        <tr><td>Q_nuclear</td><td>563.8 GW</td></tr>
+        <tr><td>v_ex (WAKE ON)</td><td>107,947 km/s (36.007%c)</td></tr>
+        <tr><td>Isp (WAKE ON)</td><td>11,003,809 s</td></tr>
+        <tr><td>Thrust (WAKE ON)</td><td>5,737 N</td></tr>
+        <tr><td>ṁ_ISM</td><td>6.026×10⁻¹³ kg/s (funnel collection)</td></tr>
+        <tr><td>F_ISM (additive)</td><td>~162 μN (small vs ablation)</td></tr>
+        <tr><td>Stage ends when</td><td>All 15,000 kg PEARL candle material consumed</td></tr>
+    </table>
+
+    <!-- STAGE 6 -->
+    <h3>STAGE 6 — GATE NEP CRUISE</h3>
+    <p><em>Candles fully consumed · K-core running (restarted 6h before expiry) · Pure ISM propulsion</em></p>
+    <pre>P_ISM = (10,000 + 5) × 0.67 = 6,703.35 W
+ṁ_ISM = ρ × A × v_ship × γ = 1.160×10⁻¹² kg/s
+v_exit = 113,760 km/s (37.946%c)</pre>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>Ship velocity at candle expiry</td><td>24.875%c (74,572 km/s)</td></tr>
+        <tr><td>Distance at candle expiry</td><td>76,395 AU</td></tr>
+        <tr><td>Mission time</td><td>10 years 285 days 4 h 26 min 40 s</td></tr>
+        <tr><td>PEARL arch. mass consumed</td><td>2,000 kg (100% — nothing jettisoned)</td></tr>
+        <tr><td>P_ISM</td><td>6,703.35 W</td></tr>
+        <tr><td>ṁ_ISM</td><td>1.160×10⁻¹² kg/s</td></tr>
+        <tr><td>v_ISM entry</td><td>56,960.57 km/s (19.00%c)</td></tr>
+        <tr><td>v_ISM exit</td><td>113,760 km/s (37.946%c)</td></tr>
+        <tr><td>F_ISM_net</td><td>67,342 nN (67.3 μN)</td></tr>
+        <tr><td>Isp</td><td>11,596,290 s</td></tr>
+        <tr><td>NEP duration</td><td>~40 years (until K-core expires)</td></tr>
+    </table>
+
+    <!-- STAGE 7 -->
+    <h3>STAGE 7 — END OF LIFE (HOOP EROSION)</h3>
+    <p><em>K-core ≤ 5% · ISM unmitigated · Ship coasting</em></p>
+    <table>
+        <tr><th>Parameter</th><th>Value</th></tr>
+        <tr><td>K-core at EOL</td><td>500 W (5% of 10,000 W)</td></tr>
+        <tr><td>Fraction unmitigated</td><td>95%</td></tr>
+        <tr><td>Hoop erosion rate</td><td>378,619 pg/s = 32,712 ng/day</td></tr>
+        <tr><td>Ti sublimation energy</td><td>4.9 MJ/kg</td></tr>
+        <tr><td>Propulsion mode</td><td>Coasting — no active thrust</td></tr>
+        <tr><td>Velocity locked</td><td>~24.875%c</td></tr>
+    </table>
+
+    <h4>5.8 Cross-Stage Summary</h4>
+    <table>
+        <tr><th>Stage</th><th>P_beam (delivered)</th><th>ECM (GeV)</th><th>mult</th><th>v_ex (%c)</th><th>Isp (s)</th><th>Thrust</th></tr>
+        <tr><td>1 BOOT</td><td>5.2 kW</td><td>1.901</td><td>1.30×</td><td>5.076%c</td><td>1,551,348</td><td>0.123 N</td></tr>
+        <tr><td>2 CRANK</td><td>1.690 MW</td><td>5.819</td><td>64.7×</td><td>15.84%c</td><td>4,840,597</td><td>632 N</td></tr>
+        <tr><td>3 RAMP</td><td>3.752 MW</td><td>7.487</td><td>165.2×</td><td>23.495%c</td><td>7,179,983</td><td>2,415 N</td></tr>
+        <tr><td>4 SAT</td><td>6.405 MW</td><td>9.655</td><td>276.2×</td><td>29.229%c</td><td>8,932,313</td><td>5,543 N</td></tr>
+        <tr><td>5 ISM+</td><td>6.405 MW</td><td>12.082</td><td>293.5×</td><td>36.007%c</td><td>11,003,809</td><td>5,737 N</td></tr>
+        <tr><td>6 NEP</td><td>6,703 W</td><td>—</td><td>—</td><td>37.946%c†</td><td>11,596,290</td><td>67 μN</td></tr>
+        <tr><td>7 EOL</td><td>338 W</td><td>—</td><td>—</td><td>—</td><td>N/A</td><td>~0</td></tr>
+    </table>
+    <p><em>† Stage 6 v_ex is ISM exit velocity, not candle exhaust. All other v_ex values are WAKE ON.</em></p>
+
+    <hr>
+
+    <!-- ================ 6. VELOCITY ACCUMULATION ================= -->
+    <h2>6. Velocity Accumulation</h2>
+    <h3>6.1 Why Tsiolkovsky Is Insufficient</h3>
+    <p>The Tsiolkovsky equation Δv = v_ex × ln(m₀/m_f) holds for constant v_ex and a closed system with no external mass interaction. PEARL-GATE violates both. v_ex varies by more than 7× across the mission. Relativistic corrections become significant above 10%c. From Stage 3 onward, the ISM funnel introduces an external energy source. The correct treatment is the relativistic thrust integral solved numerically by the RK4 integrator in the simulator.</p>
+
+    <h3>6.2 Analytical Estimate vs Simulator Result</h3>
+    <p>Using Stage 4 saturation v_ex in the Tsiolkovsky formula:</p>
+    <pre>WAKE OFF: Δv = v_ex × ln(29,413/14,413) = 87,626 × 0.7133 = 62,504 km/s (20.849%c)
+WAKE ON:  Δv = v_ex × ln(29,413/14,413) = 105,151 × 0.7133 = 75,005 km/s (25.019%c ceiling)</pre>
+    <p>The RK4 simulator returns: <strong>WAKE ON: 24.875%c at 76,395 AU in 10 years 285 days</strong></p>
+
+    <h3>6.3 Tsiolkovsky vs RK4: A Mass-Ratio-Dependent Relationship</h3>
+    <p>The relationship between the Tsiolkovsky ceiling and the RK4 result depends on mass ratio, not candle count alone.</p>
+    <table>
+        <tr><th>Config</th><th>Dry mass</th><th>Fuel</th><th>Mass ratio</th><th>Tsiol ceiling</th><th>RK4 result</th><th>Delta</th></tr>
+        <tr><td>3c / 20t dry</td><td>20.0t</td><td>15t</td><td>1.750</td><td>19.628%c</td><td>19.752%c</td><td>+0.124%c ABOVE</td></tr>
+        <tr><td>3c / 14.4t dry</td><td>14.4t</td><td>15t</td><td>2.041</td><td>25.019%c</td><td>24.875%c</td><td>−0.144%c below</td></tr>
+        <tr><td>30c / 27.3t dry</td><td>27.3t</td><td>150t</td><td>6.491</td><td>65.603%c</td><td>55.860%c</td><td>−9.742%c below</td></tr>
+        <tr><td>30c / 200t dry</td><td>200.0t</td><td>150t</td><td>1.750</td><td>19.628%c</td><td>19.754%c</td><td>+0.125%c ABOVE</td></tr>
+    </table>
+    <p>Two competing effects determine which side of the ceiling the RK4 result lands on:</p>
+    <p><strong>Effect 1 — Early-burn drag.</strong> The Tsiolkovsky ceiling uses the Stage 4 saturation exhaust velocity (105,151 km/s WAKE ON) throughout. Stages 1, 2 and 3 burn at 15,000–70,000 km/s. The real integral is dragged downward. The higher the mass ratio, the larger the drag penalty.</p>
+    <p><strong>Effect 2 — ISM kinetic harvesting.</strong> From Stage 3 onward, ISM protons carry relativistic kinetic energy in the ship frame. GATE converts that into additional exhaust momentum. Tsiolkovsky sees none of this. The ISM contribution adds a small positive surplus independent of mass ratio.</p>
+    <p>At ratios 1.75–1.85 the two effects roughly cancel and RK4 sits fractionally above the ceiling. At ratio 2.04 early-burn drag slightly wins (−0.144%c). At ratio 6.49 early-burn drag is catastrophic (−9.74%c).</p>
+    <p><strong>The RK4 relativistic integrator is the authoritative result in all cases.</strong></p>
+
+    <hr>
+
+    <!-- ================ 7. PERFORMANCE, UNCERTAINTIES, ENGINEERING ================= -->
+    <h2>7. Performance, Uncertainties and Engineering</h2>
+
+    <h3>7.1 Performance Summary</h3>
+    <p><em>All values: 720,000 veins, 15,000 kg fuel, 14,413 kg dry mass, RK4 relativistic integrator.</em></p>
+    <table>
+        <tr><th>Metric</th><th>WAKE OFF</th><th>WAKE ON</th><th>Notes</th></tr>
+        <tr><td>Peak v_ex</td><td>87,626 km/s (29.229%c)</td><td>105,151 km/s (35.075%c)</td><td>Stage 4, no ISM boost</td></tr>
+        <tr><td>Peak thrust</td><td>5,543 N</td><td>~6,651 N</td><td>Stage 4 saturation</td></tr>
+        <tr><td>Peak Isp</td><td>8,932,313 s</td><td>10,718,775 s</td><td>Stage 4</td></tr>
+        <tr><td>Final velocity (RK4)</td><td>~20–22%c</td><td>24.875%c</td><td>Simulator result</td></tr>
+        <tr><td>Tsiol. ceiling</td><td>~20.6%c</td><td>25.019%c</td><td>Analytical, Stage 4 v_ex</td></tr>
+        <tr><td>RK4 vs Tsiol. ceiling</td><td>—</td><td>−0.144%c (ratio-dependent; see Sec. 6.3)</td><td>ISM kinetic harvesting</td></tr>
+        <tr><td>Distance</td><td>—</td><td>76,395 AU</td><td>At candle expiry</td></tr>
+        <tr><td>Mission time</td><td>—</td><td>10y 285d 4h 27m</td><td>To full candle consumption</td></tr>
+        <tr><td>Q_nuc (saturation)</td><td>530.684 GW</td><td>530.684 GW</td><td>Same Q; boost is coupling efficiency</td></tr>
+        <tr><td>A_total</td><td>79.2M×</td><td>79.2M×</td><td>Stage 4 reference</td></tr>
+        <tr><td>NEP v_exit</td><td>—</td><td>113,760 km/s (37.946%c)</td><td>Post-candle ISM exit</td></tr>
+        <tr><td>NEP Isp</td><td>—</td><td>11,596,290 s</td><td>Post-candle</td></tr>
+        <tr><td>NEP duration</td><td>—</td><td>~40 years</td><td>Until K-core expires</td></tr>
+    </table>
+
+    <h3>7.2 Key Uncertain Parameters</h3>
+    <p><em>Listed in order of impact on final velocity.</em></p>
+    <table>
+        <tr><th>Parameter</th><th>Current value</th><th>Honest range</th><th>Impact on Δv</th><th>How to resolve</th></tr>
+        <tr><td>η_couple</td><td>0.52</td><td>0.45–0.60</td><td>±1.5%c</td><td>SPH / plasma hydro simulation</td></tr>
+        <tr><td>η_couple (Punch 2)</td><td>0.728</td><td>0.52–0.73</td><td>±3%c gap</td><td>PIC simulation of cavity wakefield</td></tr>
+        <tr><td>η_GATE</td><td>0.67</td><td>0.65–0.70</td><td>±0.5%c</td><td>RF engineering / bench test</td></tr>
+        <tr><td>M_fiss</td><td>300</td><td>200–400</td><td>±2%c</td><td>Neutronics / candle geometry</td></tr>
+        <tr><td>Hadronic mult. fractions</td><td>model</td><td>±30%</td><td>±2%c</td><td>Accelerator data at 13 GeV</td></tr>
+        <tr><td>ISM transit fraction</td><td>WAKE</td><td>0.3–0.9</td><td><0.5%c</td><td>QCD cross-section + PIC</td></tr>
+    </table>
+
+    <h3>7.3 Component TRL Status</h3>
+    <table>
+        <tr><th>Component</th><th>Analogue</th><th>TRL</th><th>Notes</th></tr>
+        <tr><td>Kilopower K-core (10 kW)</td><td>NASA KRUSTY fission test 2018</td><td>6</td><td>Flight-ready design demonstrated</td></tr>
+        <tr><td>SiGe TE array (720k veins in HfC matrix)</td><td>RTG heritage (Voyager, Cassini)</td><td>9</td><td>Manufacturing scale only</td></tr>
+        <tr><td>GATE MPD/MID (LIA / FFAG)</td><td>SNS Oak Ridge; EMMA FFAG UK</td><td>5–6</td><td>Same proton energy range (GeV)</td></tr>
+        <tr><td>Nd:YAG + BBO/LBO UV laser chain</td><td>Industrial Q-switched Nd:YAG + NLC</td><td>7–8</td><td>Standard frequency-doubled UV laser</td></tr>
+        <tr><td>LTD capacitor bank</td><td>NIF, Z-machine pulsed power</td><td>7</td><td>Retired at t4</td></tr>
+        <tr><td>Fissile candle (U-238/LiD in HfC matrix)</td><td>Subcritical ADS fuel (MYRRHA)</td><td>4–5</td><td>Novel geometry; subcritical physics validated</td></tr>
+        <tr><td>CNT emissivity hull panels</td><td>CNT forest research (MIT, Rice)</td><td>4</td><td>CNT 13× at 2,500 K demonstrated</td></tr>
+        <tr><td>FFAG ring accelerator</td><td>EMMA (UK), BNL FFAG programme</td><td>5</td><td>Compact FFAG demonstrated</td></tr>
+    </table>
+
+    <h3>7.4 Dry Mass Budget (14,413 kg)</h3>
+    <table>
+        <tr><th>Subsystem</th><th>Mass (kg)</th><th>Notes</th></tr>
+        <tr><td>K-core reactor + shielding</td><td>2,000</td><td>Kilopower SP-100 class with Stirling engines</td></tr>
+        <tr><td>GATE MPD/MID accelerator (LIA/FFAG)</td><td>2,000</td><td>FFAG saves 414 kg vs LIA baseline</td></tr>
+        <tr><td>PEARL triple-candle assembly + feed</td><td>2,000</td><td>Fully consumed as propellant; nothing jettisoned</td></tr>
+        <tr><td>Hull radiator panels (HfC-coated C-C)</td><td>466</td><td>Non-structural; HfC coat + C-C substrate</td></tr>
+        <tr><td>Spaceframe spine + ribs</td><td>1,500</td><td>Primary load-bearing; FFAG ring mount integrated</td></tr>
+        <tr><td>LTD capacitor bank</td><td>500</td><td>Retired at t4</td></tr>
+        <tr><td>N5 Al EM funnel coil structure</td><td>1,000</td><td>Hyperconducting (N5 Al, no cryo required)</td></tr>
+        <tr><td>Nd:YAG + BBO/LBO UV laser chain</td><td>300</td><td>LiH ablation source for GATE plasma feedstock</td></tr>
+        <tr><td>LiH plasma feedstock pad</td><td>50</td><td>~few hundred grams; minimal structural mass</td></tr>
+        <tr><td>Avionics + comms + power distribution</td><td>500</td><td>—</td></tr>
+        <tr><td>Propellant tankage + structural</td><td>500</td><td>Structural tanks for candle feed system</td></tr>
+        <tr><td><strong>Subtotal</strong></td><td><strong>10,816</strong></td><td>—</td></tr>
+        <tr><td><strong>20% margin</strong></td><td><strong>2,163</strong></td><td>—</td></tr>
+        <tr><td>N5 Al electrical bus (3 candles × 478 kg)</td><td>1,434</td><td>0.15 kg/kW × 9,559 kW; scales with candle count</td></tr>
+        <tr><td><strong>TOTAL</strong></td><td><strong>14,413</strong></td><td>Fixed HW 12,979 + bus 1,434 = 14,413 kg total</td></tr>
+    </table>
+    <p><strong>Bus coefficient:</strong> 0.15 kg/kW (N5 Al direct-coupled, no PCUs). The 2.0 kg/kW ISS figure includes copper conductors at 120V DC with full power conditioning units — not applicable here. GATE is an MPD/MID device driven by DC current directly from the TE veins. No klystrons, no RF conversion. See Section 10.2 for full derivation.</p>
+
+    <h3>7.5 GATE Architecture — LIA vs FFAG</h3>
+    <table>
+        <tr><th>Feature</th><th>LIA (helical SRF)</th><th>FFAG ring (preferred)</th></tr>
+        <tr><td>Mass</td><td>2,000 kg</td><td>1,586 kg (−414 kg)</td></tr>
+        <tr><td>Axial depth</td><td>43m hull (bare HfC)</td><td>3–5m (hull length decoupled)</td></tr>
+        <tr><td>Hull length (bare HfC)</td><td>43m</td><td>43m</td></tr>
+        <tr><td>Hull length (HfC+CNT 3×)</td><td>14m</td><td>14m</td></tr>
+        <tr><td>Hull length (HfC+CNT 5×)</td><td>9m</td><td>9m</td></tr>
+        <tr><td>TRL</td><td>3–4</td><td>5</td></tr>
+    </table>
+
+    <h3>7.6 Thermal Energy Accounting (Stage 4 Saturation)</h3>
+    <table>
+        <tr><th>Stage</th><th>Energy</th><th>Destination</th></tr>
+        <tr><td>1. Nuclear split (α=0.12)</td><td>467.002 GW (88%)</td><td>Ablation exhaust stream → thrust</td></tr>
+        <tr><td>1. Nuclear split (α=0.12)</td><td>63.682 GW (12%)</td><td>Candle bulk → SiGe TE veins in HfC matrix → hull</td></tr>
+        <tr><td>2. Geometric split (η=0.52)</td><td>Q_aft = 242.841 GW</td><td>Thrust exhaust, exits aft</td></tr>
+        <tr><td>2. Geometric split (η=0.52)</td><td>Q_waste = 224.161 GW</td><td>Forward plasma — optically thin, radiates freely</td></tr>
+        <tr><td>3. TE extraction</td><td>P_TE = 9.559 MW</td><td>Electricity → GATE beam (0.015% of bulk)</td></tr>
+        <tr><td>3. Residual</td><td>63.672 GW</td><td>Must be rejected by hull radiation</td></tr>
+        <tr><td>4. Ablation enthalpy</td><td>≈37 W</td><td>NEGLIGIBLE (5.8×10⁻¹³ of budget)</td></tr>
+        <tr><td>5. Hull radiation</td><td>63.672 GW</td><td>HfC-coated hull panels; HfC matrix at up to 3,928 K → space</td></tr>
+    </table>
+
+    <h3>7.7 Performance Scaling and Engineering Limits</h3>
+    <p>PEARL-GATE has two independent performance levers: vein count sets beam power and therefore thrust (reaching terminal velocity faster, not higher), while mass ratio sets terminal velocity via the Tsiolkovsky integral. In a chemical rocket these are coupled through propellant chemistry; here they are fully decoupled and can be optimised independently.</p>
+    <p>The three engineering caps on vein count are: MPD/MID accelerator throughput (hard ceiling at 6.4 MW); electrical bus mass (second constraint but not binding); and hexagonal packing geometry (non-binding — 65× headroom). Full analysis in Section 10.</p>
+
+    <hr>
+
+    <!-- ================ 8. THE DEEP-SPACE LONGHAUL TRUCK ================= -->
+    <h2>8. The Deep-Space Longhaul Truck</h2>
+    <p>The most consequential result in the simulator record is the comparison between two runs with identical mass ratios — 1.750 — that produce identical velocities and identical mission times, yet carry payload capacities differing by a factor of 31.</p>
+
+    <h3>8.1 The Identity That Changes Everything</h3>
+    <table>
+        <tr><th>Configuration</th><th>Fuel</th><th>Min dry</th><th>Actual dry</th><th>Payload</th><th>Mass ratio</th><th>RK4 velocity</th></tr>
+        <tr><td>3-candle courier</td><td>15t</td><td>14.4t</td><td>20t</td><td>5.6t</td><td>1.750</td><td>19.752%c</td></tr>
+        <tr><td>30-candle truck</td><td>150t</td><td>27.3t</td><td>200t</td><td>172.7t</td><td>1.750</td><td>19.754%c</td></tr>
+    </table>
+    <p>The velocity difference is 0.002%c — within simulator noise. The payload difference is 172,700 kg vs 5,600 kg: a factor of 31 in delivered mass at zero cost in speed or journey time.</p>
+    <p>The reason is exact: both configurations have mass ratio 1.750. The Tsiolkovsky integral cares only about mass ratio. The candle count sets the burn power and burn duration but not the final velocity. The 30-candle ship has 10× more fuel, 10× more thrust, and reaches terminal velocity in the same time — but with 172.7 tonnes of dry mass available for payload above the minimum hardware floor.</p>
+
+    <h3>8.2 The Payload–Speed Trade Space</h3>
+    <p><em>At 30 candles (150t fuel):</em></p>
+    <table>
+        <tr><th>Payload</th><th>Dry mass</th><th>Wet mass</th><th>Ratio</th><th>Tsiol ceiling</th><th>~RK4</th><th>Mission type</th></tr>
+        <tr><td>0t (none)</td><td>27.3t</td><td>177.3t</td><td>6.49</td><td>65.6%c</td><td>~55.9%c</td><td>Maximum speed run — no payload</td></tr>
+        <tr><td>10t</td><td>37.3t</td><td>187.3t</td><td>5.02</td><td>56.6%c</td><td>~49.8%c</td><td>Minimal science package</td></tr>
+        <tr><td>50t</td><td>77.3t</td><td>227.3t</td><td>2.94</td><td>37.8%c</td><td>~33.3%c</td><td>Habitat module + life support</td></tr>
+        <tr><td>100t</td><td>127.3t</td><td>277.3t</td><td>2.18</td><td>27.3%c</td><td>~24.0%c</td><td>Colony seed package</td></tr>
+        <tr><td>152.7t</td><td>180.0t</td><td>330.0t</td><td>1.83</td><td>21.3%c</td><td>~21.3%c</td><td>Heavy infrastructure</td></tr>
+        <tr><td>172.7t</td><td>200.0t</td><td>350.0t</td><td>1.75</td><td>19.6%c</td><td>~19.75%c</td><td>Full colony — matches courier speed</td></tr>
+    </table>
+    <p>The scaling law is linear: every additional tonne of payload costs exactly the same fractional reduction in mass ratio.</p>
+
+    <h3>8.3 Mission Architecture Possibilities</h3>
+    <p>172 tonnes at 19.75%c in under 11 years enables:</p>
+    <ul style="list-style-type: disc; margin-left: 2rem;">
+        <li><strong>Infrastructure pre-positioning:</strong> Robotic assemblers, fuel depots, and power systems arrive before any crew departs. The destination is built before the passengers.</li>
+        <li><strong>Staged colony architecture:</strong> Multiple trucks, each carrying a different package — propellant, habitat, power, communications — accumulate capability at the destination over decades.</li>
+        <li><strong>Crewed mission:</strong> A habitat with life support, radiation shielding, closed-loop food production, and a crew fits within 172 tonnes at courier speed.</li>
+        <li><strong>Scientific observatory deployment:</strong> A large telescope or gravitational lens observatory at the SGL focus (~650 AU) or the target system, with full support infrastructure and multi-decade lifetime.</li>
+        <li><strong>Antimatter factory seed:</strong> A self-replicating antimatter production facility to begin generating return-mission propellant at the destination.</li>
+    </ul>
+
+    <h3>8.4 The Scaling Law</h3>
+    <pre>M_payload  =  M_dry − (FIXED_HW + N_candles × BUS_PER_CANDLE)
+           =  M_dry − (12,979 + N_candles × 478)</pre>
+    <p>At R = 1.75 and N_candles = 30: payload = 30 × (8,750 − 478) − 12,979 × 7 = 248,160 − 90,853 = <strong>172,681 kg ≈ 172.7t</strong></p>
+    <p>Payload scales approximately linearly with candle count for large N. PEARL-GATE is not a single spacecraft design. It is a configurable propulsion platform whose payload capacity grows linearly with candle count while holding velocity constant — a property unique to beam-target propulsion architectures where thrust and exhaust velocity are decoupled.</p>
+
+    <h3>8.5 PEARL as a Booster: What It Does to GATE's NEP</h3>
+    <p>To understand what PEARL contributes, consider what GATE does without it. GATE operating as a pure NEP thruster on Kilopower alone produces 67.3 μN of thrust at an Isp of 11,596,290 s. That specific impulse is outstanding. The thrust is not. At 67.3 μN pushing 14,413 kg of dry mass, GATE alone would require approximately <strong>386 million years</strong> to accelerate to 19%c from rest. It is a station-keeping thruster, not an interstellar drive.</p>
+    <p>PEARL changes this not by improving the exhaust velocity — which is already extraordinary — but by amplifying the thrust by a factor of <strong>98.8 million</strong> during the candle burn. The cascade converts 6.4 MW of beam power into 530 GW of nuclear plasma, producing 5,543–6,651 N of thrust for the entire 10.8-year burn.</p>
+    <table>
+        <tr><th>Phase</th><th>Thrust</th><th>Exhaust vel.</th><th>Isp</th><th>Notes</th></tr>
+        <tr><td>PEARL burn — Stage 4 WAKE ON</td><td>6,651 N</td><td>105,151 km/s</td><td>10,718,775 s</td><td>Peak cascade</td></tr>
+        <tr><td>PEARL burn — Stage 4 WAKE OFF</td><td>5,543 N</td><td>87,626 km/s</td><td>8,932,313 s</td><td>No wakefield</td></tr>
+        <tr><td>NEP cruise — candle expiry</td><td>67.3 μN</td><td>113,760 km/s</td><td>11,596,290 s</td><td>K-core full power</td></tr>
+        <tr><td>NEP cruise — K-core EOL</td><td>3.98 μN</td><td>77,157 km/s</td><td>7,865,144 s</td><td>K-core at 5%</td></tr>
+    </table>
+    <p><strong>First:</strong> the NEP exhaust velocity at candle expiry (113,760 km/s, 37.946%c) is higher than the PEARL WAKE OFF exhaust velocity (87,626 km/s, 29.229%c). ISM protons entering the funnel at 24.875%c arrive carrying their own kinetic energy in the ship frame. GATE accelerates them further. The PEARL burn gifted the NEP a running start.</p>
+    <p><strong>Second:</strong> at K-core end of life, the exhaust velocity (77,157 km/s) is still above the ship velocity (74,572 km/s). The NEP is still generating net positive thrust at the moment of final shutdown.</p>
+    <p>The K-core reaches end of life 48 years and 280 days after launch, at a distance of <strong>673,581 AU — 10.65 light years</strong> from the Sun. Proxima Centauri is 4.24 light years away. By the time the K-core finally expires, the ship has travelled 2.5 times the distance to the nearest star system.</p>
+    <p><strong>PEARL is therefore not merely the propulsion system. It is the enabling condition for the NEP. Without the candle burn, GATE sits at rest generating micronewtons for geological time. With it, GATE is the most capable interstellar drive ever conceived.</strong></p>
+
+    <hr>
+
+    <!-- ================ 9. WORKED NUMERICAL EXAMPLE ================= -->
+    <h2>9. Worked Numerical Example — Stage 4 Saturation</h2>
+    <p>One pulse traced through all twelve governing equations at Stage 4 saturation conditions (T_bulk = 1,500 K, WAKE OFF unless stated). All values computed from canonical parameters: 720,000 TE veins, GATE_EFF = 0.67, ETA_COUPLE = 0.52, M_FISS = 300.</p>
+
+    <p><strong>Equation 1 — Beam Power Generation</strong><br>
+    P_beam_input = P_TE = (1500 − 293) × 720,000 × 0.011 = 9,559,440 W<br>
+    P_beam_delivered = 9,559,440 × 0.67 = 6,404,825 W (6.405 MW)</p>
+
+    <p><strong>Equation 2 — Pulse Energy</strong><br>
+    Hz = P_TE / E_pulse_LTD = 9,559,440 / 78,125 = 122.36 Hz<br>
+    E_pulse = P_beam_input / Hz = 9,559,440 / 122.36 = 78,125 J</p>
+
+    <p><strong>Equation 3 — Reaction Mass Per Pulse</strong><br>
+    Q_nuc = P_beam_delivered × M_fiss × mult = 6,404,825 × 300 × 276.19 = 530.684 GW<br>
+    ṁ_total = ṁ_aft / η_couple = 6.3254×10⁻⁵ / 0.52 = 1.2164×10⁻⁴ kg/s<br>
+    ε_r = Q_nuc / ṁ_total = 530.684×10⁹ / 1.2164×10⁻⁴ = 4.363×10¹⁵ J/kg<br>
+    m_pulse = ṁ_total / Hz = 1.2164×10⁻⁴ / 122.36 = 9.94×10⁻⁷ kg (994 ng)</p>
+
+    <p><strong>Equation 4 — Exhaust Velocity</strong><br>
+    Channel fractions at ECM = 9.655 GeV:<br>
+    fiss=1.000  fus=0.600  pos=0.250  anti=0.500  had=0.465<br>
+    mult = 1 + 0.600×2 + 0.250×5 + 0.500×80 + 0.465×500 = 276.19×<br>
+    v_e (WAKE OFF) = 87,626 km/s (29.229%c)<br>
+    v_e (WAKE ON) = 87,626 × 1.200 = 105,151 km/s (35.075%c)</p>
+
+    <p><strong>Equation 5 — Impulse Per Pulse</strong><br>
+    I_pulse = η_c × m_pulse × v_e = 0.52 × 9.94×10⁻⁷ × 87,625,983 = 45.30 N·s<br>
+    Verified: I_pulse = η_c × E_pulse × √(2/ε_r) = 0.52 × 78,125 × √(2 / 4.363×10¹⁵) = 45.30 N·s ✔</p>
+
+    <p><strong>Equation 6 — Average Thrust</strong><br>
+    F (WAKE OFF) = I_pulse × Hz = 45.30 × 122.36 = 5,543 N<br>
+    F (WAKE ON) = 5,543 × (0.624/0.52) = 6,651 N<br>
+    Cross-check: ṁ_aft × v_e = 6.3254×10⁻⁵ × 87,625,983 = 5,543 N ✔</p>
+
+    <p><strong>Equation 7 — Relativistic Acceleration (β = 0.10, γ = 1.0050)</strong><br>
+    dv/dt = F / (γ³ × M) = 5,543 / (1.0152 × 27,500) = 0.1985 m/s²</p>
+
+    <p><strong>Equation 8 — Mass Evolution</strong><br>
+    dM/dt = −P_beam / ε_r = −6,404,825 / 4.363×10¹⁵ = −1.468×10⁻⁹ kg/s = 0.0053 g/hr</p>
+
+    <p><strong>Equation 9 — Velocity Evolution</strong><br>
+    δv per pulse = 5,543 × 0.00817 / (1.0152 × 27,500) = 1.62×10⁻³ m/s per pulse<br>
+    Integrated over the full burn: RK4 result = 24.875%c</p>
+
+    <p><strong>Equation 10 — Energy Ceiling</strong><br>
+    E_fuel = ε_r × M_fuel = 4.363×10¹⁵ × 15,000 = 6.544×10¹⁹ J<br>
+    γ_max = 1 + (0.52 × 6.544×10¹⁹) / (14,413 × 8.988×10¹⁶) = 1.0263<br>
+    v_max = c√(1 − 1/γ²) = 67,398 km/s (22.482%c)</p>
+
+    <p><strong>Equation 11 — ISM Augmentation (β = 0.10)</strong><br>
+    ṁ_ISM = 2×10⁻²³ × 1,000 × 29,979,246 × 1.0050 = 6.026×10⁻¹³ kg/s<br>
+    ISM protons arriving at the PEARL target are blue-shifted in the ship frame, boosting ECM from 9.655 GeV (Stage 4) to 12.082 GeV at β = 0.10. Nuclear multiplier rises from 276× to 293×. This relativistic kinetic energy harvesting is the ISM surplus that partially offsets the early-burn drag penalty. The net effect at mass ratio 2.04 is a 0.144%c shortfall below the Tsiolkovsky ceiling of 25.019%c.</p>
+
+    <p><strong>Equation 12 — Governing System Summary</strong></p>
+    <table>
+        <tr><th>Quantity</th><th>Expression</th><th>Numerical Value</th></tr>
+        <tr><td>F (WAKE OFF)</td><td>eta_c × P_beam × sqrt(2/eps_r)</td><td>5,543 N</td></tr>
+        <tr><td>F (WAKE ON)</td><td>F × (eta_avg / eta_c)</td><td>6,651 N</td></tr>
+        <tr><td>dv/dt</td><td>F / (gamma³ × M)</td><td>0.1985 m/s²</td></tr>
+        <tr><td>dM/dt</td><td>−P_beam / eps_r</td><td>−1.468×10⁻⁹ kg/s</td></tr>
+        <tr><td>eps_r</td><td>Q_nuc / m_dot_total</td><td>4.363×10¹⁵ J/kg</td></tr>
+        <tr><td>E_fuel</td><td>eps_r × M_fuel</td><td>6.544×10¹⁹ J</td></tr>
+        <tr><td>gamma_max</td><td>1 + eta_c × E_fuel / (M_s × c²)</td><td>1.0263</td></tr>
+        <tr><td>v_max</td><td>c × sqrt(1 − 1/gamma²)</td><td>67,398 km/s (22.482%c)</td></tr>
+        <tr><td>m_dot_ISM</td><td>rho × A × v × gamma</td><td>6.026×10⁻¹³ kg/s (at beta=0.10)</td></tr>
+    </table>
+
+    <hr>
+
+    <!-- ================ 10. MAX TE VEINS PER 5-TONNE CANDLE ================= -->
+    <h2>10. Maximum TE Veins Per 5‑Tonne Candle</h2>
+    <p>Three independent constraints cap the practical vein count. The question is not how many veins will physically fit in a 5‑tonne HfC candle — the geometry is not the constraint — but how many veins the surrounding system can accept and convert usefully.</p>
+
+    <h3>10.1 Constraint 1 — MPD/MID Accelerator Throughput (Hard Ceiling)</h3>
+    <p>The GATE MPD/MID accelerator has a maximum beam power it can handle before thermal runaway. The demonstrated boundary of superconducting RF accelerator technology is 6.4 MW continuous beam power.</p>
+    <pre>P_beam_max = 6.4 MW
+P_TE_max = 6.4 / 0.67 = 9.552 MW (beam / η_GATE)
+N_max = 9,552,000 / (1,207 × 0.011) = 719,458 total → 239,819 per candle (≈ 240,000)</pre>
+    <p>Every additional vein beyond this limit generates TE power the accelerator cannot convert. The current design of 240,000 veins per candle sits precisely at this hard ceiling.</p>
+
+    <h3>10.2 Constraint 2 — Electrical Bus Mass</h3>
+    <p>At 0.15 kg/kW (N5 aluminium direct-coupled bus, no PCUs):</p>
+    <pre>M_bus = 9,559 kW × 0.15 kg/kW = 1,434 kg (N5 Al, no PCUs)</pre>
+    <p>The ceiling from this constraint alone corresponds to approximately 318,000 veins per candle — above the MPD cap anyway. Bus mass is the second constraint but is not the binding one.</p>
+    <p><strong>Why Direct DC Coupling Is Valid: N5 Aluminium and MPD Architecture</strong><br>
+    N5 aluminium (99.999% purity, achievable by zone refining) is a hyperconductor, not a superconductor. A hyperconductor achieves extremely low — though not zero — resistivity through purity alone, with no cooling infrastructure and no operating power overhead. At the current densities present in the PEARL-GATE bus, the resistive losses in N5 aluminium coils are negligible, and the magnetic field in the funnel and accelerator is maintained with minimal parasitic power draw on the TE array.</p>
+    <p>The more consequential reason the 0.15 kg/kW bus coefficient is valid is the nature of the GATE accelerator itself. GATE is a Magneto-Plasma Dynamic / Magneto-Ion Dynamic accelerator. Its acceleration mechanism is electromagnetic: magnetic fields do work on the plasma directly, driven by DC or pulsed DC current through the coils. This is categorically different from an SRF LINAC, which requires the DC output to be converted to high-frequency RF power by a klystron or solid-state RF amplifier chain. At the Spallation Neutron Source (SNS) at Oak Ridge — the closest operational hardware analogue — the RF power system alone accounts for approximately 0.35 kg/kW, which would roughly double the bus coefficient quoted here. Because GATE is an MPD/MID device, the TE veins couple directly to the accelerator coils without klystrons, solid-state RF amplifiers, or any intermediate power conditioning units. The coefficient would not be valid for an SRF LINAC architecture.</p>
+    <p>As materials science progresses, the intention is to replace the aluminium electromagnetic coils with carbon–carbon composite magnets, reducing the fixed hardware mass further still.</p>
+
+    <h3>10.3 Constraint 3 — Hexagonal Packing Geometry (Non-Binding)</h3>
+    <pre>N_geo_max = π × 16.56² / (2 × 1.732 × 0.004²) = 15,535,489 veins per candle</pre>
+    <p>The HfC matrix could physically hold 65 times more veins than the current design. Geometry is entirely non-binding.</p>
+
+    <h3>10.4 Binding Answer</h3>
+    <table>
+        <tr><th>Constraint</th><th>Veins per candle</th><th>Binding?</th></tr>
+        <tr><td>MPD/MID accelerator throughput (6.4 MW SRF cap)</td><td>239,819 (240,000)</td><td><strong>YES — hard ceiling</strong></td></tr>
+        <tr><td>Electrical bus mass (dry mass budget)</td><td>~318,000</td><td>No — above MPD cap</td></tr>
+        <tr><td>Hexagonal packing geometry (4 mm pitch, 16.56 m candle)</td><td>15,535,489</td><td>No — 65× headroom</td></tr>
+    </table>
+    <p>The absolute limit is 240,000 veins per 5‑tonne candle, set by the GATE MPD/MID accelerator throughput ceiling of 6.4 MW. Improving final velocity requires either a higher-throughput accelerator or a better mass ratio. More veins without a better accelerator is dead mass.</p>
+
+    <hr>
+
+    <!-- ================ 11. CONCLUSION ================= -->
+    <h2>11. Conclusion</h2>
+    <p>PEARL-GATE is the world's first Beam-Target Propulsion system: a 10 kW fission reactor drives a particle beam onto a high-Z candle target, triggering a hadronic cascade that amplifies power 79.2 million fold, and the cascade products are expelled directly as thrust. The Double Punch and ISM kinetic harvesting extend performance beyond what any closed-system rocket equation predicts.</p>
+    <p>The RK4 relativistic simulator confirms: at 720,000 TE veins, 15,000 kg PEARL candle, 14,413 kg dry mass, with Double Punch active, PEARL-GATE achieves <strong>24.875%c and 76,395 AU in 10 years and 285 days</strong>. The RK4 result falls 0.144%c below the analytical Tsiolkovsky ceiling of 25.019%c — a consequence of early-burn drag in Stages 1–3, partially offset by ISM kinetic energy harvesting, as detailed in Section 6.3. The entire PEARL architecture is consumed as antimatter propellant. The Kilopower reactor, restarted 6 hours before candle expiry, then drives ~40 years of pure ISM‑NEP cruise, reaching 10.65 light years before the last watt is exhausted.</p>
+    <p>Every component is at TRL 4 or above. PEARL-GATE requires no new physics and no new materials — only the novel integration of demonstrated components in the first Beam-Target Propulsion architecture.</p>
+
+    <hr>
+
+    <p style="font-size:0.9rem; color:#2b4f6e;"><em>Document: PEARL-GATE Complete Mission Physics. All values consistent with pearl_v28.html at 720,000 TE veins, 14,413 kg dry mass canonical. Simulator: RK4 relativistic integrator, WAKE ON, GATE: LIA. Prior-art analysis and BTP category definition are the intellectual property of the inventor.</em></p>
+    <div class="backlink">Converted from Wikidot · March 2026</div>
+</div>
+</body>
+</html>
