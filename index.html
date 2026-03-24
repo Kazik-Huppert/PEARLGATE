@@ -1,0 +1,2781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEARL-GATE V29 — Cylindrical Sector Candles + Double Punch Animation</title>
+<script>
+(function(){
+    function tryLoad(url,fb){
+        var s=document.createElement('script');s.src=url;
+        s.onload=function(){window._plotlyReady=true;};
+        s.onerror=fb||function(){document.getElementById('viz3d').innerHTML='<div style="color:#334155;padding:20px">Plotly failed to load</div>';};
+        document.head.appendChild(s);
+    }
+    tryLoad('https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js',
+        function(){tryLoad('https://cdn.jsdelivr.net/npm/plotly.js@2.26.0/dist/plotly.min.js');});
+})();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{background:#020617;color:#f1f5f9;font-family:'Courier New',monospace;font-size:11px;}
+.panel{background:#0f172a;border:1px solid #1e293b;padding:6px;border-radius:4px;}
+.label{font-size:0.5rem;text-transform:uppercase;color:#64748b;font-weight:bold;letter-spacing:0.5px;display:block;margin-bottom:1px;}
+.gate-item{padding:2px 6px;border-left:3px solid #1e293b;margin-bottom:1px;font-size:0.55rem;color:#475569;}
+.gate-active{border-left-color:#3b82f6;background:rgba(59,130,246,0.1);color:#fff;font-weight:bold;}
+.gate-done{border-left-color:#10b981;color:#10b981;opacity:0.65;}
+input,select{background:#020617;border:1px solid #3b82f6;color:#60a5fa;padding:2px 4px;width:100%;text-align:center;border-radius:2px;font-family:'Courier New',monospace;font-size:10px;box-sizing:border-box;}
+.btn{background:#1e293b;border:1px solid #334155;padding:4px 10px;cursor:pointer;color:white;border-radius:4px;font-weight:bold;border-bottom:2px solid #000;transition:all 0.1s;font-family:'Courier New',monospace;font-size:10px;}
+.btn:active{transform:translateY(2px);border-bottom-width:1px;}
+.btn-research{background:#1a1040;border-color:#4c1d95;color:#a78bfa;}
+.btn-sweep{background:#1a2a10;border-color:#14532d;color:#4ade80;}
+.btn-export{background:#1a1a00;border-color:#713f12;color:#fbbf24;}
+.mbar{height:3px;background:#1e293b;border-radius:2px;overflow:hidden;margin-top:2px;}
+.mfill{height:100%;width:0%;transition:width 0.3s linear;}
+.srow-compact{display:flex;justify-content:space-between;padding:1px 0;border-bottom:1px solid #0f1f38;font-size:0.6rem;}
+.srow-compact .k{color:#94a3b8;}.srow-compact .v{color:#f1f5f9;font-weight:bold;font-variant-numeric:tabular-nums;}
+.r4ok{color:#22c55e;}.r4no{color:#ef4444;}
+#viz3d{width:360px;height:360px;background:#000;border-radius:4px;overflow:hidden;touch-action:none;}
+#vizWrap{width:360px;margin:0 auto;}
+.tele-ultra{padding:4px;border-left-width:3px;}
+.tele-ultra .main-value{font-size:1.0rem;font-weight:900;line-height:1.1;display:inline;}
+.tele-ultra .unit{font-size:0.55rem;color:#475569;margin-left:2px;}
+.tele-ultra .sub-row{display:flex;justify-content:space-between;font-size:0.55rem;font-weight:bold;margin-top:2px;}
+.dist-panel{padding:4px 6px;}
+.dist-panel .dist-value{font-size:1.3rem;font-weight:900;line-height:1.2;display:inline;}
+.dist-panel .clock{font-size:0.75rem;font-weight:bold;}
+.sci-plot{width:100%;height:160px;background:#000;border-radius:3px;}
+.tab-btn{padding:3px 10px;font-size:0.55rem;cursor:pointer;border:1px solid #1e293b;background:#020617;color:#475569;font-family:'Courier New',monospace;border-radius:3px 3px 0 0;}
+.tab-btn.active{background:#0f172a;color:#fff;border-bottom-color:#0f172a;}
+.sweep-result{font-size:0.5rem;color:#64748b;padding:2px 0;border-bottom:1px solid #0f172a;}
+.energy-bar-wrap{display:flex;align-items:center;gap:4px;margin:1px 0;}
+.energy-bar-label{width:80px;font-size:0.52rem;color:#64748b;flex-shrink:0;}
+.energy-bar-bg{flex:1;height:4px;background:#1e293b;border-radius:2px;overflow:hidden;}
+.energy-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
+.energy-val{width:70px;text-align:right;font-size:0.52rem;font-weight:bold;}
+
+/* Orbital insertion modal */
+#oi-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  z-index:1000;align-items:center;justify-content:center;}
+#oi-modal.open{display:flex;}
+#oi-box{background:#0f172a;border:1px solid #334155;border-radius:8px;
+  padding:16px 20px;max-width:420px;width:90%;color:#e2e8f0;font-size:11px;
+  font-family:'Courier New',monospace;}
+#oi-box h3{color:#f59e0b;font-size:13px;margin:0 0 10px;font-family:Arial,sans-serif;
+  font-weight:700;border-bottom:1px solid #334155;padding-bottom:6px;}
+.oi-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #1e293b;}
+.oi-key{color:#94a3b8;} .oi-val{color:#38bdf8;font-weight:700;}
+.oi-warn{color:#f59e0b;margin-top:8px;font-size:10px;line-height:1.5;}
+.oi-note{color:#64748b;margin-top:6px;font-size:9px;line-height:1.4;}
+#oi-close{margin-top:12px;background:#1e3a5f;border:1px solid #3b82f6;color:#93c5fd;
+  padding:4px 12px;border-radius:4px;cursor:pointer;font-size:10px;}
+#oi-close:hover{background:#2563eb;color:#fff;}
+/* Make milestone rows clickable */
+.ms-row{cursor:pointer;border-radius:3px;padding:1px 2px;transition:background 0.15s;}
+.ms-row:hover{background:rgba(59,130,246,0.15);}
+
+</style>
+</head>
+<body class="p-2">
+<div class="max-w-[1800px] mx-auto space-y-2">
+
+<!-- ══ CONTROLS ══ -->
+<div class="panel flex flex-wrap items-end gap-2 border-b-2 border-blue-900 py-1">
+    <div><span class="label">Candles</span><input type="number" id="inCandles" value="3" min="3" max="21" step="3" style="width:45px" title="Each candle = 5,000 kg fuel (U-238/LiD in HfC matrix) + 240,000 SiGe TE veins (hard-linked). Must be multiple of 3 (three 120° sectors per set). Max 240k veins/candle = MPD/MID-GATE throughput ceiling."></div>
+    <div><span class="label" id="lblFuelVeins" style="color:#94a3b8;font-size:0.65rem">15,000 kg · 720,000 veins</span></div>
+    <div><span class="label">Dry mass excl. candles (kg)</span><input type="number" id="inDry" value="14413" style="width:70px"></div>
+
+    <div><span class="label">Fission Mult</span><input type="number" id="inMfiss" value="300" style="width:50px"></div>
+    <div><span class="label">Beam Eff</span><input type="number" id="inBeamEff" value="0.5226" step="0.01" style="width:55px"></div>
+    <div class="flex gap-1 ml-auto flex-wrap">
+        <button id="btnWake" class="btn" style="color:#475569;border-color:#1e3a5f;font-size:0.6rem" title="Toggle two-stroke wakefield model. In Beam-Target Propulsion the hadron cascade creates a plasma channel behind the candle tip — the return current is a physical consequence of the beam, not an external effect.">⚡ WAKE: OFF</button>
+        <button id="btnFFAG" class="btn" style="color:#475569;border-color:#1e3a5f;font-size:0.6rem" title="Toggle GATE architecture: LIA — Linear Induction Accelerator (helical induction cells, DC-coupled). Fires 47.8 GeV proton beam into subcritical U-238/LiD/HfC candle target triggering spallation and hadronic cascade. Initial plasma feedstock: LiH ablation pad (Stages 1–3); ISM funnel takes over at Stage 5. 47m hull, CNT 5.6×, 2.0t vs FFAG ring — saves 414 kg vs LIA but introduces bending drag on ISM collection; (hull mouth, 20m hull, CNT 13×, 1.6t). GATE waste heat identical (3.1MW) — hull length set by CNT choice only.">⬡ GATE: LIA</button>
+        <button id="btnPlay" class="btn" style="color:#4ade80">▶ IGNITE</button>
+        <button id="btnSpeed" class="btn" style="color:#fbbf24">1×</button>
+        <button id="btnReset" class="btn" style="color:#f87171">↺</button>
+    </div>
+</div>
+
+<div class="grid grid-cols-12 gap-2">
+<!-- ══ LEFT 8 COLS ══ -->
+<div class="col-span-12 lg:col-span-8 space-y-2">
+
+    <!-- Primary telemetry -->
+    <div class="grid grid-cols-3 gap-2">
+        <div class="panel tele-ultra border-l-4 border-emerald-500">
+            <span class="label">Ship Velocity</span>
+            <div><span id="outVel" class="main-value text-emerald-400">0</span></div>
+            <div class="sub-row"><span id="outBeta">0 km/s</span><span id="outAccel">0.00e+0 G</span></div>
+        </div>
+        <div class="panel tele-ultra border-l-4 border-cyan-500">
+            <span class="label">Exhaust Velocity</span>
+            <div><span id="outVex" class="main-value text-cyan-400">0</span></div>
+            <div class="sub-row"><span id="outIsp">Isp: —</span><span id="outVexC">0 km/s</span></div>
+        </div>
+        <div class="panel tele-ultra border-l-4 border-orange-500">
+            <span class="label">Thrust / Fuel</span>
+            <div><span id="outThrust" class="main-value text-orange-400">0</span><span class="unit">N</span></div>
+            <div class="sub-row"><span id="outFuelG">15,000 kg</span><span id="outFuelPct">100.00 %</span></div>
+        </div>
+    </div>
+
+    <!-- Distance/clock -->
+    <div class="panel dist-panel bg-black border border-slate-800 flex items-center justify-between">
+        <div>
+            <span id="regimeBanner" class="text-[8px] font-black tracking-widest uppercase" style="color:#334155">STANDBY</span>
+            <div id="integratorTag" class="text-[7px] text-slate-700 mt-0.5">RK4 · RELATIVISTIC</div>
+        </div>
+        <div class="text-right">
+            <span id="outDist" class="dist-value text-yellow-500">0.000 AU</span>
+            <div class="flex items-center gap-2 justify-end">
+                <span class="text-[0.5rem] text-slate-700">Distance from Sol</span>
+                <span id="missionClock" class="clock text-slate-400">00Y 000D 00:00:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Milestones -->
+    <div class="panel grid grid-cols-2 gap-3 py-1">
+        <div>
+            <div class="ms-row" onclick="showOI('Moon')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Moon (0.00257 AU)</span><span id="pMoon" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fMoon" class="mfill bg-slate-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Venus')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Venus (0.27 AU)</span><span id="pVenus" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fVenus" class="mfill bg-orange-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Mars')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Mars (0.37 AU)</span><span id="pMars" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fMars" class="mfill bg-red-500"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Mercury')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Mercury (0.52 AU)</span><span id="pMercury" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fMercury" class="mfill bg-stone-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Helios')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Helios (1.0 AU)</span><span id="pHelios" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fHelios" class="mfill bg-yellow-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Belt')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Asteroid Belt (~1.7 AU)</span><span id="pBelt" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fBelt" class="mfill bg-orange-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Jupiter')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Jupiter (~5.0 AU)</span><span id="pJupiter" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fJupiter" class="mfill bg-yellow-600"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Saturn')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Saturn (~9.35 AU)</span><span id="pSaturn" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fSaturn" class="mfill bg-yellow-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Uranus')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Uranus (~18.8 AU)</span><span id="pUranus" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fUranus" class="mfill bg-cyan-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Neptune')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Neptune (~30.0 AU)</span><span id="pNeptune" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fNeptune" class="mfill bg-blue-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Pluto')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Pluto (~38.5 AU)</span><span id="pPluto" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fPluto" class="mfill bg-slate-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Kuiper')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Kuiper Belt (~49 AU)</span><span id="pKuiper" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fKuiper" class="mfill bg-indigo-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Helio')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Heliopause (~119 AU)</span><span id="pHelio" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fHelio" class="mfill bg-blue-500"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Sgl')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">SGL (~649 AU)</span><span id="pSgl" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fSgl" class="mfill bg-yellow-500"></div></div>
+</div>
+        </div>
+        <div>
+            <div class="ms-row" onclick="showOI('Oort')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Oort Cloud (100k AU)</span><span id="pOort" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fOort" class="mfill bg-cyan-500"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Prox')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Proxima Cen. (268k AU)</span><span id="pProx" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fProx" class="mfill bg-purple-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Barnard')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Barnard's Star (377k AU)</span><span id="pBarnard" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fBarnard" class="mfill bg-rose-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Luhman')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Luhman 16 (412k AU)</span><span id="pLuhman" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fLuhman" class="mfill bg-amber-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('WISEJ')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">WISE J0855 (460k AU)</span><span id="pWISEJ" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fWISEJ" class="mfill bg-lime-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Wolf359')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Wolf 359 (492k AU)</span><span id="pWolf359" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fWolf359" class="mfill bg-red-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Sirius')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Sirius (544k AU)</span><span id="pSirius" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fSirius" class="mfill bg-sky-200"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Luyten')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Luyten 726-8 (563k AU)</span><span id="pLuyten" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fLuyten" class="mfill bg-violet-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Ross154')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Ross 154 (613k AU)</span><span id="pRoss154" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fRoss154" class="mfill bg-emerald-400"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Ross248')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Ross 248 (651k AU)</span><span id="pRoss248" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fRoss248" class="mfill bg-teal-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('EpsEri')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">ε Eridani (664k AU)</span><span id="pEpsEri" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fEpsEri" class="mfill bg-orange-200"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Lac9352')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Lacaille 9352 (677k AU)</span><span id="pLac9352" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fLac9352" class="mfill bg-pink-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('Ross128')" title="Click for insertion profile">
+<div class="flex justify-between text-[8px]"><span class="label">Ross 128 (696k AU)</span><span id="pRoss128" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fRoss128" class="mfill bg-green-300"></div></div>
+</div>
+            <div class="ms-row" onclick="showOI('EZAqr')" title="Click for insertion profile">
+            <div class="flex justify-between text-[8px]"><span class="label">EZ Aquarii (702k AU)</span><span id="pEZAqr" class="text-slate-500">0%</span></div>
+            <div class="mbar"><div id="fEZAqr" class="mfill bg-violet-300"></div></div>
+</div>
+        </div>
+    </div>
+
+    <!-- 3D Ship -->
+    <div class="panel p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-2 py-0 border-b border-slate-800">
+            <span class="label" style="margin:0">3D Ship — Physics-Driven Visual</span>
+            <div class="flex items-center gap-2">
+                <span class="label" style="margin:0;font-size:0.55rem;color:#475569">SIZE</span>
+                <input type="range" id="vizSizeSlider" min="200" max="700" value="360" step="10" style="width:70px;accent-color:#4ade80;cursor:pointer" oninput="const s=this.value+'px';const w=document.getElementById('vizWrap');const v=document.getElementById('viz3d');w.style.width=s;w.style.height=s;v.style.width=s;v.style.height=s;if(window.Plotly&&window._vd)Plotly.Plots.resize(window._vd);">
+                <span id="vizRegimeLabel" class="text-[8px] font-black tracking-widest" style="color:#334155">STANDBY</span>
+            </div>
+        </div>
+        <div id="vizWrap" style="width:360px;max-width:100%;margin:0 auto;"><div id="viz3d"></div></div>
+        <div class="px-2 py-0 border-t border-slate-800 flex items-center justify-between">
+            <span class="label">Kilopower (1×10kW, 40yr) — ISM funnel post-t3</span>
+            <div class="flex items-center gap-2">
+                <span id="kcoreText" class="text-[9px] text-slate-400">100.0% — 0.0 yr</span>
+                <div class="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="kcoreBar" class="h-full" style="width:100%;background:#10b981;transition:width 0.5s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 12 Gates -->
+    <div class="panel">
+        <span class="label">12 Mission Gates</span>
+        <div id="gateList" class="grid grid-cols-2 gap-x-2 mt-1"></div>
+    </div>
+
+    <!-- Bootstrap + Ship State -->
+    <div class="grid grid-cols-2 gap-2">
+    <div class="panel p-2">
+            <span class="label">Bootstrap (4 req)</span>
+        <div class="space-y-0 mt-1">
+            <div class="srow-compact"><span class="k">T_bulk≥700K</span><span class="v" id="c4a">✗</span></div>
+            <div class="srow-compact"><span class="k">ECM≥2.0GeV</span><span class="v" id="c4b">✗</span></div>
+            <div class="srow-compact"><span class="k">P_TE≥30kW</span><span class="v" id="c4c">✗</span></div>
+            <div class="srow-compact"><span class="k">e⁺≥70%</span><span class="v" id="c4d">✗</span></div>
+        </div>
+        <div class="mbar mt-2"><div id="fR4" class="mfill bg-pink-500"></div></div>
+    </div>
+    <div class="panel p-2">
+            <span class="label">Ship State</span>
+        <div class="space-y-0 mt-1">
+            <div class="srow-compact"><span class="k">Dry mass</span><span class="v" id="oDry">20t</span></div>
+            <div class="srow-compact"><span class="k">Fuel left</span><span class="v text-orange-400" id="oFuelG">15t</span></div>
+            <div class="srow-compact"><span class="k">Total mass</span><span class="v" id="oTotM">35t</span></div>
+            <div class="srow-compact"><span class="k">Lorentz γ</span><span class="v text-emerald-400" id="oGamma">1.0000</span></div>
+            <div class="srow-compact"><span class="k">Isp</span><span class="v text-cyan-400" id="oIsp">—</span></div>
+            <div class="srow-compact"><span class="k">Integrator</span><span class="v text-violet-400">RK4 · RELATIVISTIC</span></div>
+            <div class="srow-compact"><span class="k">Hoop integrity</span><span class="v" id="oHoop">100%</span></div>
+            <div class="srow-compact"><span class="k">Sim time</span><span class="v text-slate-400" id="oSimTime">0 s</span></div>
+        </div>
+    </div>
+    </div>
+
+</div><!-- end left -->
+
+<!-- ══ RIGHT 4 COLS ══ -->
+<div class="col-span-12 lg:col-span-4 space-y-2">
+    <div class="grid grid-cols-2 gap-2">
+
+        <div class="panel p-2">
+            <span class="label">Power Accounting</span>
+            <div id="accelMode" class="text-[9px] font-black text-purple-400 uppercase truncate">STANDBY</div>
+            <div class="space-y-0 mt-1">
+                <div class="srow-compact"><span class="k">K-core output</span><span class="v" id="oPgateBase">10.0 kW</span></div>
+                <div class="srow-compact"><span class="k">TE-output</span><span class="v" id="oPTE">0 W</span></div>
+                <div class="srow-compact"><span class="k">Total Available</span><span class="v" id="oPavail">10.0 kW</span></div>
+                <div class="srow-compact"><span class="k">Required K-input</span><span class="v text-cyan-400" id="oPkism">0 W</span></div><div class="srow-compact"><span class="k">Useable TE</span><span class="v" id="oPbeam">0 W</span></div>
+                <div class="srow-compact"><span class="k">Wakefield</span><span class="v text-cyan-400" id="oWake" title="Two-stroke cavity model: ON=experimental, OFF=clean physics">OFF</span></div>
+                <div class="srow-compact"><span class="k">ṁ_total (abl+wasted)</span><span class="v text-orange-300" id="oMdotTot">—</span></div>
+                <div class="srow-compact"><span class="k">TE residual (Cruise/EOL)</span><span class="v text-violet-400" id="oTEsurp">—</span></div>
+                <div class="srow-compact"><span class="k">GATE mode</span><span class="v text-yellow-400" id="oKrole">LIA</span></div>
+                <div class="srow-compact"><span class="k">GATE arch</span><span class="v text-cyan-300" id="oGateArch">LIA 2.0t</span></div>
+                <div class="srow-compact"><span class="k">Pulse Rate</span><span class="v" id="oHz">—</span></div>
+                
+            </div>
+        </div>
+
+        <div class="panel p-2">
+            <span class="label">PEARL Reactions</span>
+            <div class="space-y-0 mt-1">
+                <div class="srow-compact"><span class="k">Bulk Temp</span><span class="v text-orange-400" id="outTbulk">293 K</span></div>
+                <div class="mbar mt-0.5 mb-0.5"><div id="fTbulk" class="mfill bg-orange-500"></div></div>
+                <div class="srow-compact"><span class="k">Ablation Plasma T</span><span class="v text-red-400" id="outTplasma">—</span></div>
+                <div class="mbar mt-0.5 mb-0.5"><div id="fTplasma" class="mfill bg-red-500"></div></div>
+                <div class="srow-compact"><span class="k">PEARL thermal</span><span class="v text-orange-300" id="oNuc">0 W</span></div>
+                <div class="srow-compact"><span class="k">α (bulk heat share)</span><span class="v text-slate-400">12%</span></div>
+                <div class="srow-compact"><span class="k">η (aft collimation)</span><span class="v text-slate-400">52%</span></div>
+                <div class="srow-compact"><span class="k">Pulses</span><span class="v text-slate-300" id="oPulses">0</span></div>
+                <div class="srow-compact"><span class="k">Fission</span><span class="v text-yellow-400" id="rFi">100%</span></div>
+                <div class="srow-compact"><span class="k">Fusion (coupled)</span><span class="v text-blue-400" id="rFu">0%</span></div>
+                <div class="srow-compact"><span class="k">Positron rate</span><span class="v text-pink-400" id="rEp">0%</span></div>
+                <div class="srow-compact"><span class="k">e⁺ stored</span><span class="v text-pink-300" id="rPacc">0%</span></div>
+                <div class="srow-compact"><span class="k">Antimatter</span><span class="v text-purple-400" id="rAn">0%</span></div>
+                <div class="srow-compact"><span class="k">Hadronic</span><span class="v text-cyan-400" id="rHad">0%</span></div>
+                <div style="border-top:1px solid #1e293b;margin:3px 0"></div>
+                <div class="srow-compact"><span class="k">Exhaust v_e</span><span class="v text-emerald-300" id="rVex">—</span></div>
+                <div class="srow-compact"><span class="k">Isp</span><span class="v text-emerald-400" id="rIspPearl">—</span></div>
+            </div>
+        </div>
+
+        <div class="panel p-2">
+            <span class="label">GATE NEP</span>
+            <div class="space-y-0 mt-1">
+                <div class="srow-compact"><span class="k">η_LTD (pre-t4)</span><span class="v text-slate-500">78% — retired at t4</span></div>
+                <div class="srow-compact"><span class="k">η_GATE</span><span class="v text-slate-400">52% — GATE accel coupling</span></div>
+                <div class="srow-compact"><span class="k">Beam energy</span><span class="v text-yellow-400" id="outBeam">50 MeV</span></div>
+                <div class="srow-compact"><span class="k">ECM</span><span class="v text-fuchsia-400" id="outECM">0.0000 GeV</span></div>
+                <div class="mbar mt-0.5"><div id="fECM" class="mfill bg-fuchsia-500"></div></div>
+                <div class="srow-compact"><span class="k">ISM flow</span><span class="v text-cyan-400" id="rISM">0</span></div>
+                <div class="srow-compact"><span class="k">v_entry</span><span class="v text-slate-400" id="rISMvin">—</span></div>
+                <div class="srow-compact"><span class="k">v_exit</span><span class="v text-fuchsia-400" id="rISMvout">—</span></div>
+                <div class="srow-compact"><span class="k">Drag neutralised</span><span class="v text-green-400" id="rDragKill">0 N</span></div>
+                <div class="srow-compact"><span class="k">Thrust from ISM</span><span class="v text-yellow-300" id="rGATEF">0 N</span></div>
+                <div class="srow-compact"><span class="k">Protons/s</span><span class="v text-cyan-300" id="rISMprotons">—</span></div>
+            </div>
+        </div>
+
+
+
+    </div>
+
+    <!-- ══ ENERGY CONSERVATION DIAGNOSTICS ══ -->
+    <div class="panel p-2">
+        <span class="label" style="color:#a78bfa">⚡ Energy Conservation (RK4)</span>
+        <div class="mt-1 space-y-0.5">
+            <div class="energy-bar-wrap">
+                <span class="energy-bar-label text-yellow-400">Beam In</span>
+                <div class="energy-bar-bg"><div id="eb_beam" class="energy-bar-fill bg-yellow-500" style="width:0%"></div></div>
+                <span class="energy-val text-yellow-400" id="ev_beam">0 J</span>
+            </div>
+            <div class="energy-bar-wrap">
+                <span class="energy-bar-label text-orange-400">Nuclear Out</span>
+                <div class="energy-bar-bg"><div id="eb_nuc" class="energy-bar-fill bg-orange-500" style="width:0%"></div></div>
+                <span class="energy-val text-orange-400" id="ev_nuc">0 J</span>
+            </div>
+            <div class="energy-bar-wrap">
+                <span class="energy-bar-label text-emerald-400">Kinetic (ship)</span>
+                <div class="energy-bar-bg"><div id="eb_kin" class="energy-bar-fill bg-emerald-500" style="width:0%"></div></div>
+                <span class="energy-val text-emerald-400" id="ev_kin">0 J</span>
+            </div>
+            <div class="energy-bar-wrap">
+                <span class="energy-bar-label text-red-400">Exhaust KE</span>
+                <div class="energy-bar-bg"><div id="eb_exh" class="energy-bar-fill bg-red-500" style="width:0%"></div></div>
+                <span class="energy-val text-red-400" id="ev_exh">0 J</span>
+            </div>
+            <div class="energy-bar-wrap">
+                <span class="energy-bar-label text-cyan-400">Thermal (bulk)</span>
+                <div class="energy-bar-bg"><div id="eb_thm" class="energy-bar-fill bg-cyan-600" style="width:0%"></div></div>
+                <span class="energy-val text-cyan-400" id="ev_thm">0 J</span>
+            </div>
+        </div>
+        <div class="mt-1 border-t border-slate-800 pt-1">
+            <div class="srow-compact"><span class="k">Overall η</span><span class="v text-violet-400" id="ev_eta">0.000%</span></div>
+            <div class="srow-compact"><span class="k">Conservation Δ</span><span class="v" id="ev_cons">—</span></div>
+            <div class="srow-compact"><span class="k">RK4 error est.</span><span class="v text-slate-500" id="ev_rk4err">—</span></div>
+        </div>
+    </div>
+
+    <!-- ══ SCIENCE PLOTS ══ -->
+    <div class="panel p-0 overflow-hidden">
+        <div class="flex border-b border-slate-800 gap-0.5 px-1 pt-1">
+            <button class="tab-btn active" id="tab0" onclick="setTab(0)">VEL</button>
+            <button class="tab-btn" id="tab1" onclick="setTab(1)">ECM</button>
+            <button class="tab-btn" id="tab2" onclick="setTab(2)">POWER</button>
+            <button class="tab-btn" id="tab3" onclick="setTab(3)">RXNS</button>
+            <button class="tab-btn" id="tab4" onclick="setTab(4)">ENERGY</button>
+        </div>
+        <div id="sciPlot" class="sci-plot"></div>
+    </div>
+
+    <!-- ══ SWEEP ENGINE ══ -->
+    <div class="panel p-2" id="sweepPanel">
+        <div class="flex items-center justify-between mb-1">
+            <span class="label" style="color:#4ade80">⚗ Parameter Sweep Engine</span>
+            <button id="btnSweep" class="btn btn-sweep">⚗ RUN SWEEP</button>
+        </div>
+        <div class="grid grid-cols-2 gap-1 mt-1">
+            <div><span class="label">Sweep Var</span>
+            <select id="swVar" style="font-size:9px">
+                <option value="candles">Candles</option>
+                <option value="veins">TE Veins</option>
+                <option value="fuel">Fuel kg</option>
+                <option value="mfiss">Fission Mult</option>
+                <option value="beameff">Beam Eff</option>
+                <option value="dry">Dry Mass kg</option>
+            </select></div>
+            <div><span class="label">Steps</span><input type="number" id="swSteps" value="8" style="width:50px"></div>
+            <div><span class="label">Min</span><input type="number" id="swMin" value="100000" style="width:60px"></div>
+            <div><span class="label">Max</span><input type="number" id="swMax" value="800000" style="width:60px"></div>
+            <div><span class="label">Sim years</span><input type="number" id="swYears" value="5" style="width:50px"></div>
+            <div><span class="label">Metric</span>
+            <select id="swMetric" style="font-size:9px">
+                <option value="vel">Final Vel</option>
+                <option value="dist">Distance AU</option>
+                <option value="eta">Efficiency η</option>
+            </select></div>
+        </div>
+        <div class="mt-1">
+            <div id="sweepStatus" class="text-[8px] text-slate-600">Ready — press SWEEP to run</div>
+            <div class="mbar mt-1"><div id="sweepBar" class="mfill bg-green-600" style="width:0%"></div></div>
+        </div>
+        <div id="sweepPlot" style="width:100%;height:120px;background:#000;border-radius:3px;margin-top:4px;"></div>
+        <div class="flex gap-1 mt-2">
+            <button id="btnCSV" class="btn btn-export" style="flex:1">↓ CSV</button>
+            <button id="btnJSON" class="btn btn-export" style="flex:1">↓ JSON</button>
+        </div>
+    </div>
+
+</div><!-- end right -->
+
+</div><!-- end main grid -->
+
+<!-- ══ 2D DISTANCE OPTIMISER — full width below main grid ══ -->
+<div class="panel p-3 mt-2" id="optPanel" style="border-color:#78350f;background:#0a0800;">
+    <div class="flex items-center justify-between mb-2">
+        <span style="color:#f59e0b;font-size:0.75rem;font-weight:700;letter-spacing:0.05em">◈ CANDLES × DRY-MASS DISTANCE OPTIMISER</span>
+        <button id="btnOpt" class="btn" style="color:#f59e0b;border-color:#78350f;font-size:0.65rem;padding:3px 10px">◈ RUN OPTIMISER</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:6px;font-size:9px;margin-bottom:8px;align-items:end">
+        <div><div class="label">Sim years</div><input type="number" id="optYears" value="30" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Candle steps</div><input type="number" id="optCSteps" value="8" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Dry steps</div><input type="number" id="optDSteps" value="6" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Candles min</div><input type="number" id="optCMin" value="1" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Candles max</div><input type="number" id="optCMax" value="16" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Dry min (kg)</div><input type="number" id="optDMin" value="14413" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Dry max (kg)</div><input type="number" id="optDMax" value="60000" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Target (ly)</div><input type="number" id="optTarget" value="4" step="0.5" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="label">Metric</div>
+        <select id="optMetric" style="font-size:9px;width:100%;box-sizing:border-box;background:#0d1117;color:#94a3b8;border:1px solid #1e293b;border-radius:3px;padding:2px">
+            <option value="distly">Dist (ly) @ T</option>
+            <option value="timetoly">Time to target</option>
+            <option value="ratio">ly per year</option>
+        </select></div>
+    </div>
+    <div id="optStatus" style="font-size:8px;color:#475569;margin-bottom:4px">Ready — configure and press RUN OPTIMISER</div>
+    <div class="mbar" style="margin-bottom:4px"><div id="optBar" class="mfill" style="width:0%;background:#f59e0b;height:4px;border-radius:2px;transition:width 0.2s"></div></div>
+    <div id="optHeatmap" style="width:100%;height:320px;background:#000;border-radius:3px"></div>
+    <div id="optTable" style="font-size:8px;color:#94a3b8;margin-top:6px;font-family:'Courier New',monospace;overflow-x:auto"></div>
+</div>
+
+</div><!-- end outer -->
+
+<script>
+// ============================================================================
+// PHYSICS CONSTANTS
+// ============================================================================
+const C           = 299792.458;
+const G0          = 9.81;
+const MP_GEV      = 0.938272;
+const M_H         = 1.6726e-27;
+const K_B         = 1.3806e-23;
+const P_GATE_BASE = 10000;  // Single 10 kW Kilopower reactor
+const T0_GEV      = 0.050;
+const E_PULSE     = 78125;
+const TE_PER      = 1.10e-2;
+const FUNNEL_A    = 1000;
+const ISM_RHO     = 2e-23;
+const M_FISS_DEF  = 300;
+const LTD_EFF     = 0.78;         // LTD capacitor bank charging efficiency (retired at t4)
+const GATE_EFF    = 0.67;         // GATE (Gridded AF-MPD/MID — Magneto-Plasma Dynamic / Magneto-Ion Dynamic) coupling efficiency
+                                  // 0.67: individual proton LIA (Lorentz+electrostatic hybrid).
+                                  // MHD bulk-fluid analogy would give ~0.52; proton LIA is higher.
+                                  // Honest range 0.65–0.70; 0.67 is geometric mean. PIC sims needed.
+const BEAM_EFF_DEF= LTD_EFF * GATE_EFF; // combined pre-t4 (LTD×GATE); post-t4 only GATE_EFF applies
+const ALPHA       = 0.12;
+const T_AMB       = 293;
+const T_MAX       = 1500;
+const ECM_ANTI    = 4 * MP_GEV;
+const ECM_HAD     = 5.0;
+const ECM_HAD_MAX = 10.0;
+const HAD_MULT    = 500;
+const V_FISS      = 13000;
+const V_FUS       = 30000;
+const V_ANTI      = 160000;
+const V_HAD       = 280000;
+const V_ISM       = 43500;
+const SEC_YR      = 31536000;
+const SEC_DAY     = 86400;
+const SEC_HR      = 3600;
+// WAKEFIELD_BOOST removed — replaced by physics-based two-stroke model (toggle)
+// OFF: clean model, no wakefield. ON: experimental η_couple boost + additive F_piston
+// Geometric coupling efficiency for candle-tip ablation:
+// Ablation is roughly isotropic from the tip surface.
+// ~50% of products exit forward (wasted), ~50% exit backward (thrust).
+// Rod geometry channels products slightly backward → η_couple ≈ 0.52
+// This is the fraction of ablation momentum that actually drives the ship.
+const ETA_COUPLE = 0.52;
+const P_TE_RESIDUAL   = 5.0;   // W — scavenged from EM dissipation in GATE hardware post-candles
+const PEARL_ARCH_KG  = 2000;   // kg — PEARL architecture mass consumed with candles (excl. TE pads)
+                                // Only TE pads survive, still plugged into GATE TE bus
+const GATE_LIA_KG  = 2000;   // kg — GATE LIA (Linear Induction Accelerator, helical induction cells, DC-direct-drive)
+const GATE_FFAG_KG   = 1586;   // kg — GATE as FFAG ring at hull inner circumference (1586 kg calculated)
+                                //   SC magnets 336kg + induction cells 800kg + cryo 150kg + inj/ext 300kg
+const KRESTART_LEAD_S = 6 * 3600; // s — restart K-core this many seconds before candle expiry
+
+const GATE_NAMES = [
+    "1. Kilopower online — LTD charging",
+    "2. UV laser ignites Li plasma — first GATE plasma",
+    "3. First LTD pulse → first PEARL fission event",
+    "4. TE veins activate — candle residual heat rising",
+    "5. P_TE ≥ 10 kW — K-core shutdown, TE drives GATE",
+    "6. ISM GATE augmentation active [indep.]",
+    "7. Antiproton production (ECM ≥ 3.752 GeV) [indep.]",
+    "8. Hadronic Cascade (ECM ≥ 5 GeV) [indep.]",
+    "9. LTD retired — GATE on direct TE-Current (100 Hz+)",
+    "10. PEARL consumed — TE cliff-drop, GATE enters K-Current mode",
+    "11. GATE K-Current NEP cruise — K-core sole drive",
+    "12. K-core below ISM mitigation — hoop erosion begins"
+];
+
+const SPEEDS    = [[1,1],[10,10],[100,100],[100,1000],[200,10000]];
+const SPD_LABEL = ['1×','~100s/f','~10ks/f','~100ks/f','MAX'];
+let speedIdx = 0;
+
+// ── Live science plot log (downsampled to MAX_LOG points)
+const MAX_LOG = 800;
+let LOG = { t:[], vel:[], ecm:[], pbeam:[], pte:[], pnuc:[], rFi:[], rFu:[], rAn:[], rHad:[], vismout:[], Fgate:[],
+            Ebeam:[], Enuc:[], Ekin:[], Eexh:[], Ethm:[] };
+
+function logPush(key, val) {
+    LOG[key].push(val);
+    if (LOG[key].length > MAX_LOG) LOG[key].shift();
+}
+function logPoint() {
+    logPush('t',    S.time/SEC_YR);
+    logPush('vel',  S.vel);
+    logPush('ecm',  S.ECM_GeV);
+    logPush('pbeam',S.P_beam);
+    logPush('pte',  S.P_TE);
+    logPush('pnuc', S.Q_nuclear);
+    logPush('rFi',  S.fissFrac);
+    logPush('rFu',  S.fusFrac);
+    logPush('rAn',  S.antiFrac);
+    logPush('rHad', S.hadFrac);
+    logPush('Ebeam',S.E_beam_cumul);
+    logPush('Enuc', S.E_nuclear_cumul);
+    logPush('Ekin', S.E_kinetic);
+    logPush('Eexh', S.E_exhaust_cumul);
+    logPush('Ethm', S.E_thermal_cumul);
+    logPush('vismout', S.v_ism_exit || 0);
+    logPush('Fgate', S.F_ism_net || 0);
+}
+let _logTimer = 0;
+
+let S = {};
+
+// ── helpers ──
+const el  = id => document.getElementById(id);
+const st  = (id,v) => { const e=el(id); if(e) e.textContent=v; };
+const sh  = (id,v) => { const e=el(id); if(e) e.innerHTML=v; };
+const sst = (id,p,v) => { const e=el(id); if(e) e.style[p]=v; };
+const bar = (id,pct,col) => {
+    sst(id,'width',Math.min(100,Math.max(0,pct)).toFixed(1)+'%');
+    if(col) sst(id,'background',col);
+};
+
+function fmtP(w) {
+    if(w>=1e12) return (w/1e12).toFixed(3)+' TW';
+    if(w>=1e9)  return (w/1e9).toFixed(3)+' GW';
+    if(w>=1e6)  return (w/1e6).toFixed(3)+' MW';
+    if(w>=1e3)  return (w/1e3).toFixed(2)+' kW';
+    return w.toFixed(1)+' W';
+}
+function fmtV(kms) {
+    // Always %c — works at every scale from standstill to relativistic cruise.
+    return (kms / 299792.458 * 100).toFixed(12) + ' %c';
+}
+function fmtT(k) {
+    if(k>=1e12) return (k/1e12).toFixed(3)+' TK';
+    if(k>=1e9)  return (k/1e9).toFixed(3)+' GK';
+    if(k>=1e6)  return (k/1e6).toFixed(3)+' MK';
+    if(k>=1e3)  return (k/1e3).toFixed(2)+' kK';
+    return k.toFixed(0)+' K';
+}
+function fmtF(n) {
+    if(n>=1e9)  return (n/1e9).toFixed(4)+' GN';
+    if(n>=1e6)  return (n/1e6).toFixed(4)+' MN';
+    if(n>=1e3)  return (n/1e3).toFixed(4)+' kN';
+    if(n>=1)    return n.toFixed(4)+' N';
+    if(n>=1e-3) return (n*1e3).toFixed(4)+' mN';
+    if(n>=1e-6) return (n*1e6).toFixed(4)+' μN';
+    if(n>=1e-9) return (n*1e9).toFixed(4)+' nN';
+    if(n>0)     return (n*1e12).toFixed(4)+' pN';
+    return '0';
+}
+function fmtE(j) {
+    if(j>=1e18) return (j/1e18).toFixed(3)+' EJ';
+    if(j>=1e15) return (j/1e15).toFixed(3)+' PJ';
+    if(j>=1e12) return (j/1e12).toFixed(3)+' TJ';
+    if(j>=1e9)  return (j/1e9).toFixed(3)+' GJ';
+    if(j>=1e6)  return (j/1e6).toFixed(3)+' MJ';
+    if(j>=1e3)  return (j/1e3).toFixed(2)+' kJ';
+    return j.toFixed(1)+' J';
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function init() {
+    // Reset auto-pause flags so pauses fire correctly on every new run
+    _wasT7 = false; _wasT8 = false;
+    const banner = document.getElementById('pauseBanner');
+    if (banner) banner.style.display = 'none';
+    const candles = Math.max(3, Math.round(parseFloat(el('inCandles').value) / 3) * 3 || 3);
+    const fuelKg  = candles * 5000;
+    const veins   = candles * 240000;
+    const dryKg   = parseFloat(el('inDry').value)     || 14413;
+    // Update label to confirm derived values
+    const lbl = el('lblFuelVeins');
+    if (lbl) lbl.textContent = `${fuelKg.toLocaleString()} kg · ${veins.toLocaleString()} veins`;
+
+    const mfiss   = parseFloat(el('inMfiss').value)   || M_FISS_DEF;
+    const beamEff = parseFloat(el('inBeamEff').value) || BEAM_EFF_DEF;
+
+    S = {
+        time:0, fuelKg, fuelMax:fuelKg, dry:dryKg, veins, candleCount:candles,
+        mfiss, beamEff,
+        vel:0, dist:0,
+        T_bulk:T_AMB, T_plasma:0,
+        P_TE:0, P_avail:0, P_beam:0,
+        P_gate_base:P_GATE_BASE,
+        T_beam_GeV:T0_GEV, ECM_GeV:0,
+        positronAcc:0,
+        pulses:0, pulseTimer:0, pulsing:false, continuous:false,
+        hz:P_GATE_BASE/E_PULSE,
+        Q_nuclear:0, v_e:0, isp:0, thrust:0, accel_g:0,
+        gamma:1, beta:0, ismMdot:0,
+        fissFrac:1, fusFrac:0, posFrac:0, antiFrac:0, hadFrac:0,
+        wakeActive:false, wakeEnabled:false, F_wake_piston:0, ffagEnabled:false,
+        v_ism_exit:0, v_ism_entry:0, v_ism_delta:0, F_ism_net:0, F_drag_neutralised:0, ismProtons:0,
+        P_kcore_to_grid:0, P_gate_ism_total:0, P_TE_surplus_to_gate:0,
+        t1:false, t2:false, t3:false, t4:false, t5:false, t6:false, t7:false, t8:false,
+        gate_ISMaug:false, pearlConsumed:false,
+        r4c:[false,false,false,false],
+        hoopMassKg: 50.0,       // kg — GATE hoop structural mass (thin annular ring ~1m² × Ti)
+        hoopErodedKg: 0.0,      // kg — cumulative erosion from ISM bombardment
+        gate:1, playing:false, kcoreLife:1.0,
+        kcoreRunning:true, kcoreLifetimeHrs:0.0, t6:false, mdot_abl_last:0,
+        // Energy accounting
+        E_beam_cumul:0, E_nuclear_cumul:0,
+        E_kinetic:0, E_exhaust_cumul:0, E_thermal_cumul:0,
+        // RK4 error estimator (compare RK4 vs Euler step magnitude)
+        rk4_err_est:0,
+        // previous vel for error estimate
+        _vel_prev:0
+    };
+
+    LOG = { t:[], vel:[], ecm:[], pbeam:[], pte:[], pnuc:[], rFi:[], rFu:[], rAn:[], rHad:[], vismout:[], Fgate:[],
+            Ebeam:[], Enuc:[], Ekin:[], Eexh:[], Ethm:[] };
+
+    const list = el('gateList');
+    list.innerHTML = '';
+    GATE_NAMES.forEach((n,i) => {
+        const d = document.createElement('div');
+        d.id = `gate-${i+1}`; d.className = 'gate-item';
+        d.textContent = n;
+        list.appendChild(d);
+    });
+    updateUI();
+}
+
+// ═══════════════════════════════════════════════
+// REGIME FLAGS
+// ═══════════════════════════════════════════════
+function updateRegimes() {
+    // ── Thresholds mapped to physical events ──
+    //
+    // t1: First LTD pulse fired (UV laser + Li plasma → first PEARL event)
+    //     K-core has charged LTD. First fission/fusion reaction. Candle heat begins.
+    S.t1 = S.pulses >= 1;
+
+    // t2: TE veins activate — any measurable power from candle residual heat
+    //     Fixed Hz from this point. Each pulse heats candles faster than they cool in vacuum.
+    S.t2 = S.t1 && S.P_TE >= 1.0;
+
+    // t3: P_TE ≥ 10 kW — K-core shuts down (lifetime preserved). GATE enters TE-Current mode.
+    //     TE alone drives GATE LIA. Hz ramping toward 100 Hz retirement threshold.
+    S.t3 = S.t2 && S.P_TE >= P_GATE_BASE * 0.99;
+
+    // t4: LTD reaches 100 Hz — banks RETIRED from beam duty, preserved for auxiliary use.
+    //     TE now drives LIA continuously. P_TE still growing toward SiGe saturation.
+    S.t4 = S.t3 && (S.continuous || (S.hz !== null && S.hz >= 100));
+
+    // t5: TE power saturated — SiGe veins at thermal limit
+    //     Candle ablation removes heat keeping candle at optimal SiGe operating temp.
+    //     No further TE increase possible. Max beam power reached.
+    S.t5 = S.t4 && S.T_bulk >= T_MAX * 0.97;
+
+    // gate_ISMaug: ISM augmentation — independent continuous condition (not a regime flag)
+    //   True whenever GATE is collecting and accelerating ISM at meaningful velocity.
+    //   Not a phase transition — computed inline wherever needed.
+    S.gate_ISMaug = S.t3 && ((S.beta >= 0.05) || (S.F_ism_net > 0));
+
+    // t7: PEARL fully consumed — candles, rods, architecture all gone. Only TE pads remain,
+    //     still plugged into GATE TE bus, scavenging ~5W residual. Cliff-edge TE drop.
+    //     GATE enters K-Current mode on K-core alone.
+    S.t7 = S.fuelKg <= 0;
+
+    // t6: Initialising-K restart — GATE second boot of K-core, 6 hrs before candle expiry.
+    //   Uses last-step mdot_abl to project time-to-empty. Latched once set.
+    //   Only arms after t3 (K-core shut down). Mirrors t1 boot but self-triggered.
+    if (S.t3 && !S.t7 && !S.t6 && S.mdot_abl_last > 0) {
+        const timeToEmpty = S.fuelKg / S.mdot_abl_last;
+        if (timeToEmpty < KRESTART_LEAD_S) {
+            S.t6 = true;
+            S.kcoreRunning = true; // restart K-core
+        }
+    }
+    // At t3 shutdown (first time t3 becomes true, K-core not yet shut down)
+    if (S.t3 && !S.t6 && S.kcoreRunning && S.P_TE >= P_GATE_BASE * 0.99) {
+        S.kcoreRunning = false; // shut down K-core to preserve lifetime
+    }
+
+    // t8: K-core below ISM mitigation threshold — hoop erosion begins
+    //     When K-core power too low to fully ionise/collimate ISM flux, net drag > thrust.
+    //     Physical destruction of GATE hoop commences.
+    const P_mitigation_min = 500; // W — minimum K-core power to neutralise ISM at current speed
+    S.t8 = S.t7 && S.P_gate_base < P_mitigation_min;
+
+    // Bootstrap display (kept for panel — 4 conditions for max PEARL efficiency)
+    const c1=S.T_bulk>=700, c2=S.ECM_GeV>=2.0, c3=S.P_TE>=P_GATE_BASE, c4=S.positronAcc>=0.70;
+    S.r4c=[c1,c2,c3,c4];
+}
+
+function regNum() {
+    // Returns current power-routing regime (0–7). Each regime maps 1:1 to a threshold flag.
+    // Regime 5 = t6 (K-core restart phase, ~6hrs before candle expiry).
+    if(S.t8)  return 7;  // t8: K-core below mitigation — hoop erosion EOL
+    if(S.t7)  return 6;  // t7: candles spent — GATE K-Current NEP cruise
+    if(S.t6)  return 5;  // t6: K-core restart — INIT-K active, candles almost spent
+    if(S.t5)  return 4;  // t5: TE saturated — max beam power
+    if(S.t4)  return 3;  // t4: LTD retired — TE continuous beam
+    if(S.t3)  return 2;  // t3: K-core shutdown — TE-Current, Hz ramping
+    if(S.t2)  return 1;  // t2: TE active, fixed Hz
+    return 0;            // t1/pre-t1: INIT-K boot, K-core charging LTD
+}
+
+function gateNum() {
+    // Sequential gate chain. Gates 6 (ISM), 8 (antiproton), 9 (hadronic) are independent.
+    // Sequential: 1→2→3→4→5→7→10→11→12
+    if(S.t8)                     return 12; // K-core below mitigation — hoop erosion
+    if(S.t7 && S.vel>10)         return 11; // Pure GATE NEP cruise underway
+    if(S.t7)                     return 10; // Candles just spent
+    // gates 6 (ISM), 8 (antiproton), 9 (hadronic) are independent — see updateUI
+    if(S.t5)                     return 9;  // TE saturated → also past LTD retirement (gate 9)
+    if(S.t4)                     return 9;  // LTD retired from beam duty (gate 9)
+    if(S.t3)                     return 5;  // K-core → ISM funnel
+    if(S.t2)                     return 4;  // TE veins active
+    if(S.t1)                     return 3;  // First LTD pulse fired
+    if(S.pulses===0 && S.time>1) return 2;  // LTD charging (UV laser ready)
+    return 1;
+}
+
+// ═══════════════════════════════════════════════
+// RK4 RELATIVISTIC INTEGRATOR
+// ═══════════════════════════════════════════════
+function rk4Accel(v_kms, F_N, mass_kg) {
+    // Returns dv/dt in km/s/s using relativistic force law
+    const beta  = Math.min(Math.abs(v_kms)/C, 0.999999);
+    const gamma = 1/Math.sqrt(1-beta*beta);
+    const g3    = gamma*gamma*gamma;
+    return (F_N / (mass_kg * Math.max(1,g3))) / 1000; // → km/s/s
+}
+
+function rk4Step(v_kms, F_N, mass_kg, dt) {
+    const k1 = rk4Accel(v_kms,               F_N, mass_kg);
+    const k2 = rk4Accel(v_kms + 0.5*k1*dt,  F_N, mass_kg);
+    const k3 = rk4Accel(v_kms + 0.5*k2*dt,  F_N, mass_kg);
+    const k4 = rk4Accel(v_kms + k3*dt,       F_N, mass_kg);
+    return v_kms + (dt/6)*(k1 + 2*k2 + 2*k3 + k4);
+}
+
+// Euler step for error estimation
+function eulerStep(v_kms, F_N, mass_kg, dt) {
+    return v_kms + rk4Accel(v_kms, F_N, mass_kg)*dt;
+}
+
+// ═══════════════════════════════════════════════
+// PHYSICS STEP
+// ═══════════════════════════════════════════════
+function physics(dt) {
+    S.time += dt;
+    // K-core lifetime: accumulates only while running (shutdown preserves remaining life)
+    if (S.kcoreRunning) S.kcoreLifetimeHrs += dt / 3600;
+    const KCORE_LIFE_HRS = 40 * 8760; // 40 year design life in hours
+    S.kcoreLife = Math.max(0, 1 - S.kcoreLifetimeHrs / KCORE_LIFE_HRS);
+    S.P_gate_base = S.kcoreRunning ? P_GATE_BASE * S.kcoreLife : 0;
+    S.beta  = Math.min(S.vel/C, 0.999999);
+    S.gamma = 1/Math.sqrt(1 - S.beta*S.beta);
+
+    // P_TE: SiGe veins driven by nuclear bulk heat (→ LTD → LIA → GATE beam)
+    // Post-candles: bulk heat collapses; residual EM dissipation scavenged from GATE hardware
+    const P_TE_thermal = Math.max(0, (S.T_bulk - T_AMB) * S.veins * TE_PER);
+    const P_TE_raw = S.t7 ? Math.max(P_TE_RESIDUAL, P_TE_thermal) : P_TE_thermal;
+    updateRegimes();
+    const reg = regNum();
+
+    // ── Beam power routing ──
+    // ── Beam power routing (revised regime map) ──
+    //
+    // All TE has always powered the GATE via LTD capacitor banks → LIA.
+    // LTD banks are RETIRED FROM BEAM DUTY at 100 Hz (t4).
+    // Banks are preserved intact — stood down for separate low-power auxiliary use.
+    // Above 100 Hz the beam is driven directly by TE continuous supply.
+    //
+    // Reg 0 (t1 not yet, or just fired):
+    //   K-core charges LTD. First pulse from Li plasma ablation.
+    //   No TE yet. Beam = K-core × BEAM_EFF.
+    //
+    // Reg 1 (t2: TE active, fixed Hz):
+    //   K-core + P_TE both charge LTD. Each pulse heats candles → more TE.
+    //   Beam = (K-core + P_TE) × BEAM_EFF.
+    //
+    // Reg 2 (t3: P_TE ≥ 10 kW, Hz ramping):
+    //   K-core REASSIGNED to ISM ionisation/collimation.
+    //   LTD driven by TE alone, Hz ramping toward 100.
+    //   Beam = P_TE × BEAM_EFF.
+    //
+    // Reg 3–4 (t4: ≥100 Hz; t5: TE saturated):
+    //   Same as reg 2 but beam at or near max. ISM augmentation active.
+    //
+    // Reg 6 (t7: fuel spent):
+    //   P_TE → ~5W residual. K-core alone on ISM. No PEARL beam.
+    //
+    // Reg 7 (t8: K-core below mitigation):
+    //   ISM damage begins. K-core fading.
+    //
+    // ── Power routing ──
+    // Pre-t3  (TE < 10 kW): K-core running → LIA. TE supplements as veins warm.
+    // t3      (TE ≥ 10 kW): K-core SHUTS DOWN. TE → GATE (PEARL beam) + Grid (UV ioniser).
+    // t6 Initialising-K restart (6 hrs before expiry): K-core restarts → Grid only. TE still → GATE.
+    // t7      (candles spent): cliff-edge TE drop → 5W residual → GATE. K-core → Grid.
+    const kcoreW = S.kcoreRunning ? S.P_gate_base : 0; // actual K-core output (0 when shut down)
+    let P_beam = 0, P_kcore_to_grid = 0;
+    if (!S.t3) {
+        // K-core on GATE — sole source pre-TE, supplemented once TE rises
+        // Pre-t4: LTD + GATE losses both apply
+        P_beam = (kcoreW + P_TE_raw) * S.beamEff;
+        P_kcore_to_grid = 0;
+    } else if (reg===6 || reg===7) {
+        // Candles spent — no fission beam; K-core on Grid; TE residual → GATE
+        P_beam = 0;
+        P_kcore_to_grid = kcoreW;
+    } else {
+        // t3→t4: LTD+GATE losses. t4+: LTD retired — only GATE_EFF applies (efficiency improves)
+        const eff = S.t4 ? GATE_EFF : S.beamEff;
+        P_beam = P_TE_raw * eff;
+        P_kcore_to_grid = kcoreW; // 0 until t6 (K restart), then P_gate_base
+    }
+    S.P_beam = P_beam;
+    S.P_kcore_to_grid = P_kcore_to_grid;
+    S.P_gate_ism_total = S.t7 ? (kcoreW + P_TE_raw) : S.t3 ? P_TE_raw : 0;
+
+    // Beam energy per proton: T0_GEV is calibrated at rated input power (P_GATE_BASE),
+    // with GATE_EFF already implicit in the calibration. Scale with P_TE_raw (raw input),
+    // not P_beam (which would double-penalise the efficiency).
+    // P_ISM separately uses P_beam (GATE_EFF applied) — that is the correct path for ion acceleration.
+    const P_ref = !S.t3 ? (S.P_gate_base + P_TE_raw) : P_TE_raw;
+    S.T_beam_GeV = P_beam>0 ? T0_GEV * (P_ref/P_GATE_BASE) : 0;
+
+    // ECM
+    if (P_beam>0) {
+        if (S.gate_ISMaug) { // ISM-boosted ECM: head-on collision with ISM proton moving at beta in ship frame
+            // Correct SR: Lorentz-boost ISM proton (at rest in ISM frame) to ship frame.
+            // 4-momentum in ISM: (m_p, 0). Boost to ship frame (ISM moves at -beta in ship frame):
+            // E' = gamma * m_p  (NOT gamma*(1+beta)*m_p — that is the photon Doppler formula)
+            // p' = gamma * beta * m_p  (forward, toward beam)
+            const Eb=S.T_beam_GeV+MP_GEV, pb=Math.sqrt(Math.max(0,Eb*Eb-MP_GEV*MP_GEV));
+            const Ei=S.gamma*MP_GEV, pi=S.gamma*S.beta*MP_GEV; // correct massive-particle boost
+            // Head-on: beam goes aft (pb), ISM proton comes forward (pi) — momenta add in ECM
+            S.ECM_GeV = Math.sqrt(Math.max(0, 2*MP_GEV*MP_GEV + 2*(Eb*Ei + pb*pi)));
+        } else {
+            S.ECM_GeV = Math.sqrt(2*MP_GEV*(2*MP_GEV + S.T_beam_GeV));
+        }
+    } else { S.ECM_GeV = 0; }
+    updateRegimes();
+
+    // Reaction fractions
+    let fus=0, pos=0, anti=0, had=0;
+    if (P_beam>0) {
+        // LiD thermonuclear: every fission neutron hits D/Li6 → fusion always coupled from t1
+        // Baseline 15% from first pulse; rises with T_bulk; extra from ECM.
+        fus = Math.min(0.6, 0.15 + (S.T_bulk>500?(S.T_bulk-500)/800*0.4:0) + (S.ECM_GeV>1.9?(S.ECM_GeV-1.9)/5*0.2:0));
+        pos  = Math.max(0, Math.min(0.25, (S.ECM_GeV-1.9)/3.0*0.25));
+        anti = S.ECM_GeV>=ECM_ANTI ? Math.min(0.5,(S.ECM_GeV-ECM_ANTI)/4.0*0.5) : 0;
+        if (S.ECM_GeV>ECM_HAD)
+            had = Math.min(0.5,(S.ECM_GeV-ECM_HAD)/(ECM_HAD_MAX-ECM_HAD)*0.5);
+    }
+    const fiss=1.0, sum=fiss+fus+pos+anti+had;
+    const mult=1+fus*2+pos*5+anti*80+had*HAD_MULT;
+
+    let Q_nuc=0;
+    if (S.fuelKg>0 && P_beam>0)  Q_nuc = P_beam * S.mfiss * mult;
+    else if (reg===7 && P_beam>0) Q_nuc = P_beam * 2;
+    S.Q_nuclear = Q_nuc;
+
+    const heat_bulk = Q_nuc * ALPHA;
+    // S.P_TE = actual vein output (not clamped to heat_bulk — veins always generate from T_bulk)
+    S.P_TE  = P_TE_raw;
+    S.P_avail = S.P_gate_base + S.P_TE;
+
+    let v_ex = (fiss*V_FISS + fus*V_FUS + pos*(V_FISS+V_FUS)*0.5 + anti*V_ANTI + had*V_HAD) / sum;
+    if (reg===7) v_ex = V_ISM;
+    S.wakeActive = S.wakeEnabled && (S.fuelKg>0 && P_beam>0 && S.gate_ISMaug);
+    // ── TWO-STROKE WAKEFIELD MODEL (experimental, toggle) ──────────────
+    // OFF: clean physics, ETA_COUPLE=0.52 fixed, no v_ex modification.
+    // ON:  50/50 duty cycle — Stroke 1 hits solid target (full Q_nuc, beam never
+    //      stops so no Q_nuc penalty). Stroke 2: beam traverses open cavity.
+    //      Two effects:
+    //      A) Converging cavity walls redirect lateral products aft → η_couple rises.
+    //      B) Beam (γ=43, β≈c) intercepts forward-going 48% of explosion products
+    //         moving toward ship, decelerates them and redirects aft → further η rise.
+    //      C) Small additive piston force: F_piston = η_cav × P_beam × β / c
+    //         (bounded by P_beam momentum flux, η_cav=1.5 for partial reflection)
+    //      Conservative estimate: beam+walls redirect ~43% of wasted 48% products.
+    //      η_couple_eff = 0.52 + 0.48×0.43 = 0.728 (Stroke 2)
+    //      Time-averaged 50/50: η_avg = (0.52 + 0.728)/2 = 0.624
+    //      Implemented as: scale v_ex by (η_avg/ETA_COUPLE) = ×1.200 + F_piston
+    if (S.wakeActive) {
+        const ETA_COUPLE_WAKE = 0.728; // η_couple during open Stroke 2 cavity
+        // 0.728 → ETA_AVG = (0.52+0.728)/2 = 0.624 → ETA_AVG/ETA_COUPLE = ×1.200 exactly
+        // Physics: converging cavity redirects 43% of forward-going 48% blast products aft
+        //   η_couple_stroke2 = 0.52 + 0.48×0.43 = 0.728  (time-avg with 50/50 duty = 0.624)
+        // Matches old WAKEFIELD_BOOST=1.20 exactly, now grounded in two-stroke cavity physics
+        const ETA_AVG = (ETA_COUPLE + ETA_COUPLE_WAKE) / 2; // 0.624 time-averaged
+        const gamma_beam_local = S.T_beam_GeV / 0.938272 + 1;
+        const beta_beam_local  = Math.sqrt(Math.max(0, 1 - 1/(gamma_beam_local*gamma_beam_local)));
+        // Collimation boost: scale effective exhaust momentum
+        v_ex = v_ex * (ETA_AVG / ETA_COUPLE); // ×(0.624/0.52) = ×1.200
+        // Additive piston: η_cavity=1.5 (partial reflection), 50% duty on Stroke 2
+        S.F_wake_piston = 1.5 * (0.5 * P_beam) * beta_beam_local / (C * 1000);
+    } else {
+        S.F_wake_piston = 0;
+    }
+    // Post-candles: effective exhaust is GATE-accelerated ISM, not ablation products
+    // v_ism_exit is calculated in the GATE block below; use it as v_e for t7
+    // (Set provisionally from ablation calc here; overridden after GATE block if t7)
+    S.v_e = Math.min(v_ex, 0.9999*C);
+    const ve_ms = S.v_e*1000;
+    S.isp = ve_ms/G0;
+    S.T_plasma = P_beam>0 ? M_H*ve_ms*ve_ms/(3*K_B) : 0;
+
+    // TE → LTD → LIA → GATE (this is always where TE goes — no surplus concept)
+    // K-core reassigned to ISM funnel at t3; P_gate_ism_total already set above
+
+    // ── Ablative thrust (PEARL candles) ──
+    let F=0, mdot_abl=0, mdot_ism=0;
+    let F_ism_net=0, v_ism_exit=0, v_ism_entry=0, F_ism_drag_neutralised=0;
+    if (S.fuelKg>0 && P_beam>0 && Q_nuc>0 && ve_ms>0) {
+        // ETA_COUPLE: geometric coupling — ~50% of ablation products exit backward (thrust),
+        // ~50% exit forward (lost to space). Rod geometry gives slight collimation bonus → 0.52.
+        mdot_abl = 2*Q_nuc*(1-ALPHA)*ETA_COUPLE/(ve_ms*ve_ms);
+        F = mdot_abl*ve_ms;
+    }
+
+    // ── GATE ISM mode: unified drag-neutralisation + net acceleration ──
+    //
+    // Physics: ISM protons enter the EM funnel at v_ship (ship frame).
+    // They are ionised, collimated, and pass through the ship centre, then
+    // the GATE LIA accelerates them and ejects them aft at v_exit > v_ship.
+    //
+    // F_net = ṁ_ISM × (v_exit − v_ship)
+    //   • drag is neutralised (would-be drag ions are captured, not hitting hull)
+    //   • v_exit > v_ship ⟹ net forward thrust
+    //   • effect is negligible at low β; grows with γ² at relativistic speeds
+    //     because both ṁ_ISM ∝ γ and available KE per ion ∝ γ²
+    //
+    // K-core power to ISM: reassigned at t3, full from t3 onward (10 kW × kcoreLife)
+    // Regime 7 cruise: K-core is the only power source
+    //
+    if (S.vel > 0 && (S.t3 || S.t7)) {  // t3: K-core on ISM funnel duty; t7: same, fuel spent
+        const C_ms     = C * 1000;
+        const v_ship_ms = S.vel * 1000;
+
+        // ISM mass flow: relativistic Lorentz-boosted collection
+        // ṁ = ρ_ISM × A_funnel × v_ship × γ  (γ because ISM density is Lorentz-compressed in ship frame)
+        mdot_ism = ISM_RHO * FUNNEL_A * v_ship_ms * S.gamma;
+
+        // ISM power source:
+        //   Pre-candles (t3, !t7): LIA beam carries full P_TE into the ISM channel.
+        //     K-core handles ionisation/funnel collimation only — its 10 kW is NOT the beam energy.
+        //     The beam IS the TE output. P_beam = P_TE × BEAM_EFF already accounts for coupling.
+        //   K-core is on Grid (UV ioniser) from t3 onward — it never feeds the LIA.
+        //   The GATE LIA receives full P_TE_raw in all regimes from t3 onward.
+        //   Pre-candle expiry: P_TE is large (full vein output). Post-candle (t7): decays to ~5W residual.
+        //   BEAM_EFF (LTD×LIA coupling) applies only to the PEARL fission beam, not the ISM LIA.
+        // GATE_EFF applies to ISM acceleration just as it does to PEARL beam — same hardware
+        // Pre-candles: delivered ISM power = P_beam (already has GATE_EFF applied)
+        // Post-candles (t7): K-core + TE residual both go through GATE accelerator × GATE_EFF
+        const P_ISM = S.t7 ? (kcoreW + P_TE_raw) * GATE_EFF : P_beam;
+
+        // Energy budget per kg of collected ISM:
+        //   Entry: ½v_ship² (ship-frame kinetic energy of each incoming ISM proton)
+        //   GATE:  P_ISM / ṁ_ISM  (linear accelerator energy added per kg)
+        // Relativistic KE of incoming ISM in ship frame: (γ−1)c²
+        // Using Newtonian 0.5v² underestimates at >5%c, causing v_exit < v_ship when P_ISM→0.
+        // With relativistic KE: P_ISM=0 → γ_exit=γ_ship → v_exit=v_ship exactly. Always ≥ v_ship.
+        const gamma_ship    = S.gamma;
+        const E_in_per_kg   = (gamma_ship - 1) * C_ms * C_ms;
+        const E_gate_per_kg = mdot_ism > 1e-30 ? P_ISM / mdot_ism : 0;
+        const E_total_per_kg = E_in_per_kg + E_gate_per_kg;
+
+        // Relativistic exit velocity: E_total = (γ_exit − 1) m_H c²
+        const gamma_exit = 1 + E_total_per_kg * M_H / (M_H * C_ms * C_ms);
+        // gamma_exit = 1 + E_total_per_kg / (C_ms * C_ms)  [simplified: same]
+        v_ism_exit  = C_ms * Math.sqrt(Math.max(0, 1 - 1/(gamma_exit*gamma_exit)));
+        v_ism_entry = v_ship_ms;
+
+        // Net force:
+        // Pre-t7 WAKE OFF: ISM protons are fired INTO the candle (fixed target).
+        //   They do not exit aft — their momentum is absorbed into the hadronic cascade.
+        //   The funnel still neutralises hull drag (protons captured, not hitting hull).
+        //   Net ISM thrust contribution = 0. Ablation (F_abl) is the sole thrust term.
+        // Pre-t7 WAKE ON: two-stroke cycle — Stroke 2 protons traverse open cavity and
+        //   DO exit aft. F_ism_net kept (partial contribution); F_wake_piston is additive.
+        // Post-t7 (NEP cruise): ISM always exits aft at v_exit > v_ship → net thrust.
+        if (!S.t7 && !S.wakeEnabled) {
+            // WAKE OFF pre-candle expiry: drag neutralised, no net ISM thrust
+            F_ism_net = 0;
+        } else {
+            F_ism_net = mdot_ism * (v_ism_exit - v_ship_ms);
+        }
+        F_ism_drag_neutralised = mdot_ism * v_ship_ms; // drag neutralised in all modes
+        F += F_ism_net;
+    }
+    F += S.F_wake_piston || 0; // additive cavity piston (zero when wake OFF)
+    // Store ISM delta velocity (v_exit − v_entry): this is the effective propulsive exhaust.
+    // In EOL (t8): P_ISM → 0 → v_exit → v_entry → delta → 0 → exhaust display → 0.
+    S.v_ism_delta = Math.max(0, v_ism_exit - v_ism_entry) / 1000; // km/s
+
+    S.thrust   = Math.max(0, F);
+    S.ismMdot  = mdot_ism;
+    S.ismProtons = mdot_ism > 0 ? mdot_ism / 1.6726e-27 : 0; // protons/s collected by funnel
+    // In NEP cruise: the working fluid IS the ISM — v_ism_exit is the exhaust velocity
+    // Post-candles: propulsive exhaust = GATE delta. In EOL this decays to zero.
+    if (S.t7 && S.v_ism_exit > 0) S.v_e = S.v_ism_exit;
+    // Store for display
+    S.v_ism_exit = v_ism_exit / 1000; // km/s
+    S.v_ism_entry = v_ism_entry / 1000;
+    S.F_ism_net = F_ism_net;
+    S.F_drag_neutralised = F_ism_drag_neutralised;
+
+    // Pulse timing
+    // Reg 0/1 (pre-t3): LTD fires at K-core-determined rate. TE supplements each pulse's
+    //   energy (capacitors hold more charge per pulse), NOT pulse frequency. Hz FIXED.
+    // Reg 2 (t3, K-core off): TE alone charges LTD. Hz ramps = P_TE_raw/E_PULSE.
+    // Reg 3+ (t4): LTD retired. TE drives GATE directly as DC. Hz = continuous.
+    if (!S.continuous && P_beam>0) {
+        S.hz = S.t3 ? (P_TE_raw / E_PULSE)   // Reg 2: ramping with TE power
+                    : (P_GATE_BASE / E_PULSE); // Reg 0/1: fixed at K-core rate = 0.128 Hz
+        if (S.hz < 1e-10) S.hz = 1e-10;
+        S.pulseTimer += dt;
+        if (S.pulseTimer >= 1.0/S.hz) { S.pulseTimer -= 1.0/S.hz; S.pulses++; S.pulsing=true; }
+        else S.pulsing = false;
+        if (S.t3 && S.hz >= 100.0) S.continuous = true;
+    } else {
+        if (P_beam===0){S.hz=0;S.pulsing=false;S.continuous=false;} else {S.hz=null;S.pulsing=true;}
+    }
+
+    // Fuel
+    const Mship = S.dry + Math.max(0,S.fuelKg);
+    if (S.fuelKg>0 && mdot_abl>0) S.fuelKg = Math.max(0, S.fuelKg-Math.min(S.fuelKg,mdot_abl*dt));
+    if (mdot_abl>0) S.mdot_abl_last = mdot_abl; // for t6 krestart time-to-empty estimate
+    // PEARL architecture consumed at candle expiry — only TE pads remain
+    if (S.t7 && !S.pearlConsumed) { S.dry = Math.max(0, S.dry - PEARL_ARCH_KG); S.pearlConsumed=true; }
+
+    // ══ RK4 velocity integration ══
+    const v_euler = eulerStep(S.vel, F, Mship, dt);
+    const v_rk4   = rk4Step(S.vel, F, Mship, dt);
+    S.rk4_err_est = Math.abs(v_rk4 - v_euler);
+    S.vel = Math.min(v_rk4, 0.99999*C);
+
+    // Residual hull drag before funnel deploys (pre-regime-3 only)
+    // Post-funnel: ISM is captured & accelerated — drag already zero in GATE budget above
+    const Mnow = S.dry+Math.max(0,S.fuelKg);
+    if (S.vel>0 && !S.t3) {
+        const F_hull_drag = 0.5*ISM_RHO*(Math.PI*16)*Math.pow(S.vel*1000,2);
+        if (F_hull_drag>0)
+            S.vel = Math.max(0, rk4Step(S.vel, -F_hull_drag, Mnow, dt));
+    }
+
+    S.dist += (S.vel*dt)/149597870.7;
+
+    // ── GATE hoop erosion (regime 7: K-core below mitigation threshold) ──
+    // When ISM can no longer be fully ionised/collimated, it strikes hoop material.
+    // Erosion model: E_kinetic of unmitigated ISM flux removes hoop mass.
+    // Fraction unmitigated = 1 - (S.P_gate_base / P_GATE_BASE) clamped [0,1]
+    if (S.t8 && S.vel > 0) {
+        const E_BIND_TI    = 4.9e6;             // J/kg — Ti sublimation energy (sputtering proxy)
+        const A_HOOP       = 1.0;               // m² — hoop cross-section exposed to ISM
+        const frac_unmit   = Math.min(1, Math.max(0, 1 - S.P_gate_base/P_GATE_BASE));
+        const mdot_hoop    = ISM_RHO * A_HOOP * S.vel*1000 * S.gamma; // kg/s ISM on hoop
+        const E_kin_per_kg = 0.5 * (S.vel*1000)*(S.vel*1000) * S.gamma*S.gamma;
+        const erosion_rate = (mdot_hoop * E_kin_per_kg * frac_unmit) / E_BIND_TI; // kg/s removed
+        S.hoopErodedKg     = Math.min(S.hoopMassKg, S.hoopErodedKg + erosion_rate * dt);
+    }
+
+    // Bulk temperature
+    // Thermal mass: fuel candles (1500 J/kg·K) + structural floor (dry mass × 500 J/kg·K)
+    // Without the structural floor, thm → 0 when fuel=0 → T_bulk numerically unstable.
+    const thm = S.fuelKg * 1500 + S.dry * 500;
+    // Cooling: veins extract P_TE_thermal from bulk at all times (not clamped to nuclear source).
+    // Pre-candle expiry: heat_bulk (nuclear) heats bulk; veins extract P_TE_thermal.
+    // Post-candle: heat_bulk=0; veins drain residual heat → T_bulk decays toward T_AMB.
+    // Bug-fix: was (heat_bulk - S.P_TE) where S.P_TE=min(P_TE_raw,heat_bulk)=0 post-t7 → no cooling.
+    S.T_bulk = Math.max(T_AMB, Math.min(T_MAX, S.T_bulk + (heat_bulk - P_TE_thermal)*dt/thm));
+
+    // Positron accumulation
+    if (S.ECM_GeV>1.9) S.positronAcc = Math.min(1, S.positronAcc+(S.ECM_GeV-1.9)*dt*0.0002);
+
+    if (sum>0){ S.fissFrac=fiss/sum; S.fusFrac=fus/sum; S.posFrac=pos/sum; S.antiFrac=anti/sum; S.hadFrac=had/sum; }
+    S.accel_g = Mnow>0 ? F/Mnow/G0 : 0;
+    S.gate = gateNum();
+
+    // ══ ENERGY ACCOUNTING ══
+    const C_ms = C * 1000;
+    S.E_beam_cumul    += P_beam * dt;
+    S.E_nuclear_cumul += Q_nuc  * dt;
+    S.E_exhaust_cumul += F * ve_ms * dt;
+    S.E_thermal_cumul += heat_bulk * dt;
+    // Relativistic kinetic energy: (γ-1)mc²
+    S.E_kinetic = (S.gamma-1) * Mnow * C_ms * C_ms;
+}
+
+// ═══════════════════════════════════════════════
+// UI
+// ═══════════════════════════════════════════════
+const RLABELS = [
+    'GATE·INIT-K·BOOT',    // 0: K-core bootstrapping GATE, first pulse
+    'GATE·TE-CRANKING',    // 1: TE cranking up via PEARL, fixed Hz
+    'GATE·TE-CURRENT·RAMP', // 2: K-core off, TE drives GATE, Hz ramping
+    'GATE·TE-CURRENT·MAX', // 3: continuous beam, TE at/near saturation
+    'GATE·TE-SATURATED',   // 4: TE fully saturated, max PEARL escalation
+    'GATE·INIT-K·RESTART', // 5: t6 — K-core restarted, candles almost spent
+    'GATE·K-CURRENT',      // 6: PEARL consumed, GATE on K-core NEP
+    'HOOP·EROSION·EOL'    // 7: K-core dying, ISM damage
+];
+const RCOLORS = [
+    '#334155', // 0: standby/LTD charging — dark slate
+    '#fbbf24', // 1: TE rising — amber
+    '#60a5fa', // 2: Hz ramping — blue
+    '#4ade80', // 3: 100 Hz continuous — green
+    '#f472b6', // 4: TE saturated — pink
+    '#a78bfa', // 5: INIT-K restart — purple
+    '#22d3ee', // 6: GATE NEP cruise — cyan
+    '#ef4444'  // 7: hoop erosion — red
+];
+
+function updateUI() {
+    const reg=regNum(), pct=S.beta*100, col=RCOLORS[reg]||'#334155', lbl=RLABELS[reg]||'STANDBY';
+    sst('regimeBanner','color',col);
+    st('regimeBanner', lbl + (S.gate_ISMaug ? ' + ISM·GATE' : ''));
+    sst('accelMode','color',col);
+    const accelSuffix = S.gate_ISMaug ? ' + ISM·GATE' : '';
+    const postCandle  = S.t7 ? ' [PEARL·CONSUMED]' : '';
+    st('accelMode', lbl + accelSuffix + postCandle);
+
+    st('outVel',    fmtV(S.vel));
+    // Sub-row under velocity: show km/s (not %c — that's already the main display)
+    const velKms = S.vel;
+    const velKmsStr = velKms >= 1000 ? Math.round(velKms).toLocaleString()+' km/s'
+                    : velKms >= 1    ? velKms.toFixed(3)+' km/s'
+                    : velKms >= 0.001? velKms.toFixed(6)+' km/s'
+                    : velKms >= 1e-6 ? (velKms*1000).toFixed(4)+' m/s'
+                    :                  (velKms*1e6).toFixed(3)+' mm/s';
+    st('outBeta', velKmsStr);
+    st('outAccel',  S.accel_g.toExponential(3)+' G');
+    // Exhaust velocity = speed at which propellant leaves the ship (ship frame).
+    //   Normal thrust:  v_e  (ablation products — always >> ship speed)
+    //   NEP cruise t7:  v_ism_exit  (ISM enters at v_ship, exits faster — always > v_ship)
+    //   EOL t8:         v_ism_exit → v_ship as K-core dies (thrust → 0 but never below ship speed)
+    const displayVex = S.t7 ? S.v_ism_exit : S.v_e;
+    st('outVex', fmtV(displayVex));
+    const displayIsp = S.t7 ? (S.v_ism_exit*1000/9.81) : S.isp;
+    st('outIsp', displayIsp>0 ? Math.round(displayIsp).toLocaleString()+' s' : '—');
+    // Sub-row under exhaust: km/s of exhaust exit velocity
+    const vexSubKms = S.t7 ? S.v_ism_exit : S.v_e;
+    const vexKmsStr = vexSubKms >= 1000 ? Math.round(vexSubKms).toLocaleString()+' km/s'
+                    : vexSubKms >= 1    ? vexSubKms.toFixed(3)+' km/s'
+                    : vexSubKms > 0     ? (vexSubKms*1000).toFixed(4)+' m/s'
+                    : '0 m/s';
+    st('outVexC', vexKmsStr);
+    st('outThrust', (S.t8 && S.v_ism_delta < 10) ? '0 N' : fmtF(S.thrust)); // t8-only deadband
+    st('outFuelG',  S.fuelKg.toFixed(1)+' kg');
+    st('outFuelPct',(S.fuelKg/S.fuelMax*100).toFixed(2)+' %');
+    var _dv=S.dist>=500 ? (S.dist/63241.077).toFixed(4)+' ly' : S.dist.toFixed(3)+' AU';
+    st('outDist', _dv);
+    st('oSimTime',  S.time<SEC_DAY ? S.time.toFixed(0)+' s' : S.time<SEC_YR ? (S.time/SEC_DAY).toFixed(2)+' d' : (S.time/SEC_YR).toFixed(3)+' yr');
+
+    let ss=Math.floor(S.time), y=Math.floor(ss/SEC_YR); ss%=SEC_YR;
+    let d=Math.floor(ss/SEC_DAY); ss%=SEC_DAY;
+    let h=Math.floor(ss/SEC_HR); ss%=SEC_HR;
+    let m=Math.floor(ss/60);
+    st('missionClock',`${String(y).padStart(2,'0')}Y ${String(d).padStart(3,'0')}D ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss%60).padStart(2,'0')}`);
+
+    const MS={Moon:0.00257,Venus:0.27,Mars:0.37,Mercury:0.52,Helios:1.0,Belt:1.7,
+    Jupiter:5.05,Saturn:9.35,Uranus:18.8,Neptune:29.95,Pluto:38.5,Kuiper:49,
+    Helio:119,Sgl:649,Oort:99999,Prox:268000,Barnard:376916,Luhman:412078,
+    WISEJ:459762,Wolf359:492015,Sirius:543873,Luyten:562845,Ross154:613438,
+    Ross248:651382,EpsEri:664030,Lac9352:676679,Ross128:695651,EZAqr:702076};
+    for(const [k,v] of Object.entries(MS)){
+        let p=Math.min(100,S.dist/v*100);
+        bar('f'+k,p);
+        st('p'+k, p>=100 ? '✓' : p>=0.01 ? p.toFixed(2)+'%' : p.toExponential(2)+'%');
+    }
+
+    const tbCol=S.T_bulk>1200?'#f87171':S.T_bulk>700?'#fb923c':S.T_bulk>400?'#fbbf24':'#64748b';
+    st('outTbulk',Math.round(S.T_bulk)+' K');
+    bar('fTbulk',(S.T_bulk-T_AMB)/(T_MAX-T_AMB)*100,tbCol);
+    st('outTplasma',S.T_plasma>0?fmtT(S.T_plasma):'—');
+    bar('fTplasma',S.T_plasma>0?Math.min(100,Math.log10(Math.max(1,S.T_plasma))/13*100):0,'#f87171');
+
+    const bMeV=S.T_beam_GeV*1000;
+    st('outBeam',bMeV>=1000?S.T_beam_GeV.toFixed(3)+' GeV':bMeV.toFixed(1)+' MeV');
+    const ecmCol=S.antiFrac>.01?'#c084fc':S.posFrac>.01?'#f472b6':'#e879f9';
+    st('outECM',S.ECM_GeV.toFixed(4)+' GeV'); sst('outECM','color',ecmCol);
+    bar('fECM',Math.min(100,S.ECM_GeV/6*100),ecmCol);
+
+    st('oPgateBase',fmtP(S.P_gate_base));
+    // K-input: K-core contribution to GATE at current phase
+    // Pre-t3: full K-core output (minus TE share already in beam). At t3: shuts down → 0.
+    // t6 restart → t7: K-core back on Grid. Post-t7: K-core feeds full ISM system.
+    const kcoreTopup = Math.max(0, S.P_gate_base - S.P_TE);
+    const kcoreTopupStr = S.t8  ? fmtP(S.P_gate_base) + ' (fading)'
+                        : S.t7  ? fmtP(S.P_gate_base) + ' →Grid+LIA'
+                        : S.t6  ? fmtP(S.P_gate_base) + ' →Grid (restarted)'
+                        : S.t3  ? '0 W (shutdown)'
+                        : fmtP(kcoreTopup) + ' →GATE';
+    st('oPkism', kcoreTopupStr);
+    sst('oPkism', 'color', S.t3 ? '#22d3ee' : kcoreTopup < S.P_gate_base*0.25 ? '#4ade80' : kcoreTopup < S.P_gate_base*0.75 ? '#fbbf24' : '#f87171');
+    st('oPTE',fmtP(S.P_TE)); st('oPavail', fmtP(S.P_avail));
+    st('oPbeam',fmtP(S.P_beam)); st('oNuc',fmtP(S.Q_nuclear));
+    // Wakefield display — two-stroke experimental model
+    if (!S.wakeEnabled) {
+        st('oWake', 'OFF');
+        sst('oWake', 'color', '#334155');
+    } else if (!S.wakeActive) {
+        st('oWake', 'ON — inactive (speed/ISM)');
+        sst('oWake', 'color', '#4c1d95');
+    } else {
+        const etaBoost = ((0.624/0.52 - 1)*100).toFixed(1);
+        const pistonStr = S.F_wake_piston > 0 ? ' +'+fmtF(S.F_wake_piston)+' piston' : '';
+        st('oWake', 'ON ('+etaBoost+'% η +'+pistonStr+')');
+        sst('oWake', 'color', '#38bdf8');
+    }
+    // Post-candles: show residual EM scavenging; pre-candles: show nothing (TE is the beam)
+    st('oTEsurp', S.t7 ? fmtP(P_TE_RESIDUAL)+' (EM heat)' : '— (TE = beam)');
+    // Total ablation mass flow (aft thrust fraction + wasted forward/lateral fraction)
+    const mdotTotStr = S.mdot_total > 0
+        ? (S.mdot_total*1e6).toFixed(3)+' mg/s (aft: '+(S.mdot_total*ETA_COUPLE*1e6).toFixed(3)+')'
+        : S.t7 ? '— (NEP cruise)' : '—';
+    st('oMdotTot', mdotTotStr);
+    sst('oTEsurp','color', S.t7 ? '#a78bfa' : '#334155');
+    st('oGATEtot', S.P_gate_ism_total>0 ? fmtP(S.P_gate_ism_total) : '0 W');
+    sst('oGATEtot','color', S.P_gate_ism_total>0 ? '#67e8f9' : '#475569');
+    st('oISMthrust', S.F_ism_net!==0 ? fmtF(Math.abs(S.F_ism_net))+(S.F_ism_net>0?' ▲':' ▼') : '—');
+    // GATE 4-mode display
+    const gateMode = S.t8 ? 'K-CURRENT·FAIL'
+                   : S.t7 ? 'K-CURRENT'
+                   : S.t6 ? 'INIT-K·RESTART'
+                   : S.t3 ? 'TE-CURRENT'
+                   : S.t2 ? 'TE-CRANKING'
+                   : S.kcoreRunning ? 'INIT-K·BOOT' : 'STANDBY';
+    const gateModeCol = S.t8?'#ef4444':S.t7?'#22d3ee':S.t6?'#a78bfa':S.t3?'#4ade80':S.t2?'#fbbf24':'#334155';
+    st('oKrole', gateMode); sst('oKrole','color', gateModeCol);
+    // GATE architecture display
+    const archLabel = S.ffagEnabled ? 'FFAG 20m 1.6t' : 'LIA 47m 2.0t';
+    const archColor = S.ffagEnabled ? '#22d3ee' : '#94a3b8';
+    st('oGateArch', archLabel); sst('oGateArch','color', archColor);
+    // Pulse Rate display: 
+    // - No beam or pre-ignition → "—"
+    // - Continuous DC (t4+) → "CONT · DC"
+    // - Sub-1Hz → show as interval "1 pulse / Xs"
+    // - ≥1Hz → show Hz with sensible precision
+    let hzStr;
+    if (!S.t1 || S.P_beam === 0) {
+        hzStr = '—';
+    } else if (S.continuous) {
+        hzStr = 'CONT · DC';
+    } else {
+        const hz = (S.hz && S.hz > 0) ? S.hz : 0;
+        if (hz <= 0) {
+            hzStr = '—';
+        } else if (hz < 1) {
+            const period = 1/hz;
+            if (period >= 3600)      hzStr = (period/3600).toFixed(2) + ' hr/pulse';
+            else if (period >= 60)   hzStr = (period/60).toFixed(1)   + ' min/pulse';
+            else                     hzStr = period.toFixed(1) + ' s/pulse (' + hz.toFixed(4) + ' Hz)';
+        } else if (hz < 10) {
+            hzStr = hz.toFixed(3) + ' Hz';
+        } else if (hz < 100) {
+            hzStr = hz.toFixed(1) + ' Hz';
+        } else {
+            hzStr = hz.toFixed(0) + ' Hz';
+        }
+    }
+    st('oHz', hzStr);
+    st('oPulses',S.pulses.toLocaleString());
+
+    st('rFi',(S.fissFrac*100).toFixed(1)+'%'); st('rFu',(S.fusFrac*100).toFixed(2)+'%');
+    st('rEp',(S.posFrac*100).toFixed(2)+'%');  st('rAn',(S.antiFrac*100).toFixed(3)+'%');
+    st('rHad',(S.hadFrac*100).toFixed(3)+'%'); st('rPacc',(S.positronAcc*100).toFixed(1)+'%');
+    // Exhaust velocity: uses S.v_e which already switches to v_ism_exit at t7 (NEP cruise)
+    const vexDisplay = S.v_e > 0 ? fmtV(S.v_e) + '  (' + (S.v_e/C*100).toFixed(4) + '%c)' : '—';
+    const ispDisplay = S.isp > 0 ? S.isp.toLocaleString(undefined,{maximumFractionDigits:0}) + ' s' : '—';
+    st('rVex', vexDisplay);
+    st('rIspPearl', ispDisplay);
+    sst('rVex','color', S.t7?'#6ee7b7': (S.wakeActive&&S.wakeEnabled)?'#38bdf8':'#6ee7b7');
+
+    st('rISM', S.ismMdot>0?S.ismMdot.toExponential(3)+' kg/s':'0');
+    st('rISMvin',  S.v_ism_entry>0 ? fmtV(S.v_ism_entry) : '—');
+    st('rISMvout', S.v_ism_exit>0  ? fmtV(S.v_ism_exit)  : '—');
+    sst('rISMvout','color', S.v_ism_exit>S.v_ism_entry*1.01?'#e879f9':S.v_ism_exit>0?'#4ade80':'#475569');
+    st('rDragKill', S.F_drag_neutralised>0 ? fmtF(S.F_drag_neutralised) : '0 N');
+    const gateNetCol = S.F_ism_net>0?'#fde047':S.F_ism_net<0?'#f87171':'#475569';
+    st('rGATEF', S.F_ism_net!==0 ? fmtF(Math.abs(S.F_ism_net))+(S.F_ism_net>0?' ▲':' ▼') : '0 N');
+    st('rISMprotons', S.ismProtons>0 ? S.ismProtons.toExponential(3)+'/s' : '—');
+    sst('rGATEF','color',gateNetCol);
+
+    const [c1,c2,c3,c4]=S.r4c;
+    const chk=(ok,val)=>`<span class="${ok?'r4ok':'r4no'}">${ok?'✓':'✗'} ${val}</span>`;
+    sh('c4a',chk(c1,Math.round(S.T_bulk)+'K')); sh('c4b',chk(c2,S.ECM_GeV.toFixed(3)+'GeV'));
+    sh('c4c',chk(c3,fmtP(S.P_TE)));              sh('c4d',chk(c4,(S.positronAcc*100).toFixed(1)+'%'));
+    bar('fR4',[c1,c2,c3,c4].filter(Boolean).length/4*100,'#ec4899');
+
+    st('oDry',(S.dry/1000).toFixed(1)+'t');
+    st('oFuelG',(S.fuelKg/1000).toFixed(2)+'t');
+    st('oTotM',((S.dry+S.fuelKg)/1000).toFixed(1)+'t');
+    st('oGamma',S.gamma.toFixed(5));
+    st('oIsp',S.isp>0?Math.round(S.isp).toLocaleString()+' s':'—');
+    const hoopPct = Math.max(0,(1-S.hoopErodedKg/S.hoopMassKg)*100);
+    st('oHoop', S.t8 ? hoopPct.toFixed(1)+'% ⚠' : '100% (shielded)');
+    sst('oHoop','color', S.t8&&hoopPct<50?'#ef4444':S.t8&&hoopPct<90?'#f59e0b':'#4ade80');
+
+    const kc=S.kcoreLife;
+    bar('kcoreBar',kc*100,kc>0.3?'#10b981':kc>0.1?'#f59e0b':'#ef4444');
+    st('kcoreText',`${(kc*100).toFixed(1)}% — ${(40*(1-kc)).toFixed(2)} yr`);
+
+    // Sequential gates: 1-7, 10-12 via S.gate
+    // Gates 7, 8, 9: INDEPENDENT physics milestones — decouple from sequential chain.
+    // A ship can achieve hadronic cascade, antiproton production, or ISM augmentation
+    // at any point regardless of which sequential gate it is currently on.
+    const hadronicActive   = S.ECM_GeV >= ECM_HAD;
+    const antiprotonActive = S.ECM_GeV >= ECM_ANTI;
+    for(let i=1;i<=12;i++){
+        if(i===6||i===7||i===8) continue; // handled independently below
+        const e=el(`gate-${i}`);
+        if(e) e.className=i<S.gate?'gate-item gate-done':i===S.gate?'gate-item gate-active':'gate-item';
+    }
+    // Gate 6: ISM GATE augmentation — independent
+    const g6=el('gate-6');
+    if(g6){
+        if(S.gate_ISMaug && S.gate>=10) g6.className='gate-item gate-done';
+        else if(S.gate_ISMaug)          g6.className='gate-item gate-active';
+        else                   g6.className='gate-item';
+    }
+    // Gate 7: antiproton production — independent (ECM ≥ 3.752 GeV)
+    const g7=el('gate-7');
+    if(g7){
+        if(antiprotonActive && S.gate>=10) g7.className='gate-item gate-done';
+        else if(antiprotonActive)          g7.className='gate-item gate-active';
+        else                               g7.className='gate-item';
+    }
+    // Gate 8: hadronic cascade — independent (ECM ≥ 5 GeV)
+    const g8=el('gate-8');
+    if(g8){
+        if(hadronicActive && S.gate>=10) g8.className='gate-item gate-done';
+        else if(hadronicActive)          g8.className='gate-item gate-active';
+        else                             g8.className='gate-item';
+    }
+
+    // Energy diagnostics
+    const Emax=Math.max(1,S.E_nuclear_cumul);
+    bar('eb_beam',S.E_beam_cumul/Emax*100); st('ev_beam',fmtE(S.E_beam_cumul));
+    bar('eb_nuc',100);                       st('ev_nuc', fmtE(S.E_nuclear_cumul));
+    bar('eb_kin', S.E_kinetic/Emax*100);     st('ev_kin', fmtE(S.E_kinetic));
+    bar('eb_exh', S.E_exhaust_cumul/Emax*100); st('ev_exh',fmtE(S.E_exhaust_cumul));
+    bar('eb_thm', S.E_thermal_cumul/Emax*100); st('ev_thm',fmtE(S.E_thermal_cumul));
+    const eta = S.E_nuclear_cumul>0 ? S.E_kinetic/S.E_nuclear_cumul*100 : 0;
+    st('ev_eta',eta.toFixed(4)+'%');
+    const cons = S.E_nuclear_cumul>0
+        ? (S.E_kinetic+S.E_exhaust_cumul+S.E_thermal_cumul)/S.E_nuclear_cumul
+        : 0;
+    const consEl = el('ev_cons');
+    if(consEl){
+        consEl.textContent = S.E_nuclear_cumul>0 ? (cons*100).toFixed(2)+'% accounted' : '—';
+        consEl.style.color = cons>0.95&&cons<1.1 ? '#4ade80' : cons>0 ? '#f87171' : '#64748b';
+    }
+    st('ev_rk4err', S.rk4_err_est>0 ? S.rk4_err_est.toExponential(2)+' km/s' : '—');
+}
+
+// ═══════════════════════════════════════════════
+// SCIENCE PLOTS
+// ═══════════════════════════════════════════════
+let _activeTab = 0;
+function setTab(i) {
+    _activeTab = i;
+    for(let j=0;j<5;j++){
+        const t=el('tab'+j);
+        if(t) t.className='tab-btn'+(j===i?' active':'');
+    }
+    updateSciPlot(true);
+}
+
+const _plotLayout = {
+    paper_bgcolor:'#000',plot_bgcolor:'#000010',
+    font:{color:'#475569',size:8,family:'Courier New'},
+    margin:{l:36,r:4,t:4,b:24},
+    xaxis:{gridcolor:'#1e293b',zerolinecolor:'#1e293b',tickfont:{size:7}},
+    yaxis:{gridcolor:'#1e293b',zerolinecolor:'#1e293b',tickfont:{size:7}},
+    legend:{font:{size:7},bgcolor:'rgba(0,0,0,0)',x:0,y:1},
+    showlegend:true
+};
+const _plotCfg = {displayModeBar:false,responsive:true};
+let _sciReady = false;
+
+function updateSciPlot(force) {
+    if(!window.Plotly || !_sciReady && !force) return;
+    const div = el('sciPlot');
+    if(!div) return;
+
+    let traces=[], xTitle='Mission (yr)';
+    const t = LOG.t;
+
+    if(_activeTab===0){
+        traces=[
+            {x:t,y:LOG.vel,  mode:'lines',name:'v_ship',   line:{color:'#4ade80',width:1.5}},
+            {x:t,y:LOG.vismout.map(v=>v/1000),mode:'lines',name:'v_GATE_exit(Mm/s)',line:{color:'#e879f9',width:1,dash:'dot'}}
+        ];
+        _plotLayout.yaxis.title='km/s';
+    } else if(_activeTab===1){
+        traces=[{x:t,y:LOG.ecm,mode:'lines',name:'ECM (GeV)',line:{color:'#e879f9',width:1.5}}];
+        _plotLayout.yaxis.title='GeV';
+    } else if(_activeTab===2){
+        traces=[
+            {x:t,y:LOG.pbeam,mode:'lines',name:'P_beam',line:{color:'#60a5fa',width:1}},
+            {x:t,y:LOG.pte,  mode:'lines',name:'P_TE',  line:{color:'#fb923c',width:1}},
+            {x:t,y:LOG.pnuc, mode:'lines',name:'P_nuc', line:{color:'#fbbf24',width:1}}
+        ];
+        _plotLayout.yaxis.title='W';
+    } else if(_activeTab===3){
+        traces=[
+            {x:t,y:LOG.rFi, mode:'lines',name:'Fission',line:{color:'#fbbf24',width:1}},
+            {x:t,y:LOG.rFu, mode:'lines',name:'Fusion', line:{color:'#60a5fa',width:1}},
+            {x:t,y:LOG.rAn, mode:'lines',name:'Antimatter',line:{color:'#c084fc',width:1}},
+            {x:t,y:LOG.rHad,mode:'lines',name:'Hadronic',  line:{color:'#22d3ee',width:1}}
+        ];
+        _plotLayout.yaxis.title='fraction';
+    } else {
+        traces=[
+            {x:t,y:LOG.Enuc, mode:'lines',name:'Nuclear',  line:{color:'#f87171',width:1}},
+            {x:t,y:LOG.Ekin, mode:'lines',name:'Kinetic',  line:{color:'#4ade80',width:1}},
+            {x:t,y:LOG.Eexh, mode:'lines',name:'Exhaust',  line:{color:'#fb923c',width:1}},
+            {x:t,y:LOG.Ethm, mode:'lines',name:'Thermal',  line:{color:'#22d3ee',width:1}}
+        ];
+        _plotLayout.yaxis.title='J';
+    }
+    _plotLayout.xaxis.title = xTitle;
+    Plotly.react(div, traces, _plotLayout, _plotCfg);
+    _sciReady = true;
+}
+
+// ═══════════════════════════════════════════════
+// DATA EXPORT
+// ═══════════════════════════════════════════════
+function downloadBlob(content, filename, mime) {
+    const blob=new Blob([content],{type:mime});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=filename; a.click();
+}
+
+function exportCSV() {
+    const cols=['t_yr','vel_kms','ecm_gev','pbeam_w','pte_w','pnuc_w','rFi','rFu','rAn','rHad','E_nuc_j','E_kin_j','E_exh_j'];
+    let csv=cols.join(',')+'\n';
+    const n=LOG.t.length;
+    for(let i=0;i<n;i++){
+        csv+=[LOG.t[i],LOG.vel[i],LOG.ecm[i],LOG.pbeam[i],LOG.pte[i],LOG.pnuc[i],
+              LOG.rFi[i],LOG.rFu[i],LOG.rAn[i],LOG.rHad[i],
+              LOG.Enuc[i],LOG.Ekin[i],LOG.Eexh[i]].map(v=>(v||0).toExponential(6)).join(',');
+        csv+='\n';
+    }
+    downloadBlob(csv,'pearl_v28_'+Date.now()+'.csv','text/csv');
+}
+
+function exportJSON() {
+    const meta={
+        version:'PEARL-GATE V28', exported:new Date().toISOString(),
+        constants:{P_GATE_BASE,TE_PER,M_FISS:S.mfiss,BEAM_EFF:S.beamEff,ALPHA,WAKE_MODEL:S.wakeEnabled?"two-stroke-experimental":"clean"},
+        params:{veins:S.veins,fuelKg:S.fuelMax,dryKg:S.dry},
+        finalState:{vel:S.vel,dist:S.dist,time:S.time,ECM_GeV:S.ECM_GeV,
+                    E_nuclear:S.E_nuclear_cumul,E_kinetic:S.E_kinetic,
+                    eta_pct:S.E_nuclear_cumul>0?S.E_kinetic/S.E_nuclear_cumul*100:0},
+        timeSeries:LOG
+    };
+    downloadBlob(JSON.stringify(meta,null,2),'pearl_v28_'+Date.now()+'.json','application/json');
+}
+
+// ═══════════════════════════════════════════════
+// SWEEP ENGINE (async chunked)
+// ═══════════════════════════════════════════════
+let _sweeping=false, _sweepFreezeRender=false; // freeze 3D render during sweep
+
+function runSweep() {
+    if(_sweeping){ st('sweepStatus','Sweep in progress — wait'); return; }
+    _sweeping=true; _sweepFreezeRender=true;
+    el('btnSweep').disabled=true;
+
+    const varKey   = el('swVar').value;
+    const steps    = Math.max(2,Math.min(20,parseInt(el('swSteps').value)||8));
+    const minV     = parseFloat(el('swMin').value)||100000;
+    const maxV     = parseFloat(el('swMax').value)||800000;
+    const simYears = parseFloat(el('swYears').value)||5;
+    const metric   = el('swMetric').value;
+    const simSec   = simYears*SEC_YR;
+    const dt       = 100; // 100s steps
+
+    const results=[], xVals=[], yVals=[];
+
+    function runOne(i) {
+        if(i>=steps){ finishSweep(varKey,metric,results,xVals,yVals); return; }
+        const v = steps===1 ? minV : minV + (maxV-minV)/(steps-1)*i;
+        xVals.push(v);
+
+        // snapshot current sim state
+        const savedS = JSON.parse(JSON.stringify(S));
+        const savedPlaying = S.playing;
+
+        // Build sweep state
+        S = JSON.parse(JSON.stringify(savedS));
+        S.playing=false; S.time=0; S.vel=0; S.dist=0;
+        S.fuelKg=savedS.fuelMax; S.T_bulk=T_AMB; S.positronAcc=0;
+        S.pulses=1; S.continuous=false; S.pulseTimer=0;
+        S.E_beam_cumul=0; S.E_nuclear_cumul=0; S.E_kinetic=0;
+        S.E_exhaust_cumul=0; S.E_thermal_cumul=0;
+        S.kcoreLife=1; S.P_gate_base=P_GATE_BASE;
+    S.kcoreRunning=true; S.kcoreLifetimeHrs=0; S.t6=false; S.gate_ISMaug=false; S.pearlConsumed=false; S.mdot_abl_last=0;
+    S.wakeEnabled=_wakeKept; S.F_wake_piston=0;
+    S.ffagEnabled=_ffagKept;
+        if(varKey==='candles')  { const c=Math.round(v); S.veins=c*240000; S.fuelKg=c*5000; S.fuelMax=c*5000; }
+        if(varKey==='veins')   S.veins   = v;
+        if(varKey==='fuel')    { S.fuelKg=v; S.fuelMax=v; }
+        if(varKey==='mfiss')   S.mfiss   = v;
+        if(varKey==='beameff') S.beamEff = v;
+        if(varKey==='dry')     S.dry     = v;
+
+        const iters=Math.ceil(simSec/dt);
+        let t=0;
+        function chunk(){
+            const end=Math.min(t+5000,iters);
+            for(;t<end;t++) physics(dt);
+            if(t<iters){
+                setTimeout(chunk,0);
+            } else {
+                const y = metric==='vel'?S.vel : metric==='dist'?S.dist : (S.E_nuclear_cumul>0?S.E_kinetic/S.E_nuclear_cumul*100:0);
+                results.push({x:v,y}); yVals.push(y);
+                const prog=(i+1)/steps*100;
+                bar('sweepBar',prog);
+                st('sweepStatus',`Running step ${i+1}/${steps}…  last: ${v.toExponential(3)} → ${y.toExponential(4)}`);
+                // restore
+                S=JSON.parse(JSON.stringify(savedS));
+                S.playing=savedPlaying;
+                setTimeout(()=>runOne(i+1),0);
+            }
+        }
+        chunk();
+    }
+    runOne(0);
+}
+
+function finishSweep(varKey, metric, results, xVals, yVals) {
+    _sweeping=false; _sweepFreezeRender=false; el('btnSweep').disabled=false;
+    st('sweepStatus',`✓ Sweep complete — ${results.length} runs`);
+    bar('sweepBar',100,'#4ade80');
+    if(!window.Plotly) return;
+    const labels={candles:'Candles',veins:'TE Veins',fuel:'Fuel kg',mfiss:'Fission Mult',beameff:'Beam Eff',dry:'Dry kg'};
+    const mlabels={vel:'Final Vel (km/s)',dist:'Distance (AU)',eta:'Efficiency η (%)'};
+    Plotly.newPlot(el('sweepPlot'),[
+        {x:xVals,y:yVals,mode:'lines+markers',
+         line:{color:'#4ade80',width:2},marker:{size:5,color:'#4ade80'}}
+    ],{
+        paper_bgcolor:'#000',plot_bgcolor:'#000010',
+        font:{color:'#475569',size:8,family:'Courier New'},
+        margin:{l:40,r:4,t:4,b:30},
+        xaxis:{title:labels[varKey]||varKey,gridcolor:'#1e293b',tickfont:{size:7}},
+        yaxis:{title:mlabels[metric]||metric,gridcolor:'#1e293b',tickfont:{size:7}},
+        showlegend:false
+    },{displayModeBar:false,responsive:true});
+}
+
+// ═══════════════════════════════════════════════
+// 3D VISUALISATION (physics-driven colours)
+// ═══════════════════════════════════════════════
+const VP3=[
+    {ec:'#110800',es:0.3,ez:1,en:0,  ic:'#001122',is:0.3,in2:10, fo:0.0,bc:'rgba(0,0,0,0)',bw:1, strutColors:{long:'#555555',edge:'#555555'},tePadOn:false,tePadColor:'#333333',rodBodyColor:'#333333',tipCapColor:'#333333'},
+    {ec:'#ffaa00',es:1.0,ez:3,en:50, ic:'#003366',is:0.5,in2:40, fo:0.0,bc:'#00ffff',      bw:5, strutColors:{long:'#555555',edge:'#555555'},tePadOn:false,tePadColor:'#333333',rodBodyColor:'#333333',tipCapColor:'#aa0000'},
+    {ec:'#ff8800',es:1.8,ez:3,en:70, ic:'#006699',is:0.9,in2:65, fo:0.0,bc:'#22ffff',      bw:6, strutColors:{long:'#555555',edge:'#555555'},tePadOn:true, tePadColor:'#3366ff',rodBodyColor:'#333333',tipCapColor:'#aa0000'},
+    {ec:'#ff4400',es:2.8,ez:4,en:90, ic:'#22aacc',is:1.3,in2:90, fo:0.22,bc:'#eeffff',     bw:8, strutColors:{long:'#555555',edge:'#555555'},tePadOn:true, tePadColor:'#3388ff',rodBodyColor:'#aa0000',tipCapColor:'#aa0000'},
+    {ec:'#ff44aa',es:4.0,ez:5,en:110,ic:'#44ddee',is:1.9,in2:120,fo:0.32,bc:'#ffaaff',     bw:9, strutColors:{long:'#aa0000',edge:'#aa0000'},tePadOn:true, tePadColor:'#33aaff',rodBodyColor:'#aa0000',tipCapColor:'#ff8800'},
+    {ec:'#aa44ff',es:6.5,ez:6,en:135,ic:'#88eeff',is:2.6,in2:145,fo:0.42,bc:'#ff88ff',     bw:11,strutColors:{long:'#ff0000',edge:'#ff0000'},tePadOn:true, tePadColor:'#33ccff',rodBodyColor:'#ff8800',tipCapColor:'#ffff00'},
+    {ec:'#7700ff',es:8.0,ez:6,en:150,ic:'#aaffff',is:3.3,in2:150,fo:0.52,bc:'#ff00ff',     bw:12,strutColors:{long:'#ff8800',edge:'#aa44ff'},tePadOn:true, tePadColor:'#33ffff',rodBodyColor:'#ffff00',tipCapColor:'#ffffff'},
+    {ec:'#330055',es:4.5,ez:5,en:110,ic:'#ccffff',is:4.0,in2:150,fo:0.54,bc:'rgba(0,0,0,0)',bw:1,strutColors:{long:'#ff0000',edge:'#ff0000'},tePadOn:true, tePadColor:'#33ffff',rodBodyColor:null,tipCapColor:null}
+];
+
+// Physics-driven overrides applied on top of regime base
+function vpFor3D(){
+    const gate=S.gate;
+    if(gate>=12) return{ec:'rgba(0,0,0,0)',es:0,ez:0,en:0,ic:'rgba(0,0,0,0)',is:0,in2:0,fo:0,bc:'rgba(0,0,0,0)',bw:0,strutColors:{},tePadOn:false,rodBodyColor:null};
+    if(gate>=11) return{ec:'rgba(0,0,0,0)',es:0,ez:0,en:0,ic:'#ccffff',is:4.0,in2:150,fo:0.54,bc:'#00ffff',bw:8,strutColors:{long:'#ff0000',edge:'#ff0000'},tePadOn:true,tePadColor:'#33ffff',rodBodyColor:null};
+    // Drive VP3 selection from regNum() — 8 regimes (0-7), 8 VP3 entries, 1:1 map.
+    // Reg 0: LTD charging/standby    → VP3[0] dark
+    // Reg 1: TE rising fixed Hz      → VP3[1] amber exhaust
+    // Reg 2: K-core→ISM Hz ramping   → VP3[2] orange+TE pads
+    // Reg 3: 100 Hz continuous       → VP3[3] hot orange+funnel
+    // Reg 4: TE saturated max        → VP3[4] pink/magenta
+    // Reg 5: INIT-K restart (t6)      → VP3[5] deep purple pre-expiry
+    // Reg 6: GATE NEP cruise         → VP3[5] purple beam
+    // Reg 7: Hoop erosion EOL        → VP3[7] dim/dying
+    const reg3d = regNum();
+    const vp3idx = [0,1,2,3,4,4,5,7][Math.min(7,reg3d)];
+    let base = Object.assign({}, VP3[vp3idx]);
+
+    // Physics-driven exhaust brightness: map T_plasma → exhaust opacity + size
+    if(S.T_plasma>0){
+        const logT=Math.log10(Math.max(1,S.T_plasma));
+        const bright=Math.min(1,logT/13); // 0 at 1K, 1 at 10TK
+        base.ez=Math.max(base.ez, 1+bright*8);
+        base.en=Math.max(base.en, Math.round(bright*150));
+    }
+
+    // Physics-driven ECM: funnel glow intensity
+    if(S.ECM_GeV>0){
+        const ecmFrac=Math.min(1,S.ECM_GeV/10);
+        base.fo=Math.max(base.fo, S.t3?ecmFrac*0.6:0);
+    }
+
+    // Hadronic cascade: add purple tint to exhaust
+    if(S.hadFrac>0.01){
+        base.ec='#9900ff';
+        base.ez=Math.max(base.ez,7);
+    }
+
+    // Wakefield: boost ISM particle count + speed (only when experimental mode ON)
+    if(S.wakeActive && S.wakeEnabled){
+        base.in2=Math.min(150,Math.round(base.in2*1.20));
+        base.is=base.is*1.20;
+    }
+
+    return base;
+}
+
+// Geometry
+function getBasis(d,base){
+    const rVec=[0,base[1],base[2]];
+    const rLen=Math.sqrt(rVec[1]*rVec[1]+rVec[2]*rVec[2]);
+    if(rLen<0.001){
+        let up=[0,0,1]; if(Math.abs(d[2])>0.99)up=[0,1,0];
+        let p=[d[1]*up[2]-d[2]*up[1],d[2]*up[0]-d[0]*up[2],d[0]*up[1]-d[1]*up[0]];
+        let pL=Math.sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+        p=[p[0]/pL,p[1]/pL,p[2]/pL];
+        const q=[d[1]*p[2]-d[2]*p[1],d[2]*p[0]-d[0]*p[2],d[0]*p[1]-d[1]*p[0]];
+        return{p,q};
+    }
+    const e_r=[0,base[1]/rLen,base[2]/rLen];
+    const dot=d[0]*e_r[0]+d[1]*e_r[1]+d[2]*e_r[2];
+    let p=[e_r[0]-dot*d[0],e_r[1]-dot*d[1],e_r[2]-dot*d[2]];
+    const pL=Math.sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+    if(pL<0.001){
+        let up=[0,0,1]; if(Math.abs(d[2])>0.99)up=[0,1,0];
+        p=[d[1]*up[2]-d[2]*up[1],d[2]*up[0]-d[0]*up[2],d[0]*up[1]-d[1]*up[0]];
+        let pL2=Math.sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+        p=[p[0]/pL2,p[1]/pL2,p[2]/pL2];
+    } else p=[p[0]/pL,p[1]/pL,p[2]/pL];
+    const q=[d[1]*p[2]-d[2]*p[1],d[2]*p[0]-d[0]*p[2],d[0]*p[1]-d[1]*p[0]];
+    return{p,q};
+}
+
+function createCylinder(p1,p2,radius,color,ns=16){
+    const dir=[p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]];
+    const len=Math.sqrt(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]);
+    if(len<0.01)return null;
+    const d=[dir[0]/len,dir[1]/len,dir[2]/len];
+    const{p,q}=getBasis(d,p1);
+    const ang=[],bR=[],tR=[];
+    for(let i=0;i<=ns;i++)ang.push(i/ns*2*Math.PI);
+    ang.forEach(a=>{
+        const c=Math.cos(a),s=Math.sin(a);
+        const ox=radius*(c*p[0]+s*q[0]),oy=radius*(c*p[1]+s*q[1]),oz=radius*(c*p[2]+s*q[2]);
+        bR.push([p1[0]+ox,p1[1]+oy,p1[2]+oz]);
+        tR.push([p2[0]+ox,p2[1]+oy,p2[2]+oz]);
+    });
+    const verts=[p1,p2,...bR,...tR];
+    const bs=2,ts=2+bR.length,fi=[],fj=[],fk=[];
+    for(let i=0;i<ns;i++){
+        fi.push(0,1,bs+i,bs+i); fj.push(bs+i,ts+i+1,bs+i+1,ts+i); fk.push(bs+i+1,ts+i,ts+i+1,bs+i+1);
+        fi.push(1); fj.push(ts+i+1); fk.push(ts+i);
+    }
+    return{type:'mesh3d',x:verts.map(v=>v[0]),y:verts.map(v=>v[1]),z:verts.map(v=>v[2]),
+           i:fi,j:fj,k:fk,color,opacity:1,lighting:{ambient:0.4,diffuse:0.7,specular:0.3},flatshading:true,showlegend:false};
+}
+
+function createFuelRodWithCaps(base,tip,size,bodyColor,tipCapColor){
+    // Cylindrical sector ("cake slice"): 120° arc outer wall, two radial faces, concave tip
+    const dir=[tip[0]-base[0],tip[1]-base[1],tip[2]-base[2]];
+    const len=Math.sqrt(dir[0]*dir[0]+dir[1]*dir[1]+dir[2]*dir[2]);
+    if(len<0.01)return null;
+    const a=[dir[0]/len,dir[1]/len,dir[2]/len];
+    const r=Math.sqrt(base[1]*base[1]+base[2]*base[2]);
+    if(r<0.001)return null;
+    const e_r=[0,base[1]/r,base[2]/r];
+    const a_dot=a[0]*e_r[0]+a[1]*e_r[1]+a[2]*e_r[2];
+    let p=[e_r[0]-a_dot*a[0],e_r[1]-a_dot*a[1],e_r[2]-a_dot*a[2]];
+    const pL=Math.sqrt(p[0]*p[0]+p[1]*p[1]+p[2]*p[2]);
+    if(pL<0.001)return null;
+    for(let i=0;i<3;i++)p[i]/=pL;
+    const q=[a[1]*p[2]-a[2]*p[1],a[2]*p[0]-a[0]*p[2],a[0]*p[1]-a[1]*p[0]];
+    const ARC=12, cR=size;
+    const bVerts=[],tVerts=[];
+    // Centre vertices
+    bVerts.push(base); tVerts.push([tip[0]+cR,tip[1],tip[2]]); // tip centre at bowl deepest point
+    // Arc vertices: 120° sweep from -PI/3 to +PI/3 around the p/q plane
+    for(let i=0;i<=ARC;i++){
+        const ang=-Math.PI/3+i/ARC*(2*Math.PI/3);
+        const c=Math.cos(ang),s=Math.sin(ang);
+        const bx=base[0]+size*(c*p[0]+s*q[0]);
+        const by=base[1]+size*(c*p[1]+s*q[1]);
+        const bz=base[2]+size*(c*p[2]+s*q[2]);
+        bVerts.push([bx,by,bz]);
+        // Concave tip: bowl opening aft, curvature = cascade sphere radius = size
+        const ty=tip[1]+size*(c*p[1]+s*q[1]);
+        const tz=tip[2]+size*(c*p[2]+s*q[2]);
+        const dy=ty-tip[1],dz=tz-tip[2];
+        const rr=Math.sqrt(dy*dy+dz*dz);
+        const bowlX=tip[0]+Math.sqrt(Math.max(0.001,cR*cR-rr*rr));
+        tVerts.push([bowlX,ty,tz]);
+    }
+    // Build mesh: all vertices in one array, base first then tip
+    const allV=[...bVerts,...tVerts];
+    const nArc=ARC+1, bOff=0, tOff=bVerts.length;
+    const fi=[],fj=[],fk=[];
+    // Outer arc faces (quad strips between base arc and tip arc)
+    for(let i=0;i<ARC;i++){
+        fi.push(bOff+1+i,bOff+1+i,tOff+1+i);
+        fj.push(tOff+1+i,bOff+1+i+1,tOff+1+i+1);
+        fk.push(tOff+1+i+1,tOff+1+i,bOff+1+i+1);
+    }
+    // Radial face 1 (first edge: centre to first arc vertex)
+    for(let end=0;end<1;end++){
+        fi.push(bOff,bOff+1,tOff+1); fi.push(bOff,tOff+1,tOff);
+    }
+    // Radial face 2 (last edge: centre to last arc vertex)
+    {
+        const last=ARC;
+        fi.push(bOff,tOff+1+last,bOff+1+last); fi.push(bOff,tOff,tOff+1+last);
+    }
+    // Base cap (fan from centre)
+    for(let i=0;i<ARC;i++){fi.push(bOff); fj.push(bOff+1+i); fk.push(bOff+1+i+1);}
+    // Tip concave cap (fan from centre)
+    for(let i=0;i<ARC;i++){fi.push(tOff); fj.push(tOff+1+i+1); fk.push(tOff+1+i);}
+    // Fix the radial faces indexing
+    const fi2=[],fj2=[],fk2=[];
+    // Outer arc
+    for(let i=0;i<ARC;i++){
+        fi2.push(bOff+1+i); fj2.push(tOff+1+i); fk2.push(tOff+1+i+1);
+        fi2.push(bOff+1+i); fj2.push(tOff+1+i+1); fk2.push(bOff+1+i+1);
+    }
+    // Radial face 1
+    fi2.push(bOff); fj2.push(bOff+1); fk2.push(tOff+1);
+    fi2.push(bOff); fj2.push(tOff+1); fk2.push(tOff);
+    // Radial face 2
+    fi2.push(bOff); fj2.push(tOff+1+ARC); fk2.push(bOff+1+ARC);
+    fi2.push(bOff); fj2.push(tOff); fk2.push(tOff+1+ARC);
+    // Base cap
+    for(let i=0;i<ARC;i++){fi2.push(bOff); fj2.push(bOff+1+i); fk2.push(bOff+1+i+1);}
+    // Tip concave cap
+    for(let i=0;i<ARC;i++){fi2.push(tOff); fj2.push(tOff+1+i+1); fk2.push(tOff+1+i);}
+    const body={type:'mesh3d',x:allV.map(v=>v[0]),y:allV.map(v=>v[1]),z:allV.map(v=>v[2]),
+                i:fi2,j:fj2,k:fk2,
+                color:bodyColor,opacity:1,lighting:{ambient:0.4,diffuse:0.7,specular:0.3},flatshading:true,showlegend:false};
+    // Tip cap trace (just the concave bowl, for separate colouring)
+    const capFi=[],capFj=[],capFk=[];
+    for(let i=0;i<ARC;i++){capFi.push(tOff); capFj.push(tOff+1+i+1); capFk.push(tOff+1+i);}
+    const cap={type:'mesh3d',x:allV.map(v=>v[0]),y:allV.map(v=>v[1]),z:allV.map(v=>v[2]),
+               i:capFi,j:capFj,k:capFk,color:tipCapColor,opacity:1,
+               lighting:{ambient:0.4,diffuse:0.7,specular:0.3},flatshading:true,showlegend:false};
+    return[body,cap];
+}
+
+function createTEPad(base,color){
+    const p2=[base[0]+0.1,base[1],base[2]];
+    return createCylinder(base,p2,0.3,color,8);
+}
+
+const _r=4;
+// Real hull lengths: LIA=47m (CNT 5×, TRL4-5), FFAG=20m (CNT 13×, TRL4)
+// Scale: _r=4 represents R=17.84m → 1 unit = 4.46m real
+const _LIA_HALF = 5.3;   // 47m hull half-length in scene units
+const _FFAG_HALF  = 2.25;  // 20m hull half-length in scene units
+const _FUNNEL_DEPTH = 11;  // funnel depth fixed by EM physics, both modes
+
+function _mkGeom(half) {
+    const r=_r, C=Math.cos, S2=Math.sin, PI=Math.PI;
+    // ── Hull mesh (hexagonal prism) ──
+    const hV=[], hT=[];
+    for(let i=0;i<6;i++){
+        const a1=i/6*2*PI, a2=(i+1)/6*2*PI;
+        hV.push([half,C(a1)*r,S2(a1)*r],[half,C(a2)*r,S2(a2)*r],
+                [-half,C(a1)*r,S2(a1)*r],[-half,C(a2)*r,S2(a2)*r]);
+        const idx=i*4; hT.push([idx,idx+1,idx+2],[idx+1,idx+3,idx+2]);
+    }
+    const hullTrace={type:'mesh3d',x:hV.map(v=>v[0]),y:hV.map(v=>v[1]),z:hV.map(v=>v[2]),
+        i:hT.map(t=>t[0]),j:hT.map(t=>t[1]),k:hT.map(t=>t[2]),
+        color:'#3a6ea5',opacity:0.9,lighting:{ambient:0.5,diffuse:0.8,specular:0.2},
+        flatshading:true,showlegend:false};
+    // ── Funnel: frustum from hull mouth (x=+half, r=_r) to collection mouth (x=+half+depth, r=7) ──
+    const fM=half+_FUNNEL_DEPTH, FSEGS=12, fV=[], fT=[];
+    for(let i=0;i<FSEGS;i++){const a=i/FSEGS*2*PI;fV.push([half,C(a)*r,S2(a)*r]);}
+    for(let i=0;i<FSEGS;i++){const a=i/FSEGS*2*PI;fV.push([fM,C(a)*7,S2(a)*7]);}
+    for(let i=0;i<FSEGS;i++){
+        const i0=i,i1=(i+1)%FSEGS,j0=FSEGS+i,j1=FSEGS+(i+1)%FSEGS;
+        fT.push([i0,i1,j0]);fT.push([i1,j1,j0]);
+    }
+    const funnelTpl={type:'mesh3d',x:fV.map(v=>v[0]),y:fV.map(v=>v[1]),z:fV.map(v=>v[2]),
+        i:fT.map(t=>t[0]),j:fT.map(t=>t[1]),k:fT.map(t=>t[2]),
+        color:'#aa44ff',opacity:0,lighting:{ambient:0.6,diffuse:0.6,specular:0.1},
+        flatshading:true,showlegend:false};
+    // ── Candle rod bases at hull aft face ──
+    const rodSz=_r/Math.sqrt(3);
+    const rodBases=[
+        [-half,rodSz*C(PI/6),    rodSz*S2(PI/6)   ],
+        [-half,rodSz*C(5*PI/6),  rodSz*S2(5*PI/6) ],
+        [-half,rodSz*C(3*PI/2),  rodSz*S2(3*PI/2) ]
+    ];
+    // ── Hull rim rings for struts ──
+    const FV=[], BV=[];
+    for(let i=0;i<6;i++){
+        const a=i/6*2*PI;
+        BV.push([-half,C(a)*r,S2(a)*r]);
+        FV.push([ half,C(a)*r,S2(a)*r]);
+    }
+    return {
+        half, funnelMouth:fM, rodSz,
+        hullTrace, funnelTpl, rodBases, FV, BV,
+        ismSpawn: fM,           // ISM particles start at funnel collection mouth
+        ismReset: half,         // ISM particles recycle when they reach hull mouth
+        xRange:  (function(){ const mx=Math.max(half+20,fM+2); return [-mx,mx]; })()
+    };
+}
+const _gLia = _mkGeom(_LIA_HALF);
+const _gFFAG  = _mkGeom(_FFAG_HALF);
+// getGeom() called at runtime — S may not exist at parse time
+function getGeom(){ return (typeof S!=='undefined'&&S.ffagEnabled)?_gFFAG:_gLia; }
+
+// Dynamic candle tip — steps shorter at 75%, 50%, 25% fuel remaining
+function getTipPt() {
+    const g = getGeom();
+    if (!S || S.fuelKg <= 0) return [-g.half, 0, 0];
+    const pct = S.fuelMax > 0 ? S.fuelKg / S.fuelMax : 1;
+    const nSets = S.candleCount ? Math.max(1, Math.round(S.candleCount / 3)) : 1;
+    const maxLen = Math.min(20, 8 + nSets * 2); // base 10, +2 per set, cap at 20 scene units
+    const stepLen = pct > 0.75 ? maxLen
+                  : pct > 0.50 ? maxLen * 0.75
+                  : pct > 0.25 ? maxLen * 0.50
+                  :              maxLen * 0.25;
+    return [-g.half - stepLen, 0, 0];
+}
+
+// ── FFAG RING GEOMETRY ──
+// Flat torus at x = +half (hull mouth rim), radius = _r, flush with hull forward face.
+// RF cavity bumps point radially inward. Extraction pipe runs aft to beam axis.
+function buildFFAGRing() {
+    const g = getGeom(), rx = g.half, t = [];
+    const segs = 24;
+    for (let i = 0; i < segs; i++) {
+        const a1=i/segs*2*Math.PI, a2=(i+1)/segs*2*Math.PI;
+        const p1=[rx,Math.cos(a1)*_r,Math.sin(a1)*_r];
+        const p2=[rx,Math.cos(a2)*_r,Math.sin(a2)*_r];
+        const seg=createCylinder(p1,p2,0.22,'#22d3ee',6);
+        if(seg)t.push(seg);
+    }
+    for (let i = 0; i < 8; i++) {
+        const a=i/8*2*Math.PI;
+        const outer=[rx,Math.cos(a)*_r,        Math.sin(a)*_r       ];
+        const inner=[rx,Math.cos(a)*(_r-0.9),  Math.sin(a)*(_r-0.9) ];
+        const cav=createCylinder(outer,inner,0.38,'#7c3aed',8);
+        if(cav)t.push(cav);
+    }
+    // Extraction pipe: ring mouth → beam axis, then aft to candle tip
+    const pipe=createCylinder([rx,0,0],[-g.half,0,0],0.12,'#22d3ee',6);
+    if(pipe)t.push(pipe);
+    return t;
+}
+
+function buildStruts(vis){
+    const g=getGeom(), t=[];
+    for(let i=0;i<6;i++){
+        const c1=createCylinder(g.BV[i],g.FV[i],0.15,vis.strutColors.long||'#555',8);
+        const c2=createCylinder([0,0,0],g.FV[i],0.15,vis.strutColors.edge||'#555',8);
+        if(c1)t.push(c1); if(c2)t.push(c2);
+    }
+    return t;
+}
+
+let MAX_P=150,_ismP=[],_exhP=[];
+function initParticles(){
+    const g=getGeom?getGeom():_gLia, sp=g.ismSpawn;
+    _ismP=Array.from({length:MAX_P},()=>({x:sp+Math.random()*20,y:(Math.random()-.5)*10,z:(Math.random()-.5)*10,spd:0.4}));
+    _exhP=Array.from({length:MAX_P},()=>({x:getTipPt()[0]+(Math.random()-.5)*30,y:(Math.random()-.5)*3,z:(Math.random()-.5)*3,spd:1}));
+}
+initParticles();
+function _rIsm(p,spd){const g=getGeom(),sp=g.ismSpawn;p.x=sp+Math.random()*20;p.y=(Math.random()-.5)*10;p.z=(Math.random()-.5)*10;p.spd=spd*(0.5+0.9*Math.random());}
+function _rExh(p,spd){const tp=getTipPt();p.x=tp[0]+(Math.random()-.5)*4;p.y=(Math.random()-.5)*3;p.z=(Math.random()-.5)*3;p.spd=spd*(0.5+0.9*Math.random());}
+
+window._vd=null; let _vd=null,_cam={x:0.2,y:0,z:3},_vReady=false,_bFlash=0,_lPulses=0;
+let _dpPhase=0; // Double Punch phase: 0-0.5 = Punch 1 (cascade), 0.5-1.0 = Punch 2 (wakefield)
+function _getLayout(){
+    const g=getGeom(), xMin=g.xRange[0], xMax=g.xRange[1];
+    const asp=Math.max(1.2,(xMax-xMin)/24);
+    return {dragmode:'orbit',hovermode:false,
+        scene:{camera:{eye:{x:0.2,y:0,z:3},center:{x:0,y:0,z:0},up:{x:0,y:0,z:1}},
+        xaxis:{visible:false,range:[xMin,xMax]},
+        yaxis:{visible:false,range:[-12,12]},
+        zaxis:{visible:false,range:[-12,12]},
+        aspectmode:'manual',aspectratio:{x:asp,y:1,z:1},bgcolor:'#000010'},
+        paper_bgcolor:'#000000',
+        legend:{font:{color:'#334155',size:9},bgcolor:'rgba(0,0,0,0)',x:0,y:1},
+        margin:{l:0,r:0,b:0,t:0}};
+}
+const _pc={displayModeBar:false,responsive:true};
+function _getCam(){try{return _vd._fullLayout.scene._scene.getCamera().eye;}catch(e){return _cam;}}
+
+function _buildVizTraces(vp,beamOn){
+    const g = getGeom();
+    const tipPt = getTipPt(); // dynamic — steps at 75/50/25% fuel
+    let nc=Math.min(vp.in2||0,MAX_P),ne=Math.min(vp.en||0,MAX_P);
+    let t=[g.hullTrace,{...g.funnelTpl,opacity:vp.fo||0},
+        // ── DOUBLE PUNCH LOCUS ──
+        // Inner: tiny beam interaction volume (red, always at tip)
+        // Outer: cascade envelope (amber, pulses with Punch 1)
+        // Wakefield rings (green, pulse with Punch 2)
+        ...(S.fuelKg>0&&beamOn?(()=>{
+            const isPunch1=_dpPhase<0.5;
+            const p1Str=isPunch1?0.5+0.5*Math.sin(_dpPhase/0.5*Math.PI):Math.max(0,1-(_dpPhase-0.5)*6);
+            const p2Str=isPunch1?0:0.3+0.7*Math.sin((_dpPhase-0.5)/0.5*Math.PI);
+            const cascR=g.rodSz; // sphere radius = rodSz so it reaches outer edges of converged tips
+            // Build cascade sphere mesh (fills the concave bowl exactly)
+            const SLAT=12,SLON=16;
+            const sx=[],sy=[],sz=[],si=[],sj=[],sk=[];
+            for(let la=0;la<=SLAT;la++){
+                const theta2=la/SLAT*Math.PI;
+                const ct=Math.cos(theta2),st=Math.sin(theta2);
+                for(let lo=0;lo<=SLON;lo++){
+                    const phi2=lo/SLON*Math.PI*2;
+                    sx.push(tipPt[0]+cascR*st*Math.cos(phi2));
+                    sy.push(tipPt[1]+cascR*st*Math.sin(phi2));
+                    sz.push(tipPt[2]+cascR*ct);
+                }
+            }
+            for(let la=0;la<SLAT;la++){
+                for(let lo=0;lo<SLON;lo++){
+                    const a=la*(SLON+1)+lo, b=a+SLON+1;
+                    si.push(a,a); sj.push(b,b+1); sk.push(b+1,a+1);
+                }
+            }
+            const traces=[
+                // Inner beam interaction (tiny, always visible when beam on)
+                {type:'scatter3d',mode:'markers',x:[tipPt[0]],y:[tipPt[1]],z:[tipPt[2]],
+                 marker:{size:4,color:'#FF2200',opacity:0.5+0.4*p1Str},showlegend:false},
+                // Outer cascade envelope sphere (mesh3d, pulses with Punch 1, fills concave bowl)
+                {type:'mesh3d',x:sx,y:sy,z:sz,i:si,j:sj,k:sk,
+                 color:'#FFAA00',opacity:0.18*p1Str,
+                 lighting:{ambient:0.6,diffuse:0.4,specular:0.1},flatshading:false,showlegend:false}
+            ];
+            // Wakefield rings during Punch 2
+            if(p2Str>0.05){
+                for(let wr=0;wr<5;wr++){
+                    const wx=tipPt[0]-1.0-wr*1.5;
+                    const wR=cascR*(0.4+wr*0.25); // starts at ~40% of cascade sphere, expands
+                    const pts=24;
+                    const wrx=[],wry=[],wrz=[];
+                    for(let wi=0;wi<=pts;wi++){
+                        const wa=wi/pts*Math.PI*2;
+                        wrx.push(wx);wry.push(Math.cos(wa)*wR);wrz.push(Math.sin(wa)*wR);
+                    }
+                    traces.push({type:'scatter3d',mode:'lines',x:wrx,y:wry,z:wrz,
+                        line:{color:'#66ffcc',width:Math.max(1,3-wr*0.5)},
+                        opacity:Math.max(0,(0.5-wr*0.08)*p2Str),showlegend:false});
+                }
+                // Punch 2 beam overshoot (extends past tip into wakefield zone)
+                traces.push({type:'scatter3d',mode:'lines',
+                    x:[tipPt[0],tipPt[0]-cascR*4],y:[0,0],z:[0,0],
+                    line:{color:'#66ffcc',width:2,dash:'dash'},
+                    opacity:0.6*p2Str,showlegend:false});
+            }
+            return traces;
+        })():[]
+        ),
+        // ── Beam traces ──
+        // Origin: funnel tip (LIA exit) at x=0.
+        // Fuel present: solid line from [0,0,0] → tipPt (candle ablation point).
+        // Cruise (t7, no fuel): beam extends backward into space, fading over 5 segments.
+        ...( beamOn ? (
+            S.fuelKg > 0
+            // ── Ablative mode: beam from GATE exit to candle tips ──
+            // LIA: beam exits at x=0 (hull centre). FFAG: exits ring at hull mouth x=+half then aft.
+            ? (()=>{ const bx0 = S.ffagEnabled ? g.half : 0;
+                return [{type:'scatter3d',mode:'lines',
+                x:[bx0, tipPt[0]], y:[0,0], z:[0,0],
+                line:{color:vp.bc, width:vp.bw}, showlegend:false}]; })()
+            // ── Cruise / NEP mode: fading beam extending behind ship ──
+            : (() => {
+                const segs=6, reach=-36;
+                const segLen = reach / segs;
+                const col = vp.bc || '#22d3ee';
+                // Parse base colour for rgba — col is hex like '#22d3ee'
+                const hex = col.replace('#','');
+                const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+                return Array.from({length:segs},(_,i)=>{
+                    const x0 = i*segLen, x1 = (i+1)*segLen;
+                    const op = Math.max(0, 1 - i/(segs-1));
+                    return {type:'scatter3d',mode:'lines',
+                        x:[x0,x1],y:[0,0],z:[0,0],
+                        line:{color:`rgba(${r},${g},${b},${op.toFixed(2)})`,
+                              width: Math.max(1, Math.round(vp.bw*(1-i/segs)))},
+                        showlegend:false};
+                });
+              })()
+        ) : [] )
+    ];
+    if(S.fuelKg>0&&vp.rodBodyColor)
+        g.rodBases.forEach(b=>{const p=createFuelRodWithCaps(b,tipPt,g.rodSz,vp.rodBodyColor,vp.tipCapColor);if(p)p.forEach(x=>t.push(x));});
+    buildStruts(vp).forEach(s=>t.push(s));
+    if(vp.tePadOn) g.rodBases.forEach(b=>{const p=createTEPad(b,vp.tePadColor);if(p)t.push(p);});
+    // FFAG ring — shown when FFAG architecture enabled
+    if(S.ffagEnabled) buildFFAGRing().forEach(s=>t.push(s));
+    t.push({type:'scatter3d',mode:'markers',x:_ismP.slice(0,nc).map(p=>p.x),y:_ismP.slice(0,nc).map(p=>p.y),z:_ismP.slice(0,nc).map(p=>p.z),marker:{size:2,color:vp.ic,opacity:0.75},showlegend:false});
+    // Exhaust particles removed — they obscured the Double Punch wakefield animation
+    return t;
+}
+
+function _initViz(){
+    _vd=el('viz3d'); window._vd=_vd; if(!_vd||!window.Plotly)return;
+    Plotly.newPlot(_vd,_buildVizTraces(VP3[0],false),_getLayout(),_pc).then(()=>{_cam=_getCam();_vReady=true;});
+}
+
+function _stepViz(){
+    if(!_vReady||!window.Plotly)return;
+    const vp=vpFor3D(),reg=regNum();
+    // Only flash if beam is physically alive — in EOL, once v_ism_delta → 0 stop flashing.
+    const _beamAlive = !(S.t8 && S.v_ism_delta < 10); // deadband only at EOL t8 — not at candle expiry
+    if(_beamAlive){
+        if(S.continuous) _bFlash=Date.now()+300;
+        else if(S.pulses>_lPulses) _bFlash=Date.now()+200;
+    } else {
+        _bFlash=0; // kill any residual flash timer
+    }
+    _lPulses=S.pulses;
+    const beamOn = Date.now()<_bFlash; // _bFlash=0 once beam dies in EOL
+    // Double Punch phase: cycles 0→1 over ~2 seconds when beam is active
+    if(beamOn && S.fuelKg>0) _dpPhase=(_dpPhase+0.064)%1.0; // ~2 full cycles/sec (real: 122 Hz)
+    else _dpPhase=0;
+    for(let j=0;j<MAX_P;j++){
+        _ismP[j].x-=_ismP[j].spd;
+        if(_ismP[j].x < getGeom().ismReset) _rIsm(_ismP[j],vp.is||0.3);
+        // Exhaust particle update removed
+    }
+    const cam=_getCam(),layout=_getLayout();
+    layout.scene.camera={eye:cam,center:{x:0,y:0,z:0},up:{x:0,y:0,z:1}};
+    Plotly.react(_vd,_buildVizTraces(vp,beamOn),layout,_pc).then(()=>{_cam=_getCam();});
+    const rl=el('vizRegimeLabel');
+    if(rl){rl.textContent=RLABELS[reg];rl.style.color=RCOLORS[reg];}
+}
+
+// ═══════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════
+let _vfc=0,_logInterval=1000; // log every 1000 sim-seconds
+// Auto-pause state — reset on init
+let _wasT7 = false;  // fuel already expired before this run
+let _wasT8 = false;  // K-core already expired before this run
+
+function _autoPauseCheck() {
+    // Fuel expiry (t7 just became true)
+    if (S.t7 && !_wasT7) {
+        _wasT7 = true;
+        S.playing = false;
+        el('btnPlay').textContent = '▶ RESUME';
+        el('btnPlay').style.color = '#f59e0b';
+        _showPauseBanner(
+            '⏸  CANDLES EXPIRED — RECORD RESULTS',
+            `Vel: ${(S.vel/C*100).toFixed(6)}%c  |  ` +
+            `Dist: ${(S.dist).toFixed(5)} AU  |  ` +
+            `Time: ${fmtTime(S.time)}`,
+            'Press ▶ IGNITE to continue NEP cruise.',
+            '#f59e0b'
+        );
+    }
+    // K-core EOL (t8 just became true)
+    if (S.t8 && !_wasT8) {
+        _wasT8 = true;
+        S.playing = false;
+        el('btnPlay').textContent = '▶ RESUME';
+        el('btnPlay').style.color = '#f87171';
+        _showPauseBanner(
+            '⏸  K-CORE EXPIRED — RECORD RESULTS',
+            `Vel: ${(S.vel/C*100).toFixed(6)}%c  |  ` +
+            `Dist: ${(S.dist).toFixed(5)} AU  |  ` +
+            `Time: ${fmtTime(S.time)}`,
+            'Press ▶ IGNITE to continue EOL coast.',
+            '#f87171'
+        );
+    }
+}
+
+function _showPauseBanner(title, stats, cta, colour) {
+    let banner = document.getElementById('pauseBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'pauseBanner';
+        banner.style.cssText = (
+            'position:fixed;top:12px;left:50%;transform:translateX(-50%);' +
+            'z-index:9999;padding:10px 18px;border-radius:6px;' +
+            'font-family:Courier New,monospace;font-size:0.75rem;' +
+            'border:2px solid;box-shadow:0 4px 24px rgba(0,0,0,0.7);' +
+            'max-width:600px;text-align:center;cursor:pointer;'
+        );
+        banner.onclick = () => banner.style.display = 'none';
+        document.body.appendChild(banner);
+    }
+    banner.style.background = '#0a0800';
+    banner.style.borderColor = colour;
+    banner.style.color = colour;
+    banner.innerHTML = (
+        `<div style="font-weight:700;font-size:0.85rem;margin-bottom:4px">${title}</div>` +
+        `<div style="color:#e2e8f0;margin-bottom:4px">${stats}</div>` +
+        `<div style="color:#94a3b8;font-size:0.7rem">${cta} &nbsp;(click banner to dismiss)</div>`
+    );
+    banner.style.display = 'block';
+}
+
+// Helper: AU in metres and C in km/s for banner (matched to simulator constants)
+
+function fmtTime(sec) {
+    let s = Math.floor(sec);
+    const y = Math.floor(s / SEC_YR);  s %= SEC_YR;
+    const d = Math.floor(s / SEC_DAY); s %= SEC_DAY;
+    const h = Math.floor(s / 3600);    s %= 3600;
+    const m = Math.floor(s / 60);      s %= 60;
+    return `${y}Y ${d}D ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function loop(){
+    if(S.playing && !_sweepFreezeRender){
+        const[steps,dt]=SPEEDS[speedIdx];
+        for(let i=0;i<steps;i++) physics(dt);
+        _autoPauseCheck();
+        updateUI();
+        _logTimer+=SPEEDS[speedIdx][0]*SPEEDS[speedIdx][1];
+        if(_logTimer>=_logInterval){ logPoint(); _logTimer=0; updateSciPlot(false); }
+        _vfc++;
+        if(_vfc%Math.max(1,speedIdx)===0)_stepViz();
+    } else if (!_sweepFreezeRender) {
+        // Idle: keep 3D alive but don't flicker during sweep
+        _vfc++;
+        if(_vfc%4===0)_stepViz();
+    }
+    requestAnimationFrame(loop);
+}
+
+el('btnWake').onclick=()=>{
+    S.wakeEnabled=!S.wakeEnabled;
+    el('btnWake').textContent=S.wakeEnabled?'⚡ WAKE: ON':'⚡ WAKE: OFF';
+    el('btnWake').style.color=S.wakeEnabled?'#38bdf8':'#475569';
+    el('btnWake').style.borderColor=S.wakeEnabled?'#0369a1':'#1e3a5f';
+};
+el('btnFFAG').onclick=()=>{
+    S.ffagEnabled=!S.ffagEnabled;
+    el('btnFFAG').textContent=S.ffagEnabled?'⬡ GATE: FFAG':'⬡ GATE: LIA';
+    el('btnFFAG').style.color=S.ffagEnabled?'#22d3ee':'#475569';
+    el('btnFFAG').style.borderColor=S.ffagEnabled?'#0e7490':'#1e3a5f';
+    // Apply delta to whatever is currently in the input field, not S.dry (which may be stale)
+    const delta = GATE_LIA_KG - GATE_FFAG_KG; // 414 kg
+    const currentDry = parseFloat(el('inDry').value) || 14413;
+    const newDry = S.ffagEnabled ? currentDry - delta : currentDry + delta;
+    S.dry = newDry;
+    el('inDry').value = Math.round(newDry);
+};
+el('btnPlay').onclick=()=>{
+    if(!S.playing&&S.pulses===0){S.pulses=1;S.pulseTimer=0;}
+    S.playing=!S.playing;
+    if (S.playing) {
+        el('btnPlay').textContent='■ STOP';
+        el('btnPlay').style.color='#f87171';
+        // Hide any auto-pause banner when resuming
+        const b=document.getElementById('pauseBanner');
+        if(b) b.style.display='none';
+    } else {
+        el('btnPlay').textContent='▶ IGNITE';
+        el('btnPlay').style.color='#f59e0b';
+    }
+};
+el('btnSpeed').onclick=()=>{
+    speedIdx=(speedIdx+1)%SPEEDS.length;
+    el('btnSpeed').textContent=SPD_LABEL[speedIdx];
+    _logInterval=speedIdx>=3?100000:speedIdx>=2?10000:1000;
+};
+el('btnReset').onclick=()=>{
+    const _wakeKept = S.wakeEnabled;
+    const _ffagKept = S.ffagEnabled;
+    S.playing=false;
+    el('btnPlay').textContent='▶ IGNITE';
+    el('btnPlay').style.color='#4ade80';
+    speedIdx=0; el('btnSpeed').textContent='1×';
+    // Reset auto-pause flags
+    _wasT7 = false; _wasT8 = false;
+    // Hide any pause banner
+    const b=document.getElementById('pauseBanner');
+    if(b) b.style.display='none';
+    // wake toggle survives reset
+
+    _logTimer=0; _logInterval=1000;
+    init(); initParticles(); _vReady=false; _initViz();
+    // restore toggles that survive reset
+    S.wakeEnabled = _wakeKept;
+    S.ffagEnabled = _ffagKept;
+    // re-sync button visual states
+    el('btnWake').textContent=_wakeKept?'⚡ WAKE: ON':'⚡ WAKE: OFF';
+    el('btnWake').style.color=_wakeKept?'#38bdf8':'#475569';
+    el('btnWake').style.borderColor=_wakeKept?'#0369a1':'#1e3a5f';
+    el('btnFFAG').textContent=_ffagKept?'⬡ GATE: FFAG':'⬡ GATE: LIA';
+    el('btnFFAG').style.color=_ffagKept?'#22d3ee':'#475569';
+    el('btnFFAG').style.borderColor=_ffagKept?'#0e7490':'#1e3a5f';
+};
+el('btnSweep').onclick=runSweep;
+el('btnCSV').onclick=exportCSV;
+el('btnJSON').onclick=exportJSON;
+
+// ═══════════════════════════════════════════════
+// 2D DISTANCE OPTIMISER  (fuel × veins grid)
+// ═══════════════════════════════════════════════
+const AU_PER_LY = 63241.077;   // AU per light-year
+let _optRunning = false;
+
+function runOptimiser() {
+    if (_optRunning) { st('optStatus','Optimiser already running — wait'); return; }
+    if (_sweeping)   { st('optStatus','Sweep in progress — wait for it to finish'); return; }
+
+    const simYears  = parseFloat(el('optYears').value)  || 30;
+    const cSteps    = Math.max(2, Math.min(16, parseInt(el('optCSteps').value) || 8));
+    const dSteps    = Math.max(2, Math.min(12, parseInt(el('optDSteps').value) || 6));
+    const cMin      = Math.max(1, Math.round(parseFloat(el('optCMin').value)  || 1));
+    const cMax      = Math.max(cMin+1, Math.round(parseFloat(el('optCMax').value) || 16));
+    const dMin      = parseFloat(el('optDMin').value)   || 14413;
+    const dMax      = parseFloat(el('optDMax').value)   || 40000;
+    const targetLy  = parseFloat(el('optTarget').value) || 4;
+    const metric    = el('optMetric').value;
+
+    const simSec = simYears * SEC_YR;
+    const dt = 500;  // coarser step for speed across 64+ runs
+    const targetAU = targetLy * AU_PER_LY;
+
+    // Build candle count grid (linear) and dry mass grid (linear)
+    const cVals = [], dVals = [];
+    for (let i = 0; i < cSteps; i++) {
+        const t = i / (cSteps - 1);
+        cVals.push(Math.round(cMin + t * (cMax - cMin)));
+    }
+    for (let i = 0; i < dSteps; i++) {
+        const t = i / (dSteps - 1);
+        dVals.push(Math.round(dMin + t * (dMax - dMin)));
+    }
+    // Derived fuel/vein grids — locked to candles
+    const fVals = cVals.map(c => c * 5000);
+    const vVals = cVals.map(c => c * 240000);
+
+    const totalRuns = cSteps * dSteps;
+    const results = [];   // [{ci, di, candles, fuel, veins, dry, distLy, timeToTargetYr, ratio}]
+    let runIdx = 0;
+
+    _optRunning = true;
+    _sweepFreezeRender = true;
+    el('btnOpt').disabled = true;
+    st('optStatus', `Starting ${totalRuns} runs (${cSteps} candle × ${dSteps} dry-mass steps, ${simYears} yr each)…`);
+
+    const savedS = JSON.parse(JSON.stringify(S));
+
+    function runOne(ci, di) {
+        if (ci >= cSteps) { finishOpt(results, cVals, dVals, fVals, vVals, metric, targetLy, simYears); return; }
+        const nextCi = di + 1 >= dSteps ? ci + 1 : ci;
+        const nextDi = di + 1 >= dSteps ? 0 : di + 1;
+
+        const candles = cVals[ci];
+        const fuel    = fVals[ci];   // candles * 5000
+        const veins   = vVals[ci];   // candles * 240000
+        const dry     = dVals[di];
+
+        // Build fresh sim state from saved snapshot
+        S = JSON.parse(JSON.stringify(savedS));
+        S.playing = false; S.time = 0; S.vel = 0; S.dist = 0;
+        S.fuelKg = fuel; S.fuelMax = fuel; S.T_bulk = T_AMB; S.positronAcc = 0;
+        S.pulses = 1; S.continuous = false; S.pulseTimer = 0;
+        S.E_beam_cumul = 0; S.E_nuclear_cumul = 0; S.E_kinetic = 0;
+        S.E_exhaust_cumul = 0; S.E_thermal_cumul = 0;
+        S.kcoreLife = 1; S.P_gate_base = P_GATE_BASE;
+        S.kcoreRunning = true; S.kcoreLifetimeHrs = 0;
+        S.t6 = false; S.gate_ISMaug = false; S.pearlConsumed = false; S.mdot_abl_last = 0;
+        S.wakeEnabled = savedS.wakeEnabled; S.F_wake_piston = 0;
+        S.ffagEnabled = savedS.ffagEnabled;
+        S.veins = veins;
+        S.dry = dry;
+
+        const iters = Math.ceil(simSec / dt);
+        let t = 0;
+        let timeToTargetYr = null;
+
+        function chunk() {
+            const end = Math.min(t + 8000, iters);
+            for (; t < end; t++) {
+                physics(dt);
+                if (timeToTargetYr === null && S.dist >= targetAU) {
+                    timeToTargetYr = S.time / SEC_YR;
+                }
+            }
+            if (t < iters) {
+                setTimeout(chunk, 0);
+            } else {
+                const distLy = S.dist / AU_PER_LY;
+                const ratio  = distLy / simYears;
+                results.push({
+                    ci, di, candles, fuel, veins, dry, distLy,
+                    timeToTargetYr: timeToTargetYr !== null ? timeToTargetYr : Infinity,
+                    ratio
+                });
+                runIdx++;
+                const pct = runIdx / totalRuns * 100;
+                el('optBar').style.width = pct.toFixed(1) + '%';
+                st('optStatus', `Run ${runIdx}/${totalRuns}  ${candles} candles (${(fuel/1000).toFixed(0)}t · ${(veins/1000).toFixed(0)}k veins) dry=${(dry/1000).toFixed(0)}t → ${distLy.toFixed(3)} ly`);
+                S = JSON.parse(JSON.stringify(savedS));
+                setTimeout(() => runOne(nextCi, nextDi), 0);
+            }
+        }
+        chunk();
+    }
+    runOne(0, 0);
+}
+
+function finishOpt(results, cVals, dVals, fVals, vVals, metric, targetLy, simYears) {
+    _optRunning = false;
+    _sweepFreezeRender = false;
+    el('btnOpt').disabled = false;
+    el('optBar').style.width = '100%';
+    el('optBar').style.background = '#4ade80';
+
+    if (!window.Plotly) { st('optStatus', 'Plotly not loaded'); return; }
+
+    const cSteps = cVals.length, dSteps = dVals.length;
+
+    function _optBetter(a, b, m) {
+        if (m === 'timetoly') return (a.timeToTargetYr < b.timeToTargetYr);
+        if (m === 'ratio')    return (a.ratio > b.ratio);
+        return (a.distLy > b.distLy);
+    }
+
+    // Build z matrix [ci][di] — rows=candles, cols=dry mass
+    const zRaw = Array.from({length: cSteps}, () => new Array(dSteps).fill(null));
+    let bestR = null, baselineR = null;
+    // BL_ = baseline canonical values (3-candle courier mission)
+    const BL_CANDLES = 3, BL_DRY = 14413; // BL_DRY = 14,413 kg dry mass
+
+    results.forEach(r => {
+        let z;
+        if (metric === 'distly')    z = r.distLy;
+        else if (metric === 'ratio') z = r.ratio;
+        else z = r.timeToTargetYr === Infinity ? null : r.timeToTargetYr;
+        zRaw[r.ci][r.di] = z;
+        if (!bestR || _optBetter(r, bestR, metric)) bestR = r;
+        if (!baselineR ||
+            (Math.abs(r.candles - BL_CANDLES) + Math.abs(r.dry - BL_DRY)/1000) <
+            (Math.abs(baselineR.candles - BL_CANDLES) + Math.abs(baselineR.dry - BL_DRY)/1000))
+            baselineR = r;
+    });
+
+    const xLabels = dVals.map(d => (d/1000).toFixed(0)+'t dry');
+    const yLabels = cVals.map(c => c+'×candle');
+    const metricLabel = metric==='distly' ? `Distance (ly) at ${simYears} yr`
+                      : metric==='ratio'  ? `ly per year`
+                      :                     `Years to ${targetLy} ly`;
+
+    const z = zRaw.map(row => row.map(v => v === null ? NaN : v));
+
+    const trace = {
+        type: 'heatmap',
+        x: xLabels, y: yLabels, z,
+        colorscale: metric === 'timetoly' ? 'RdYlGn_r' : 'Viridis',
+        colorbar: {
+            title: {text: metricLabel, font:{color:'#94a3b8',size:9}},
+            tickfont: {color:'#94a3b8', size:8},
+            thickness: 10, len: 0.8
+        },
+        hovertemplate: 'Dry: %{x}<br>Candles: %{y}<br>'+metricLabel+': %{z:.3f}<extra></extra>'
+    };
+
+    const blTrace = {
+        type:'scatter', mode:'markers+text',
+        x:[xLabels[baselineR ? baselineR.di : 0]],
+        y:[yLabels[baselineR ? baselineR.ci : 0]],
+        marker:{symbol:'star',size:14,color:'#facc15',line:{color:'#000',width:1}},
+        text:['BASE'], textposition:'top center',
+        textfont:{color:'#facc15',size:8}, name:'Baseline', showlegend:false
+    };
+
+    const bestTrace = {
+        type:'scatter', mode:'markers+text',
+        x:[xLabels[bestR.di]], y:[yLabels[bestR.ci]],
+        marker:{symbol:'diamond',size:14,color:'#f43f5e',line:{color:'#fff',width:1}},
+        text:['OPT'], textposition:'top center',
+        textfont:{color:'#f43f5e',size:8}, name:'Optimum', showlegend:false
+    };
+
+    const layout = {
+        paper_bgcolor:'#000', plot_bgcolor:'#000',
+        margin:{l:60,r:60,t:24,b:38},
+        font:{color:'#94a3b8', size:8, family:'Courier New'},
+        xaxis:{title:{text:'Dry mass',font:{size:8}}, tickfont:{size:7}, color:'#475569',
+               gridcolor:'#1e293b', showgrid:true},
+        yaxis:{title:{text:'Candle count',font:{size:8}}, tickfont:{size:7}, color:'#475569',
+               gridcolor:'#1e293b', showgrid:true},
+        title:{text: metricLabel + ' — candles × dry-mass optimiser',
+               font:{color:'#f59e0b',size:9}, y:0.98}
+    };
+
+    Plotly.newPlot(el('optHeatmap'), [trace, blTrace, bestTrace], layout, {displayModeBar:false, responsive:true});
+
+    // Top-5 table
+    const sorted = [...results].sort((a,b) => _optBetter(a,b,metric) ? -1 : 1);
+    const top5 = sorted.slice(0,5);
+    const baseDistLy = baselineR ? baselineR.distLy : 0;
+    const baseTime   = baselineR ? baselineR.timeToTargetYr : Infinity;
+
+    let html = `<div style="color:#f59e0b;margin-bottom:3px">◈ TOP 5  (baseline ★ 3 candles / ${(BL_DRY/1000).toFixed(0)}t dry → ${baseDistLy.toFixed(3)} ly`;
+    if (baseTime < Infinity) html += ` / ${baseTime.toFixed(1)} yr to ${targetLy} ly`;
+    html += `)</div>`;
+    html += `<table style="width:100%;border-collapse:collapse">`;
+    html += `<tr style="color:#475569"><td>Rank</td><td>Candles</td><td>Fuel</td><td>Veins</td><td>Dry</td><td>Dist (ly)</td><td>→${targetLy}ly (yr)</td><td>ly/yr</td><td>vs base</td></tr>`;
+    top5.forEach((r, i) => {
+        const deltaLy   = r.distLy - baseDistLy;
+        const deltaSign = deltaLy >= 0 ? '+' : '';
+        const tStr = r.timeToTargetYr < Infinity ? r.timeToTargetYr.toFixed(1) : '—';
+        const isBase = r === baselineR;
+        const isBest = r === bestR;
+        const rowCol = isBest ? '#f43f5e' : isBase ? '#facc15' : '#94a3b8';
+        html += `<tr style="color:${rowCol}">` +
+            `<td>${i===0?'◈':i+1}${isBest?' ♦':isBase?' ★':''}</td>` +
+            `<td>${r.candles}</td>` +
+            `<td>${(r.fuel/1000).toFixed(0)}t</td>` +
+            `<td>${(r.veins/1000).toFixed(0)}k</td>` +
+            `<td>${(r.dry/1000).toFixed(0)}t</td>` +
+            `<td>${r.distLy.toFixed(3)}</td>` +
+            `<td>${tStr}</td>` +
+            `<td>${r.ratio.toFixed(4)}</td>` +
+            `<td>${deltaSign}${deltaLy.toFixed(3)}</td>` +
+            `</tr>`;
+    });
+    html += '</table>';
+    el('optTable').innerHTML = html;
+
+    st('optStatus', `✓ Complete — ${results.length} runs. Best: ${bestR.candles} candles (${(bestR.fuel/1000).toFixed(0)}t / ${(bestR.veins/1000).toFixed(0)}k veins) dry=${(bestR.dry/1000).toFixed(0)}t → ${bestR.distLy.toFixed(3)} ly`);
+}
+
+el('btnOpt').onclick = runOptimiser;
+
+window.onload=()=>{
+    // Minimum dry mass formula (N5 aluminium direct-coupled bus at 0.15 kg/kW):
+    // Fixed hardware (with 20% margin) = 12,979 kg  (constant)
+    // Bus mass = candles × 240,000 veins × 1,207 K × 0.011 W/vein/K / 1000 × 0.15 kg/kW
+    //          = candles × 478 kg  (N5 Al direct-coupled, no PCUs, 1kV panels)
+    // cf. ISS copper at 2.0 kg/kW = 6,373 kg/candle — excluded: includes PCUs at 120V
+    const FIXED_HW_KG  = 12979;
+    const BUS_PER_CANDLE = 478;
+
+    function updateCandleDerived() {
+        const c = Math.max(3, Math.round(parseFloat(el('inCandles').value) / 3) * 3 || 3);
+        el('inCandles').value = c; // snap display to valid multiple
+        // Update fuel/veins label
+        const lbl = el('lblFuelVeins');
+        if (lbl) lbl.textContent = `${(c*5000).toLocaleString()} kg · ${(c*240000).toLocaleString()} veins`;
+        // Update dry mass minimum
+        const dryMin = FIXED_HW_KG + c * BUS_PER_CANDLE;
+        const dryInput = el('inDry');
+        dryInput.min = dryMin;
+        dryInput.title = `Min ${dryMin.toLocaleString()} kg (fixed hardware ${FIXED_HW_KG.toLocaleString()} kg + bus ${(c*BUS_PER_CANDLE).toLocaleString()} kg for ${c} candles)`;
+        // If current value is below minimum, raise it
+        if (parseFloat(dryInput.value) < dryMin) {
+            dryInput.value = dryMin;
+        }
+    }
+
+    el('inCandles').addEventListener('input', updateCandleDerived);
+    updateCandleDerived();  // run once on load to set correct min for default 3 candles
+    init();
+    function waitPlotly(){if(window.Plotly){_initViz();updateSciPlot(true);}else setTimeout(waitPlotly,100);}
+    waitPlotly();
+    loop();
+};
+
+// ── Orbital Insertion Profile Data ──────────────────────────────────
+const OI_DATA = {
+  Moon:     {au:0.00257,  color:'#94a3b8', type:'moon',
+    orb_v:1.022, orb_alt:100, soi:66100, body_r:1737,
+    note:'Low Lunar Orbit insertion. Retrograde burn at periapsis.'},
+  Venus:    {au:0.27,     color:'#fdba74', type:'planet',
+    orb_v:35.0,  orb_alt:300, soi:616000, body_r:6052,
+    note:'Venus Orbit Insertion. Significant aerobraking viable in upper atmosphere.'},
+  Mars:     {au:0.37,     color:'#f87171', type:'planet',
+    orb_v:24.1,  orb_alt:400, soi:577000, body_r:3390,
+    note:'Mars Orbit Insertion. Aerobraking viable (surface pressure 0.6%). Phobos/Deimos staging possible.'},
+  Mercury:  {au:0.52,     color:'#a8a29e', type:'planet',
+    orb_v:47.9,  orb_alt:200, soi:112000, body_r:2440,
+    note:'Mercury Orbit Insertion. No atmosphere; pure propulsive insertion required.'},
+  Helios:   {au:1.0,      color:'#fde047', type:'helio',
+    orb_v:29.78, note:'Earth-Sun L1/L2 halo orbit or 1 AU heliocentric orbit. Solar observation platform. No atmosphere; pure propulsive insertion.'},
+  Belt:     {au:1.7,      color:'#fb923c', type:'helio',
+    orb_v:22.5, note:'Asteroid Belt heliocentric orbit (~1.7 AU semi-major axis). Ceres, Vesta, Pallas targets. Individual asteroid rendezvous requires additional ΔV beyond capture.'},
+  Jupiter:  {au:5.0,      color:'#ca8a04', type:'planet',
+    orb_v:60.2,  orb_alt:600000, soi:48.2e6, body_r:71492,
+    note:'Jupiter Orbit Insertion. Gravity assist from Galilean moons viable for apoapsis lowering.'},
+  Saturn:   {au:9.35,     color:'#eab308', type:'planet',
+    orb_v:35.5,  orb_alt:60000, soi:54.8e6, body_r:60268,
+    note:'Saturn Orbit Insertion. Titan flyby for aerobraking viable (dense N₂ atmosphere).'},
+  Uranus:   {au:18.8,     color:'#67e8f9', type:'planet',
+    orb_v:21.3,  orb_alt:50000, soi:52.0e6, body_r:25559,
+    note:'Uranus Orbit Insertion. Ring plane crossing required.'},
+  Neptune:  {au:30.0,     color:'#60a5fa', type:'planet',
+    orb_v:23.5,  orb_alt:500, soi:86.7e6, body_r:24764,
+    note:'Neptune Orbit Insertion. Triton flyby gravity assist viable for orbit lowering.'},
+  Pluto:    {au:38.5,     color:'#cbd5e1', type:'dwarf',
+    orb_v:1.3,   orb_alt:100, soi:3.1e6, body_r:1188,
+    note:'Pluto System Insertion. Charon gravity assist viable.'},
+  Kuiper:   {au:49,       color:'#818cf8', type:'helio',
+    orb_v:4.24, note:'Kuiper Belt heliocentric orbit (~49 AU). Eris, Makemake, Haumea region. Orbital capture requires retrograde burn relative to solar orbital velocity.'},
+  Helio:    {au:119,      color:'#3b82f6', type:'helio',
+    orb_v:2.72, note:'Heliopause heliocentric orbit (~119 AU). Interstellar boundary science platform. Voyager 1 crossed 2012. Very low solar orbital velocity at this distance.'},
+  Sgl:      {au:649,      color:'#fbbf24', type:'sgl',
+    cruise_c:0.05, arrival_kms:90,
+    note:'Solar Gravitational Lens focal region (550–900 AU). Transit science mode — no orbital insertion. Decelerate to ~90 km/s (20 AU/yr) for pixel imaging.'},
+  Oort:     {au:1e5,      color:'#06b6d4', type:'helio',
+    orb_v:0.297, note:'Oort Cloud heliocentric orbit (~100,000 AU / 1.58 ly). Inner Oort shell science platform. Comet source region. Solar orbital velocity is negligible at this distance — effectively a free insertion.'},
+  Prox:     {au:268270,   color:'#c084fc', type:'star', star_r:0.15,
+    note:'Proxima Centauri system. Contains Proxima Cen b (habitable zone) and Proxima Cen c. Stellar orbit insertion requires full deceleration burn.'},
+  Barnard:  {au:377296,   color:'#fb7185', type:'star', star_r:0.18,
+    note:"Barnard's Star system. High proper motion. No confirmed planets."},
+  Luhman:   {au:412000,   color:'#fcd34d', type:'binary',
+    note:'Luhman 16 — binary brown dwarf system. Nearest non-stellar neighbours.'},
+  WISEJ:    {au:460000,   color:'#a3e635', type:'browndwarf',
+    note:'WISE J0855 — cold brown dwarf, ~250 K surface temperature. Possible planet-sized companion.'},
+  Wolf359:  {au:492000,   color:'#fca5a5', type:'star', star_r:0.16,
+    note:'Wolf 359 — M6 red dwarf. Featured in Star Trek TNG Battle of Wolf 359.'},
+  Sirius:   {au:544000,   color:'#e0f2fe', type:'binary',
+    note:'Sirius A/B binary — brightest star system. Sirius B is a white dwarf.'},
+  Luyten:   {au:563000,   color:'#ddd6fe', type:'star',
+    note:'Luyten 726-8 — binary red dwarf (UV Ceti variables). Nearest flare star system.'},
+  Ross154:  {au:613000,   color:'#6ee7b7', type:'star',
+    note:'Ross 154 — M4 flare star. No confirmed planets.'},
+  Ross248:  {au:651000,   color:'#5eead4', type:'star',
+    note:'Ross 248 — M6 red dwarf. Andromeda project flyby target.'},
+  EpsEri:   {au:664000,   color:'#fdba74', type:'star',
+    note:'ε Eridani — K2 star. Confirmed debris disk. Possible giant planet ε Eri b.'},
+  Lac9352:  {au:677000,   color:'#f9a8d4', type:'star',
+    note:'Lacaille 9352 — M1 red dwarf. Nearest star with confirmed super-Earth.'},
+  Ross128:  {au:696000,   color:'#86efac', type:'star',
+    note:'Ross 128 — M4 red dwarf. Ross 128 b: habitable-zone Earth-mass candidate.'},
+  EZAqr:    {au:702076,   color:'#c4b5fd', type:'triple',
+    note:'EZ Aquarii (Luyten 789-6 / Gliese 866) — nearest triple star system. Three M-dwarf components (A, B, C). 11.1 ly. No confirmed planets.'},
+};
+
+function fmtTimeYr(years){
+  if(years<0.1) return Math.round(years*365)+' days';
+  if(years<2) return years.toFixed(1)+' yr';
+  return Math.round(years)+' yr';
+}
+
+function showOI(key){
+  const d = OI_DATA[key]; if(!d) return;
+  const modal = document.getElementById('oi-modal');
+  const title = document.getElementById('oi-title');
+  const content = document.getElementById('oi-content');
+  const warn = document.getElementById('oi-warn');
+  const note = document.getElementById('oi-note');
+
+  const C_kms = 299792.458;
+  const AU_km = 1.496e8;
+  const v_ship_kms = (typeof S!=='undefined') ? S.vel*C_kms : 0;
+  const dist_AU = (typeof S!=='undefined') ? S.dist : 0;
+  const dist_target = d.au;
+  const remaining_AU = Math.max(0, dist_target - dist_AU);
+  const t_remain_yr = (v_ship_kms > 0.1) ? (remaining_AU * AU_km / v_ship_kms) / 3.156e7 : null;
+
+  let rows = [];
+  let warnText = '';
+
+  // Arrival velocity
+  const v_arr = v_ship_kms > 0 ? v_ship_kms : 74325;
+  rows.push(['Target distance', d.au >= 1e5 ? (d.au/63241).toFixed(2)+' ly' : d.au+' AU']);
+  rows.push(['Current ship velocity', v_ship_kms > 0.01 ? v_ship_kms.toFixed(0)+' km/s ('+
+    (v_ship_kms/C_kms*100).toFixed(3)+'%c)' : '—']);
+  if(t_remain_yr !== null)
+    rows.push(['Time to target', t_remain_yr > 1e6 ? '>1M yr (coasting)' : fmtTimeYr(t_remain_yr)]);
+
+  if(d.type === 'moon' || d.type === 'planet' || d.type === 'dwarf'){
+    const v_orb = d.orb_v;
+    const dv = v_arr - v_orb;
+    const v_ex_kms = 111119; // Stage 5+ exhaust vel
+    const mr = Math.exp(dv / v_ex_kms);
+    const fuel_kg = 14413 * (mr - 1);
+    rows.push(['Orbital velocity at insertion', v_orb.toFixed(1)+' km/s']);
+    rows.push(['ΔV required for capture', dv.toFixed(0)+' km/s']);
+    rows.push(['Capture mass ratio', mr.toFixed(3)+'×']);
+    rows.push(['Fuel for insertion (v_ex=111k)', fuel_kg > 1e6 ? '>1M kg — impractical' :
+      fuel_kg.toFixed(0)+' kg']);
+    if(dv > 5000) warnText = '⚠ ΔV exceeds practical propellant budget at this velocity. '+
+      'Propulsive capture not viable without a dedicated deceleration burn profile. '+
+      'Gravity assist chains (multi-body) or aerobraking (if atmosphere present) reduce ΔV.';
+    if(d.type === 'moon') rows.push(['SOI radius', (d.soi/1000).toFixed(0)+' km']);
+  }
+
+  else if(d.type === 'sgl'){
+    const v_cruise = d.cruise_c * C_kms;
+    const dv = v_cruise - d.arrival_kms;
+    const mr_accel = Math.exp(v_cruise/(111119));
+    const mr_decel = Math.exp(dv/111119);
+    rows.push(['Recommended cruise velocity', v_cruise.toFixed(0)+' km/s ('+
+      (d.cruise_c*100).toFixed(1)+'%c)']);
+    rows.push(['Science transit velocity', d.arrival_kms+' km/s (20 AU/yr)']);
+    rows.push(['ΔV deceleration burn', dv.toFixed(0)+' km/s']);
+    rows.push(['Decel candle requirement', '~1.5 candles (7,500 kg fuel)']);
+    rows.push(['Mission profile', 'Accel (1.5c) → Coast → Decel (1.5c)']);
+    rows.push(['Total timeline to science', '~25–30 years']);
+    rows.push(['Science phase duration', '10–25 years (550→900 AU)']);
+    rows.push(['Payload capacity', '50–100+ tonnes (30-candle truck)']);
+    warnText = '📡 SGL Science Mode: Lateral manoeuvring within 1.3 km image cylinder. '+
+      'K-core NEP (60.5 μN) tracks Jupiter-driven barycentric wobble. '+
+      'Single-aperture lens diameter effective: ~1.2 m at 650 AU.';
+  }
+
+  else if(d.type === 'star' || d.type === 'binary' || d.type === 'browndwarf' || d.type === 'triple'){
+    const v_capture = 30; // km/s for stellar system capture
+    const dv = v_arr - v_capture;
+    const v_ex = 111119;
+    const mr = Math.exp(dv / v_ex);
+    const fuel_kg = 14413 * (mr - 1);
+    const candles = fuel_kg / 5000;
+    rows.push(['Stellar capture velocity', v_capture+' km/s']);
+    rows.push(['ΔV for stellar capture', dv.toFixed(0)+' km/s']);
+    rows.push(['Decel mass ratio', mr.toFixed(3)+'×']);
+    rows.push(['Candles for decel burn', candles.toFixed(1)+' ('+
+      (fuel_kg/1000).toFixed(0)+'t fuel)']);
+    rows.push(['Decel burn duration', '~10–12 years (mirrored accel burn)']);
+    rows.push(['Feasibility', candles <= 3.5 ? '✓ Within 30-candle truck budget' :
+      '⚠ Requires extended candle load']);
+    if(d.star_r) rows.push(['Host star radius', d.star_r+' R☉']);
+    warnText = '🌟 Stellar insertion requires full retrograde deceleration burn. '+
+      '180° spacecraft rotation and second GATE unit (or rotatable mount). '+
+      'Recommend 30-candle truck: 15 candles accel + 15 candles decel → arrival ~22%c cruise.';
+  }
+
+  else if(d.type === 'helio'){
+    const v_orb = d.orb_v || 0;
+    const dv = Math.max(0, v_arr - v_orb);
+    const v_ex = 111119;
+    const mr = Math.exp(dv / v_ex);
+    const fuel_kg = 14413 * (mr - 1);
+    const candles = fuel_kg / 5000;
+    rows.push(['Heliocentric orbital velocity', v_orb.toFixed(2)+' km/s']);
+    rows.push(['ΔV for heliocentric capture', dv.toFixed(0)+' km/s']);
+    rows.push(['Decel mass ratio', mr.toFixed(3)+'×']);
+    rows.push(['Fuel required', fuel_kg.toFixed(0)+' kg (~'+candles.toFixed(1)+' candles)']);
+    rows.push(['Sun distance at orbit', d.au+' AU']);
+    if(dv > 5000) warnText = '⚠ ΔV at cruise velocity makes direct capture impractical. '
+      +'A deceleration burn profile (accel + decel candles) is required. '
+      +'Gravity assist from outer planets can reduce the ΔV budget significantly.';
+    else warnText = '✓ Heliocentric capture feasible. Solar orbital velocity is low at this distance — residual ship velocity greatly exceeds escape velocity. Retrograde burn recommended.';
+  }
+  else {
+    rows.push(['Type', 'Navigation reference']);
+    warnText = 'Reference marker only.';
+  }
+
+  title.textContent = (key === 'Sgl' ? 'SGL' :
+    key === 'Prox' ? 'Proxima Centauri' :
+    key === 'Helio' ? 'Heliopause' :
+    key === 'Barnard' ? "Barnard's Star" :
+    key === 'EpsEri' ? 'ε Eridani' :
+    key === 'Lac9352' ? 'Lacaille 9352' :
+    key) + ' — Insertion Profile';
+  content.innerHTML = rows.map(([k,v])=>
+    `<div class="oi-row"><span class="oi-key">${k}</span><span class="oi-val">${v}</span></div>`
+  ).join('');
+  warn.textContent = warnText;
+  note.textContent = d.note || '';
+  modal.classList.add('open');
+}
+
+// Close on backdrop click
+document.addEventListener('DOMContentLoaded',function(){
+  var m=document.getElementById('oi-modal');
+  if(m) m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+
+</script>
+
+<!-- Orbital Insertion Modal -->
+<div id="oi-modal">
+  <div id="oi-box">
+    <h3 id="oi-title">Orbital Insertion Profile</h3>
+    <div id="oi-content"></div>
+    <div id="oi-warn" class="oi-warn"></div>
+    <div id="oi-note" class="oi-note"></div>
+    <button id="oi-close" onclick="document.getElementById('oi-modal').classList.remove('open')">✕ Close</button>
+  </div>
+</div>
+
+</body>
+</html>
