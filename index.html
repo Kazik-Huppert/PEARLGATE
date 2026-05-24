@@ -37,19 +37,19 @@
 </head>
 <body>
 
-<h1>PEARL‑GATE  · Huppert's 0‑D Model and Mission Simulator  (Pending UK Patent Application GB2522564.0)</h1>
+<h1>SDS-FAR (Spallation-Driven Subcritical Fragment+Ablator Rocket) · 0‑D Model and Simulator</h1>
 <div class="sub">
-<b>Correct physics:</b> trapped fragments ((1‑ε)ṁ_nuc) are swept into the ablator jet.<br>
+<b>Physics:</b> trapped fragments ((1‑ε)ṁ_nuc) are expelled by the ablator jet.<br>
 Jet mass flow = (K + 1‑ε)ṁ_nuc; energy per kg mixture = η·Q_ff / (K + 1‑ε) (Q_ff already contains (1‑ε)).<br>
 v_p = √(2·(E_ab_mix – H_sub)) &nbsp; v_eff = (ε·[γ]·v_ff + (K+1‑ε)·v_p) / (1+K)<br>
-Q_ff = (1‑ε)·(γ‑1)c² (relativistic). K=0 → pure FFR, K&gt;0 → hybrid FFRE+NTR.<br>
-Trajectory: <b>Sprint → Coast → Sprint</b>. Each slider: [min] –slider– [max] – click numbers to edit range.
+Q_ff = (1‑ε)·(γ‑1)c² (relativistic). K=0 → pure FFRE, K&gt;0 → hybrid FFRE+NTR.<br>
+Recommended Trajectory: <b>Sprint → Coast → Break</b>. Each slider: [min] –slider– [max] – click numbers to edit range.
 </div>
 
 <!-- ═══════════ MASS ═══════════ -->
 <div class="sec">1.  MASS</div>
 <div class="srow"><span class="slbl">Dry Mass  (structure + payload + engine)</span><input type="number" class="rbox" id="mn_dry" value="20"><input type="range" id="inDry" min="20" max="37" step="0.1" value="36"><input type="number" class="rbox" id="mx_dry" value="37"><span class="vdisp" id="vDry">36.0</span><span class="unit"> t</span></div>
-<div class="srow"><span class="slbl">Mass Ratio  m_wet / m_dry</span><input type="number" class="rbox" id="mn_mr" value="1.01"><input type="range" id="inMR" min="1.01" max="300" step="0.01" value="4.2"><input type="number" class="rbox" id="mx_mr" value="300"><span class="vdisp" id="vMR">4.20</span></div>
+<div class="srow"><span class="slbl">Mass Ratio  m_wet / m_dry</span><input type="number" class="rbox" id="mn_mr" value="1.01"><input type="range" id="inMR" min="1.01" max="300" step="0.01" value="4.2"><input type="number" class="rbox" id="mx_mr" value="300"><span class="vdisp" id="vMR">2.71828</span></div>
 <div class="rrow"><span class="rlbl">Wet Mass  =  dry × ratio</span><span class="rval" id="oWet">—</span></div>
 <div class="rrow"><span class="rlbl">Total propellant  (wet – dry) = (1+K)×nuc_fuel</span><span class="rval" id="oFuel">—</span></div>
 <div class="rrow"><span class="rlbl">Nuclear fuel mass</span><span class="rval" id="oNuc">—</span></div>
