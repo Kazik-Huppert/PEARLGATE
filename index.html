@@ -350,6 +350,7 @@ function updateAll(){
     setV('oNuc', (d.nuc_mass/1e3).toFixed(4)+' t  ('+d.nuc_mass.toFixed(1)+' kg)');
     setV('oAbl', (d.abl_mass/1e3).toFixed(3)+' t  ('+d.abl_mass.toFixed(0)+' kg)');
     setV('oJetMass', (d.jet_mass/1e3).toFixed(3)+' t  (ablator + trapped fragments)');
+    setV('FreeFragMass', ((d.prop - d.jet_mass)/1000).toFixed(3) + ' t');
 
     setV('oQff', (relMode?'Q_ff = (1−ε)·(γ−1)c² = ':'Q_ff = (1−ε)·v_ff²/2 = ')+
          (d.Q_ff/1e13).toFixed(4)+' ×10¹³ J/kg  ('+(d.Q_ff/1e6).toFixed(0)+' MJ/kg)');
