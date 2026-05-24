@@ -74,6 +74,8 @@ Recommended Trajectory: <b>Sprint → Coast → Break</b>. <br>Each slider: [min
 <div class="rrow"><span class="rlbl">Operating mode</span><span class="rval" id="oMode">—</span></div>
 <div class="rrow"><span class="rlbl">Π₂ = η·Q_ff / (H_sub·(K+1‑ε))  (ablation overheat ratio)</span><span class="rval" id="oPi2">—</span></div>
 <div class="rrow"><span class="rlbl">Π₅ = v_p / v_ff  (jet-to-fragment speed ratio)</span><span class="rval" id="oPi5">—</span></div>
+<div class="srow"><span class="slbl">ADS boot-up power  P_boot</span><input type="number" class="rbox" id="mn_pb" value="2.5"><input type="range" id="inPb" min="2.5" max="15" step="0.001" value="2.5"><input type="number" class="rbox" id="mx_pb" value="15"><span class="vdisp" id="vPb">2.5</span><span class="unit"> MW</span></div>
+<div class="rrow"><span class="rlbl">Startup check</span><span class="rval" id="oBootCheck">—</span></div>
 
 <!-- ═══════════ POWER & THRUST ═══════════ -->
 <div class="sec">3.  THRUST  &amp;  POWER</div>
@@ -91,8 +93,6 @@ Recommended Trajectory: <b>Sprint → Coast → Break</b>. <br>Each slider: [min
 <div class="srow"><span class="slbl">Subcritical  k_eff</span><input type="number" class="rbox" id="mn_ke" value="0.98"><input type="range" id="inKe" min="0.98" max="0.9990" step="0.0001" value="0.991"><input type="number" class="rbox" id="mx_ke" value="0.999"><span class="vdisp" id="vKe">0.9910</span></div>
 <div class="rrow"><span class="rlbl">Subcritical gain  Π₁ = 1/(1‑k_eff)</span><span class="rval" id="oPi1">—</span></div>
 <div class="srow"><span class="slbl">Energy recovery efficiency  η  (Marshak coupling)</span><input type="number" class="rbox" id="mn_eta" value="0"><input type="range" id="inEta" min="0" max="1" step="0.001" value="0.896"><input type="number" class="rbox" id="mx_eta" value="1"><span class="vdisp" id="vEta">0.896</span></div>
-<div class="srow"><span class="slbl">ADS boot-up power  P_boot</span><input type="number" class="rbox" id="mn_pb" value="2.5"><input type="range" id="inPb" min="2.5" max="15" step="0.001" value="2.5"><input type="number" class="rbox" id="mx_pb" value="15"><span class="vdisp" id="vPb">2.5</span><span class="unit"> MW</span></div>
-<div class="rrow"><span class="rlbl">Startup check</span><span class="rval" id="oBootCheck">—</span></div>
 
 <!-- ═══════════ THERMAL MANAGEMENT & BEAM (unchanged) ═══════════ -->
 <div class="sec">3b.  THERMAL MANAGEMENT  &amp;  BEAM</div>
