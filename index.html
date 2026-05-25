@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SDS-FAR (Spallation-Driven Subcritical Fragment+Ablator Rocket) · 0‑D Model and Simulator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; color: #fff; font-family: monospace; font-size: 13px; padding: 16px; }
+  h1  { font-size: 14px; margin-bottom: 2px; }
+  .sub { color: #666; font-size: 11px; margin-bottom: 14px; line-height: 1.7; }
+  .sec { color: #aaa; font-size: 11px; border-bottom: 1px solid #222;
+         margin: 14px 0 6px; padding-bottom: 2px; letter-spacing: 1px; }
+  .srow { display: flex; align-items: center; margin: 3px 0; gap: 5px; }
+  .slbl { width: 290px; flex-shrink: 0; color: #ccc; }
+  .rbox { width: 62px; background: #000; color: #fff; border: 1px solid #333;
+          font-family: monospace; font-size: 12px; text-align: center; padding: 1px 3px; }
+  .rbox:focus { outline: 1px solid #888; }
+  input[type=range] { width: 150px; flex-shrink: 0; }
+  .vdisp { width: 72px; text-align: right; flex-shrink: 0; }
+  .unit  { color: #555; font-size: 11px; }
+  .rrow  { display: flex; margin: 2px 0; }
+  .rlbl  { width: 370px; color: #666; flex-shrink: 0; font-size: 12px; }
+  .rval  { color: #fff; font-size: 12px; }
+  .rval.warn { color: #fa0; }
+  .rval.err  { color: #f55; }
+  button { background: #000; color: #fff; border: 1px solid #444; padding: 4px 12px;
+           cursor: pointer; font-family: monospace; font-size: 12px; margin-right: 6px; }
+  button:hover  { border-color: #fff; }
+  button.active { border-color: #fff; background: #111; }
+  #viz3d { height: 300px; background: #000; border-radius: 4px; overflow: hidden; cursor: grab; margin: 8px 0; }
+  #viz3d:active { cursor: grabbing; }
+  canvas { display: block; border: 1px solid #333; margin: 4px 0; }
+  #status { white-space: pre; font-size: 12px; color: #bbb; line-height: 1.6;
+            border: 1px solid #1a1a1a; padding: 8px; margin-top: 6px; min-height: 80px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<h1>SDS-FAR (Spallation-Driven Subcritical Fragment+Ablator Rocket) · 0‑D Model and Simulator</h1>
+<div class="sub">
+<b>Physics:</b> trapped fragments ((1‑ε)ṁ_nuc) are expelled by the ablator jet.<br>
+Jet mass flow = (K + 1‑ε)ṁ_nuc; energy per kg mixture = η·Q_ff / (K + 1‑ε) (Q_ff already contains (1‑ε)).<br>
+v_p = √(2·(E_ab_mix – H_sub)) &nbsp; v_eff = (ε·[γ]·v_ff + (K+1‑ε)·v_p) / (1+K)<br>
+Q_ff = (1‑ε)·(γ‑1)c² (relativistic). <br>K=0 → pure FFRE (pointless), K&gt;0 → Fragment+Ablator Rocket (upgraded Open Core NTR/AFFRE).<br>
+Recommended Trajectory: <b>Sprint → Coast → Break</b>. <br>Each slider: [min] –slider– [max] – click numbers to edit range.
+</div>
+
+<!-- ═══════════ MASS ═══════════ -->
+<div class="sec">1.  MASS</div>
+<div class="srow"><span class="slbl">Dry Mass  (structure + payload + engine)</span><input type="number" class="rbox" id="mn_dry" value="20"><input type="range" id="inDry" min="20" max="37" step="0.05" value="36.5"><input type="number" class="rbox" id="mx_dry" value="37"><span class="vdisp" id="vDry">36.5</span><span class="unit"> t</span></div>
+<div class="srow"><span class="slbl">Mass Ratio  m_wet / m_dry</span><input type="number" class="rbox" id="mn_mr" value="1.01"><input type="range" id="inMR" min="1.01" max="300" step="0.05" value="2.7"><input type="number" class="rbox" id="mx_mr" value="300"><span class="vdisp" id="vMR">2.7</span></div>
+<div class="rrow"><span class="rlbl">Wet Mass  =  dry × ratio</span><span class="rval" id="oWet">—</span></div>
+<div class="rrow"><span class="rlbl">Total propellant  (wet – dry) = (1+K)×nuc_fuel</span><span class="rval" id="oFuel">—</span></div>
+<div class="rrow"><span class="rlbl">Nuclear fuel mass</span><span class="rval" id="oNuc">—</span></div>
+<div class="rrow"><span class="rlbl">Graphene Ablator mass  = K × nuclear fuel</span><span class="rval" id="oAbl">—</span></div>
+<div class="rrow"><span class="rlbl">Jet mixture mass  = ablator + trapped fragments  (K+1‑ε)×nuc_fuel</span><span class="rval" id="oJetMass">—</span></div>
+<div class="rrow"><span class="rlbl">Free fragments = Total propellant − Jet mixture mass</span><span class="rval" id="FreeFragMass">—</span></div>
+
+<!-- ═══════════ PROPULSION PHYSICS ═══════════ -->
+<div class="sec">2.  PROPULSION  PHYSICS</div>
+<div class="srow"><span class="slbl">Graphene Ablator / Nuclear fuel ratio  K</span><input type="number" class="rbox" id="mn_K" value="1"><input type="range" id="inK" min="1" max="300" step="0.05" value="30"><input type="number" class="rbox" id="mx_K" value="300"><span class="vdisp" id="vK">30.0</span></div>
+<div class="srow"><span class="slbl">Fragment species speed  v_ff</span><input type="number" class="rbox" id="mn_vff" value="3"><input type="range" id="inVff" min="3" max="8" step="0.01" value="4"><input type="number" class="rbox" id="mx_vff" value="8"><span class="vdisp" id="vVff">4.00</span><span class="unit"> %c</span></div>
+<div class="rrow"><span class="rlbl">Q_ff  (deposited KE per kg nuclear fuel, forward hemisphere)</span><span class="rval" id="oQff">—</span></div>
+<div class="rrow"><span class="rlbl">Lorentz factor  γ  (relativistic correction)</span><span class="rval" id="oGamma">—</span></div>
+<div class="srow"><span class="slbl">Fragment Escape Fraction  ε_coll  (0.5 = open isotropic default)</span><input type="number" class="rbox" id="mn_ec" value="0.49"><input type="range" id="inEc" min="0.49" max="0.51" step="0.01" value="0.5"><input type="number" class="rbox" id="mx_ec" value="0.51"><span class="vdisp" id="vEc">0.50</span></div>
+<div class="rrow"><span class="rlbl">Escaping fragment power  ε·P_nuc  → thrust</span><span class="rval" id="oPesc">—</span></div>
+<div class="rrow"><span class="rlbl">Trapped fragment power  (1‑ε)·P_nuc  → ablator mixture</span><span class="rval" id="oPtrap">—</span></div>
+<div class="srow"><span class="slbl">Graphene Ablator Sublimation enthalpy  H_sub</span><input type="number" class="rbox" id="mn_hs" value="47"><input type="range" id="inHs" min="47" max="60" step="1" value="59.7"><input type="number" class="rbox" id="mx_hs" value="60"><span class="vdisp" id="vHs">59.7</span><span class="unit"> MJ/kg</span></div>
+<div class="rrow"><span class="rlbl">E_ab_mix = η·Q_ff / (K+1‑ε)  (energy per kg of jet mixture)</span><span class="rval" id="oEab">—</span></div>
+<div class="rrow"><span class="rlbl">Jet speed  v_p = √(2·max(0, E_ab_mix – H_sub))</span><span class="rval" id="oVp">—</span></div>
+<div class="rrow"><span class="rlbl">v_eff = (ε·[γ]·v_ff + (K+1‑ε)·v_p) / (1+K)</span><span class="rval" id="oVeff">—</span></div>
+<div class="rrow"><span class="rlbl">Δv = v_eff · ln(R)  or  c·tanh(v_eff/c·ln R)</span><span class="rval" id="oDv">—</span></div>
+<div class="rrow"><span class="rlbl">Operating mode</span><span class="rval" id="oMode">—</span></div>
+<div class="rrow"><span class="rlbl">Π₂ = η·Q_ff / (H_sub·(K+1‑ε))  (ablation overheat ratio)</span><span class="rval" id="oPi2">—</span></div>
+<div class="rrow"><span class="rlbl">Π₅ = v_p / v_ff  (jet-to-fragment speed ratio)</span><span class="rval" id="oPi5">—</span></div>
+<div class="srow"><span class="slbl">Energy recovery efficiency  η  (Marshak coupling)</span><input type="number" class="rbox" id="mn_eta" value="0"><input type="range" id="inEta" min="0" max="1" step="0.001" value="0.896"><input type="number" class="rbox" id="mx_eta" value="1"><span class="vdisp" id="vEta">0.896</span></div>
+<div class="srow"><span class="slbl">ADS boot-up power  P_boot</span><input type="number" class="rbox" id="mn_pb" value="2.5"><input type="range" id="inPb" min="2.5" max="15" step="0.001" value="13"><input type="number" class="rbox" id="mx_pb" value="15"><span class="vdisp" id="vPb">13.000</span><span class="unit"> MW</span></div>
+<div class="rrow"><span class="rlbl">Startup check</span><span class="rval" id="oBootCheck">—</span></div>
+
+<!-- ═══════════ THRUST & POWER ═══════════ -->
+<div class="sec">3.  THRUST  &amp;  POWER</div>
+<div class="rrow"><span class="rlbl">Nuclear Fuel Mass Flow  ṁ_nuc  (derived from P_boot)</span><span class="rval" id="oMdotNuc">—</span></div>
+<div class="rrow"><span class="rlbl">Nuclear power  P_nuc = ṁ_nuc · (γ‑1)c²</span><span class="rval" id="oPnuc">—</span></div>
+<div class="rrow"><span class="rlbl">Beam power required  (= P_boot, TEGs must match)</span><span class="rval" id="oPbeamReq">—</span></div>
+<div class="rrow"><span class="rlbl">Fragment thrust  F_ff = ε·ṁ_nuc·[γ]·v_ff</span><span class="rval" id="oFff">—</span></div>
+<div class="rrow"><span class="rlbl">Jet thrust  F_jet = (K+1‑ε)·ṁ_nuc·v_p</span><span class="rval" id="oFabl">—</span></div>
+<div class="rrow"><span class="rlbl">Total thrust  F_tot</span><span class="rval" id="oFtot">—</span></div>
+<div class="rrow"><span class="rlbl">Total mass flow  ṁ_tot = (1+K)·ṁ_nuc</span><span class="rval" id="oMtot">—</span></div>
+<div class="rrow"><span class="rlbl">Jet mass flow  (K+1‑ε)·ṁ_nuc</span><span class="rval" id="oMabl">—</span></div>
+<div class="rrow"><span class="rlbl">Burn time  (propellant / ṁ_tot)</span><span class="rval" id="oBt">—</span></div>
+<div class="rrow"><span class="rlbl">Initial acceleration  F_tot / m_wet</span><span class="rval" id="oAcc0">—</span></div>
+<div class="rrow"><span class="rlbl">Final acceleration   F_tot / m_dry</span><span class="rval" id="oAccF">—</span></div>
+<div class="srow"><span class="slbl">Subcritical  k_eff</span><input type="number" class="rbox" id="mn_ke" value="0.98"><input type="range" id="inKe" min="0.98" max="0.9990" step="0.0001" value="0.991"><input type="number" class="rbox" id="mx_ke" value="0.999"><span class="vdisp" id="vKe">0.9910</span></div>
+<div class="rrow"><span class="rlbl">Subcritical gain  Π₁ = 1/(1‑k_eff)</span><span class="rval" id="oPi1">—</span></div>
+
+<!-- ═══════════ THERMAL MANAGEMENT & BEAM ═══════════ -->
+<div class="sec">3b.  THERMAL MANAGEMENT  &amp;  BEAM</div>
+<div class="rrow"><span class="rlbl">Ablator-coupled power  η·P_trapped</span><span class="rval" id="oPabl">—</span></div>
+<div class="rrow"><span class="rlbl">Unmanaged waste heat  (1‑η)·P_trapped</span><span class="rval" id="oPunman">—</span></div>
+<div class="srow"><span class="slbl">TEG Figure of Merit  ZT</span><input type="number" class="rbox" id="mn_zt" value="0.1"><input type="range" id="inZT" min="0.1" max="6.0" step="0.1" value="2.9"><input type="number" class="rbox" id="mx_zt" value="6.0"><span class="vdisp" id="vZT">2.90</span></div>
+<div class="srow"><span class="slbl">Radiator Specific Mass</span><input type="number" class="rbox" id="mn_rsm" value="50"><input type="range" id="inRSM" min="50" max="2000" step="10" value="300"><input type="number" class="rbox" id="mx_rsm" value="2000"><span class="vdisp" id="vRSM">300</span><span class="unit"> kg/MW</span></div>
+<div class="srow"><span class="slbl">Max Radiator / Structure Temp</span><input type="number" class="rbox" id="mn_tmax" value="500"><input type="range" id="inTmax" min="500" max="4000" step="50" value="2000"><input type="number" class="rbox" id="mx_tmax" value="4000"><span class="vdisp" id="vTmax">2000</span><span class="unit"> K</span></div>
+<div class="rrow"><span class="rlbl">Radiator equilibrium temp  T_hot</span><span class="rval" id="oTrad">—</span></div>
+<div class="rrow"><span class="rlbl">TEG efficiency  η_TEG</span><span class="rval" id="oEtaTEG">—</span></div>
+<div class="rrow"><span class="rlbl">TEG power recovered</span><span class="rval" id="oPTEG">—</span></div>
+<div class="rrow"><span class="rlbl">Heat rejected to radiators</span><span class="rval" id="oQrej">—</span></div>
+<div class="rrow"><span class="rlbl">Radiator mass / area</span><span class="rval" id="oRadMA">—</span></div>
+<div class="srow"><span class="slbl">Beam Power Fraction of TEG output</span><input type="number" class="rbox" id="mn_bf" value="0.95"><input type="range" id="inBF" min="0.95" max="0.99" step="0.001" value="0.99"><input type="number" class="rbox" id="mx_bf" value="0.99"><span class="vdisp" id="vBF">0.990</span></div>
+<div class="rrow"><span class="rlbl">Power allocated to beam</span><span class="rval" id="oPbeamTEG">—</span></div>
+<div class="rrow"><span class="rlbl">Power to other systems</span><span class="rval" id="oPsys">—</span></div>
+<div class="rrow"><span class="rlbl">Self-sustaining ratio  Π₃ = P_TEG·f / P_beam</span><span class="rval" id="oSSR">—</span></div>
+<div class="srow"><span class="slbl">Beam Current / Energy Ratio</span><input type="number" class="rbox" id="mn_br" value="0.00001"><input type="range" id="inBR" min="0.00001" max="0.001" step="0.000001" value="0.00042"><input type="number" class="rbox" id="mx_br" value="0.001"><span class="vdisp" id="vBR">0.000420</span><span class="unit"> A/GeV</span></div>
+<div class="rrow"><span class="rlbl">Beam energy</span><span class="rval" id="oEGeV">—</span></div>
+<div class="rrow"><span class="rlbl">Beam current</span><span class="rval" id="oIamp">—</span></div>
+<div class="rrow" style="margin-top:6px;"><span class="rlbl" style="color:#aaa;">── Antimatter generation thresholds ──</span></div>
+<div class="rrow"><span class="rlbl">e⁺ (positron)</span><span class="rval" id="oThreshE">1.022 MeV</span></div>
+<div class="rrow"><span class="rlbl">p̄ (antiproton)</span><span class="rval" id="oThreshP">5.6296 GeV</span></div>
+<div class="rrow"><span class="rlbl">n̄ (antineutron)</span><span class="rval" id="oThreshN">5.6394 GeV</span></div>
+<div class="rrow"><span class="rlbl">Antimatter status</span><span class="rval" id="oAMstatus">—</span></div>
+<div class="rrow"><span class="rlbl">LiH consumption rate</span><span class="rval" id="oLiHcons">—</span></div>
+<div class="rrow"><span class="rlbl">LiH required for mission</span><span class="rval" id="oLiHreq">—</span></div>
+
+<!-- ═══════════ MISSION ═══════════ -->
+<div class="sec">4.  MISSION TRAJECTORY  — Sprint → Coast → Sprint</div>
+<div class="srow"><span class="slbl">Destination Distance</span><input type="number" class="rbox" id="mn_au" value="100"><input type="range" id="inAU" min="100" max="269000" step="1" value="550"><input type="number" class="rbox" id="mx_au" value="269000"><span class="vdisp" id="vAU">550</span><span class="unit"> AU</span></div>
+<div class="srow"><span class="slbl">Arrival speed</span><span style="color:#555;font-size:11px;width:52px;text-align:right;flex-shrink:0;">0</span><input type="range" id="inVa" min="0" max="652" step="1" value="100"><span class="unit" id="vVaMax" style="width:52px;flex-shrink:0;">—km/s</span><span class="vdisp" id="vVa">100</span><span class="unit"> km/s</span></div>
+<div class="srow"><span class="slbl">Mission Duration  (target transit time)</span><input type="number" class="rbox" id="mn_md" value="0.5"><input type="range" id="inMD" min="0.5" max="50" step="0.1" value="5"><input type="number" class="rbox" id="mx_md" value="50"><span class="vdisp" id="vMD">5.0</span><span class="unit"> yr</span></div>
+<div class="rrow"><span class="rlbl">Cruise speed at flip  (Δv + v_arr)/2</span><span class="rval" id="oCruise">—</span></div>
+<div class="rrow"><span class="rlbl">Δv split (accel / decel)</span><span class="rval" id="oDvSplit">—</span></div>
+<div class="rrow"><span class="rlbl">Phase durations  (accel / coast / decel)</span><span class="rval" id="oPhases">—</span></div>
+<div class="rrow"><span class="rlbl">Total transit time</span><span class="rval" id="oTransit">—</span></div>
+<div class="rrow"><span class="rlbl">Mission duration check</span><span class="rval" id="oSGL">—</span></div>
+
+<!-- ═══════════ ANIMATION ═══════════ -->
+<div class="sec">5.  ANIMATION</div>
+<div class="srow"><span class="slbl">Time warp  10^<span id="vWexp">7.00</span> = <span id="vWfmt">10.0M</span>×</span><input type="number" class="rbox" id="mn_wp" value="1"><input type="range" id="inWp" min="1" max="9.5" step="0.01" value="7"><input type="number" class="rbox" id="mx_wp" value="9.5"></div>
+<div style="margin:12px 0; display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+  <button id="btnStart">▶ Start</button>
+  <button id="btnReset">↺ Reset</button>
+  <button id="btnToggle">⚙ PHYSICS</button>
+  <button id="btnRel">γ RELATIVISTIC</button>
+  <div style="color:#555; font-size:11px; max-width:480px; line-height:1.6;">
+    <b style="color:#888;">CLOCK</b>: missionTime advances by realDt×warp — CPU‑dependent.<br>
+    <b style="color:#888;">PHYSICS</b>: missionTime advances by (1/60 s)×warp — repeatable.<br>
+    <b style="color:#888;">CLASSICAL</b>: Q_ff=v²/4, F=½ṁv, Δv=v_eff·ln(R).<br>
+    <b style="color:#888;">RELATIVISTIC</b>: Q_ff=(γ‑1)c², F=½ṁγv, Δv=c·tanh(v_eff/c·ln(R)).
+  </div>
+</div>
+<div id="viz3d"></div>
+<canvas id="cvs" width="720" height="56"></canvas>
+<div id="status">Press Start to begin.</div>
+
+<script>
+const C=299792458, AU_M=1.496e11, FSTEP=1/60;
+let running=false, clockMode=false, relMode=true, missionTime=0, lastRAF=null;
+
+const vizS={on:false,paused:false,f:0,fMax:1,v:0,reg:1,vArr:0,dv:0};
+let vizScene,vizCam,vizRen,vizReady=false;
+let vizCandleMeshes=[],vizCandleGlows=[],vizPadMeshes=[];
+let vizOuterSphere,vizInnerLocus,vizP2Line,vizWakeRings=[],vizFunnel;
+let vizBeamParticles=[],vizIsmParticles=[],vizAnimTime=0;
+let _csm=null,_cgm=null,_vLTs=0;
+const vPI=Math.PI,vCo=Math.cos,vSi=Math.sin;
+const _r=4,_half=5.3,_fcl=12,_fR=7.2,_fMouth=_half+3.5;
+const _rSz=_r/Math.sqrt(3),_hAft=-_half,_hRad=4.5;
+const _ang=[vPI/6,5*vPI/6,3*vPI/2];
+const _rBases=_ang.map(a=>[_hAft,_rSz*vCo(a),_rSz*vSi(a)]);
+const _aC=new THREE.Vector3(),_aR={value:0};
+const _BB=[{t:0,c:new THREE.Color('#000')},{t:.15,c:new THREE.Color('#1a0000')},
+           {t:.3,c:new THREE.Color('#660000')},{t:.5,c:new THREE.Color('#ff2200')},
+           {t:.75,c:new THREE.Color('#ffaa00')},{t:.9,c:new THREE.Color('#ffeeaa')},
+           {t:1,c:new THREE.Color('#fff')}];
+
+const el=id=>document.getElementById(id);
+const get=id=>parseFloat(el(id).value);
+const cvs=el('cvs');
+const ctx=cvs.getContext('2d');
+
+function setV(id,txt,cls){const e=el(id);if(!e)return;e.textContent=txt;e.className='rval'+(cls?' '+cls:'');}
+function fmtTime(s){if(!isFinite(s)||s<0)return '—';if(s<3600)return s.toFixed(0)+' s';if(s<86400)return (s/3600).toFixed(2)+' hr';if(s<3.156e7)return (s/86400).toFixed(2)+' days';return (s/3.156e7).toFixed(4)+' yr';}
+function fmtDays(s){return isFinite(s)&&s>=0?(s/86400).toFixed(1)+' d':'—';}
+function fmtPow(v){if(!isFinite(v))return '—';if(v>=1e12)return (v/1e12).toFixed(3)+' TW';if(v>=1e9)return (v/1e9).toFixed(3)+' GW';if(v>=1e6)return (v/1e6).toFixed(3)+' MW';if(v>=1e3)return (v/1e3).toFixed(3)+' kW';return v.toFixed(3)+' W';}
+
+function draw(prog,phase){
+    const W=cvs.width,H=cvs.height;
+    ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,255,255,0.2)';
+    for(let i=0;i<90;i++)ctx.fillRect((i*137.5*7.3)%W,(i*97.3*4.1)%(H-10),1,1);
+    const sx=Math.round(Math.max(8,Math.min(W-14,prog*(W-22)+8)));
+    if(phase==='ACCEL'&&prog>0.001){const len=Math.min(sx-8,80),g=ctx.createLinearGradient(sx-len,0,sx,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,0.45)');ctx.fillStyle=g;ctx.fillRect(sx-len,H/2-2,len,4);}
+    if(phase==='DECEL'){const len=Math.min(W-sx-8,60),g=ctx.createLinearGradient(sx,0,sx+len,0);g.addColorStop(0,'rgba(255,255,255,0.45)');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(sx,H/2-2,len,4);}
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(sx,H/2-3,4,0,2*Math.PI);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.setLineDash([2,5]);
+    ctx.beginPath();ctx.moveTo(W-10,3);ctx.lineTo(W-10,H-9);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#888';ctx.font='8px monospace';ctx.fillText('DEST',W-32,11);ctx.fillText(phase,4,H-11);
+    ctx.fillStyle='#111';ctx.fillRect(0,H-7,W,7);ctx.fillStyle='#fff';ctx.fillRect(0,H-7,W*prog,7);
+}
+
+function cascade(){
+    const m_dry = get('inDry')*1e3, mr_in = get('inMR'), m_wet = m_dry*mr_in;
+    const K   = get('inK'), vffPc = get('inVff'), v_ff = vffPc/100*C;
+    const eps = get('inEc'), eta = get('inEta'), H_sub = get('inHs')*1e6, k_eff = get('inKe');
+    const prop = Math.max(0, m_wet - m_dry);
+    const nuc_mass = prop / (1+K);
+    const abl_mass = K * nuc_mass;
+    const jet_mass = (K + 1 - eps) * nuc_mass;
+
+    const gamma   = 1/Math.sqrt(1 - Math.min(0.9999, (v_ff/C)**2));
+    const KE_unit = relMode ? (gamma-1)*C*C : v_ff*v_ff/2;
+    const Q_ff    = (1-eps) * KE_unit;
+
+    const denom_mix = K + 1 - eps;
+    const E_ab_mix = (denom_mix > 0) ? eta * Q_ff / denom_mix : 0;
+    const ablOK = (denom_mix > 0) && (E_ab_mix > H_sub);
+    const v_p = ablOK ? Math.sqrt(2 * (E_ab_mix - H_sub)) : 0;
+
+    const Pi1 = 1/(1 - k_eff);
+    const P_boot = get('inPb')*1e6;
+    const mdot_nuc = KE_unit>0 ? (P_boot * Pi1) / KE_unit : 0;
+    const mdot_jet = denom_mix * mdot_nuc;
+    const mdot_tot = (1+K) * mdot_nuc;
+
+    const P_nuc = mdot_nuc * KE_unit;
+    const P_beam_req = P_boot;
+
+    const v_ff_rel = relMode ? eps * gamma * v_ff : eps * v_ff;
+    const v_eff_out = (v_ff_rel + denom_mix * v_p) / (1+K);
+
+    const ln_R = Math.log(m_wet / m_dry);
+    const delta_v = relMode ? C * Math.tanh(v_eff_out/C * ln_R) : v_eff_out * ln_R;
+
+    const F_ff  = relMode ? eps * mdot_nuc * gamma * v_ff : eps * mdot_nuc * v_ff;
+    const F_jet = mdot_jet * v_p;
+    const F_tot = F_ff + F_jet;
+
+    const burn_t = mdot_tot>0 ? prop / mdot_tot : Infinity;
+    const ff_pct = F_tot>0 ? F_ff/F_tot*100 : 100;
+
+    const P_esc     = eps * P_nuc;
+    const P_trapped = (1-eps) * P_nuc;
+    const P_abl_in  = eta * P_trapped;
+    const P_unman   = (1-eta) * P_trapped;
+
+    const Pi2 = (denom_mix > 0 && H_sub > 0) ? (eta * Q_ff) / (H_sub * denom_mix) : 0;
+    const Pi5 = (v_ff > 0) ? v_p / v_ff : 0;
+
+    const ZT = get('inZT'), rSM = get('inRSM'), T_MAX = get('inTmax'), T_AMB=293;
+    const T_hot_raw = Math.pow(1e6*2 / (5.670374e-8*0.99*rSM), 0.25);
+    const T_hot = Math.min(T_MAX, Math.max(T_AMB+1, T_hot_raw));
+    const overTemp = T_hot_raw > T_MAX;
+    const carnot = Math.max(0, 1 - T_AMB/T_hot);
+    const zt_fac = (Math.sqrt(1+ZT)-1) / (Math.sqrt(1+ZT) + T_AMB/T_hot);
+    const eta_TEG = carnot * zt_fac;
+    const P_TEG = eta_TEG * P_unman;
+    const Q_rej = P_unman - P_TEG;
+    const radMass = Q_rej/1e6 * rSM, radArea = radMass/2;
+
+    const beam_frac = get('inBF');
+    const P_to_beam = P_TEG * beam_frac;
+    const P_to_sys  = P_TEG * (1-beam_frac);
+    const ss_ratio  = P_beam_req>0 ? P_to_beam/P_beam_req : Infinity;
+
+    const bRatio = get('inBR');
+    const E_GeV = bRatio>0 ? Math.sqrt(P_to_beam / (bRatio*1e9)) : 0;
+    const I_A = bRatio * E_GeV;
+    const LIH_PA = 8.028 * 1.6605e-27 / 1.602e-19;
+    const LiH_rate = I_A * LIH_PA;
+    const mission_dur_s = get('inMD')*3.156e7;
+    const LiH_req = LiH_rate * Math.min(burn_t, mission_dur_s);
+
+    const radOverHalf = radMass > m_dry/2;  // warning if radiator alone >50% dry mass
+
+    return {
+        m_dry, m_wet, mr:mr_in, prop, nuc_mass, abl_mass, jet_mass,
+        K, v_ff, vffPc, Q_ff, KE_unit, eps, eta, H_sub, gamma,
+        E_ab_mix, ablOK, v_p, v_eff:v_eff_out, delta_v,
+        Pi1, mdot_nuc, mdot_jet, mdot_tot, P_nuc, P_beam_req,
+        F_ff, F_jet, F_tot, burn_t, ff_pct,
+        P_esc, P_trapped, P_abl_in, P_unman,
+        Pi2, Pi5,
+        T_hot, T_hot_raw, overTemp, eta_TEG, P_TEG, Q_rej, radMass, radArea,
+        beam_frac, P_to_beam, P_to_sys, ss_ratio, radOverHalf,
+        P_boot, boot_ok: P_to_beam>=P_beam_req,
+        E_GeV, I_A, LIH_PA, LiH_rate, LiH_req
+    };
+}
+
+function mission(d){
+    const v_arr = get('inVa')*1e3, tgt_m = get('inAU')*AU_M, dur_yr = get('inMD');
+    if(d.delta_v <= v_arr || !isFinite(d.burn_t) || d.v_eff <= 0) return {ok:false, v_arr, tgt_m, dur_yr};
+    const v_c = (d.delta_v + v_arr)/2;
+    const m1 = d.m_wet * Math.exp(-v_c / d.v_eff);
+    const m2 = m1 * Math.exp(-(v_c-v_arr)/d.v_eff);
+    const bt1 = (d.m_wet - m1) / d.mdot_tot;
+    const bt2 = (m1 - m2) / d.mdot_tot;
+    const x1 = (d.v_eff/d.mdot_tot) * (d.m_wet - m1 - m1*Math.log(d.m_wet/m1));
+    const x2 = v_c*bt2 - (d.v_eff/d.mdot_tot) * (m1 - m2 - m2*Math.log(m1/m2));
+    const x_coast = tgt_m - x1 - x2;
+    if(x_coast < 0) return {ok:false, reason:'overshoot',
+        x1_au:x1/AU_M, x2_au:x2/AU_M, x_total_au:(x1+x2)/AU_M,
+        mdot_min_mgs: d.mdot_nuc * (x1+x2)/tgt_m * 1e6 * 1.001,
+        v_arr, tgt_m, dur_yr, v_c, dv1:v_c, dv2:v_c-v_arr};
+    const t_coast = x_coast / v_c;
+    const total_t = bt1 + t_coast + bt2;
+    return {ok:true, v_arr, tgt_m, dur_yr, v_c, m1, m2, bt1, bt2, x1, x2, x_coast, t_coast, total_t,
+            dv1:v_c, dv2:v_c-v_arr};
+}
+
+function state(t, d, mp){
+    if(!mp||!mp.ok) return {pos:0,vel:0,mass:d.m_wet,phase:'IDLE'};
+    const {v_c, v_arr, m1, m2, bt1, bt2, t_coast, x1, tgt_m} = mp;
+    if(t<=0) return {pos:0,vel:0,mass:d.m_wet,phase:'PRE'};
+    if(t<=bt1){
+        const mass = Math.max(m1, d.m_wet - d.mdot_tot*t);
+        const r = d.m_wet/mass;
+        return {pos:Math.max(0, (d.v_eff/d.mdot_tot)*(d.m_wet-mass-mass*Math.log(r))),
+                vel:d.v_eff*Math.log(r), mass, phase:'ACCEL'};
+    }
+    if(t <= bt1+t_coast){
+        const tc = t-bt1;
+        return {pos: x1 + v_c*tc, vel:v_c, mass:m1, phase:'COAST'};
+    }
+    if(t <= bt1+t_coast+bt2-1e-9){
+        const td = t - bt1 - t_coast;
+        const x_co = x1 + v_c*t_coast;
+        const mass = Math.max(m2, m1 - d.mdot_tot*td);
+        const r = m1/mass;
+        const xd = v_c*td - (d.v_eff/d.mdot_tot)*(m1-mass-mass*Math.log(m1/mass));
+        return {pos:Math.min(tgt_m, x_co+xd), vel:Math.max(v_arr, v_c - d.v_eff*Math.log(r)), mass, phase:'DECEL'};
+    }
+    return {pos:tgt_m, vel:v_arr, mass:m2, phase:'ARRIVED'};
+}
+
+function updateAll(){
+    const d = cascade(), mp = mission(d);
+
+    setV('oWet', (d.m_wet/1e3).toFixed(3)+' t  ('+d.m_wet.toFixed(0)+' kg)');
+    setV('oFuel', (d.prop/1e3).toFixed(3)+' t  ('+d.prop.toFixed(0)+' kg)');
+    setV('oNuc', (d.nuc_mass/1e3).toFixed(4)+' t  ('+d.nuc_mass.toFixed(1)+' kg)');
+    setV('oAbl', (d.abl_mass/1e3).toFixed(3)+' t  ('+d.abl_mass.toFixed(0)+' kg)');
+    setV('oJetMass', (d.jet_mass/1e3).toFixed(3)+' t  (ablator + trapped fragments)');
+    setV('FreeFragMass', ((d.prop - d.jet_mass)/1000).toFixed(3) + ' t');
+
+    setV('oQff', (relMode?'Q_ff = (1−ε)·(γ−1)c² = ':'Q_ff = (1−ε)·v_ff²/2 = ')+
+         (d.Q_ff/1e13).toFixed(4)+' ×10¹³ J/kg  ('+(d.Q_ff/1e6).toFixed(0)+' MJ/kg)');
+    setV('oGamma', 'γ = '+d.gamma.toFixed(6)+'  (γ−1 = '+((d.gamma-1)*1e4).toFixed(2)+' ×10⁻⁴)'+
+         (relMode?'  ← ACTIVE':'  (classical)'), relMode?'':'warn');
+
+    setV('oPesc', fmtPow(d.P_esc)+'  ('+(d.eps*100).toFixed(0)+'% of P_nuc)');
+    setV('oPtrap', fmtPow(d.P_trapped)+'  ('+((1-d.eps)*100).toFixed(0)+'% of P_nuc)');
+
+    if(d.K<=0){
+        setV('oEab','N/A  (K=0: no ablator)'); setV('oVp','N/A');
+    } else {
+        setV('oEab', (d.E_ab_mix/1e6).toFixed(3)+' MJ/kg'+(d.ablOK?'':'  ← BELOW H_sub'), d.ablOK?'':'warn');
+        setV('oVp', d.ablOK?(d.v_p/1e3).toFixed(3)+' km/s':'0  (E_ab < H_sub)', d.ablOK?'':'warn');
+    }
+    setV('oVeff', (d.v_eff/1e3).toFixed(3)+' km/s  ('+(d.v_eff/C*100).toFixed(5)+'% c)');
+    setV('oDv', (d.delta_v/1e3).toFixed(3)+' km/s  ('+(d.delta_v/C*100).toFixed(5)+'% c)');
+
+    const mstr = d.K<=0 ? 'PURE FFR' :
+        d.ff_pct>85 ? 'FFR-DOMINANT' : (100-d.ff_pct)>85 ? 'ABLATOR-DOMINANT' : 'HYBRID';
+    setV('oMode', mstr+'  ('+d.ff_pct.toFixed(0)+'% fragment / '+(100-d.ff_pct).toFixed(0)+'% jet)');
+
+    const pi2 = d.Pi2;
+    setV('oPi2', pi2.toFixed(3)+(pi2>=1?'  ✓ (jet active)':'  ✗ (quenched)'), pi2>=1?'':'warn');
+    const pi5 = d.Pi5;
+    let pi5Note = pi5<0.1?'  ← FFR-dominant':pi5>10?'  ← NTR-dominant':'  ← hybrid';
+    setV('oPi5', pi5.toFixed(4)+pi5Note);
+
+    // Startup check
+    const bootMsg = d.P_to_beam >= d.P_beam_req ?
+        (d.P_boot/1e6).toFixed(3)+' MW boot → '+(d.P_to_beam/1e6).toFixed(3)+' MW TEG ≥ '+(d.P_beam_req/1e6).toFixed(3)+' MW required  ✓' :
+        (d.P_boot/1e6).toFixed(3)+' MW boot → '+(d.P_to_beam/1e6).toFixed(3)+' MW TEG < '+(d.P_beam_req/1e6).toFixed(3)+' MW required  ✗';
+    setV('oBootCheck', bootMsg, d.boot_ok?'':'warn');
+
+    setV('oPi1', d.Pi1.toFixed(1)+'×');
+    setV('oMdotNuc', (d.mdot_nuc*1e6).toFixed(3)+' mg/s  (≈ '+(d.mdot_nuc*1e3).toFixed(4)+' g/s)');
+    setV('oPnuc', fmtPow(d.P_nuc));
+    setV('oPbeamReq', fmtPow(d.P_beam_req)+'  (= P_boot, TEGs must match)');
+    setV('oFff', d.F_ff.toFixed(3)+' N');
+    setV('oFabl', d.F_jet.toFixed(3)+' N');
+    setV('oFtot', d.F_tot.toFixed(3)+' N');
+    setV('oMtot', d.mdot_tot.toExponential(3)+' kg/s  (nuc '+ (d.mdot_nuc*1e6).toFixed(2)+' mg/s + jet '+ (d.mdot_jet*1e6).toFixed(2)+' mg/s)');
+    const jmg = d.mdot_jet*1e6;
+    setV('oMabl', jmg>=1000 ? (jmg/1000).toFixed(3)+' g/s' : jmg.toFixed(3)+' mg/s  (jet)');
+    setV('oBt', fmtTime(d.burn_t)+'  ('+fmtDays(d.burn_t)+')');
+    const g0=9.80665;
+    setV('oAcc0', (d.F_tot/d.m_wet).toFixed(3)+' m/s²  ('+(d.F_tot/d.m_wet/g0).toFixed(4)+' g)');
+    setV('oAccF', (d.F_tot/d.m_dry).toFixed(3)+' m/s²  ('+(d.F_tot/d.m_dry/g0).toFixed(4)+' g)');
+
+    setV('oPabl', fmtPow(d.P_abl_in));
+    setV('oPunman', fmtPow(d.P_unman));
+    setV('oTrad', d.T_hot.toFixed(0)+' K'+(d.overTemp?'  ← EXCEEDS T_MAX':'  ✓'), d.overTemp?'warn':'');
+    setV('oEtaTEG', (d.eta_TEG*100).toFixed(2)+'%');
+    setV('oPTEG', fmtPow(d.P_TEG));
+    setV('oQrej', fmtPow(d.Q_rej));
+    const radPct = d.radMass/d.m_dry*100;
+    setV('oRadMA', d.radMass.toFixed(1)+' kg  /  '+d.radArea.toFixed(1)+' m²'+(d.radOverHalf?'  ⚠ RADIATOR >50% DRY MASS':'  ✓'), d.radOverHalf?'warn':'');
+    setV('oPbeamTEG', fmtPow(d.P_to_beam));
+    setV('oPsys', fmtPow(d.P_to_sys));
+    const ssr = d.ss_ratio;
+    setV('oSSR', isFinite(ssr)? ssr.toFixed(4)+'×  '+(ssr>=1?'✓ TEGs sustain boot power':'⚠ TEGs cannot sustain boot power'):'∞', ssr>=1?'':'warn');
+    setV('oEGeV', d.E_GeV.toFixed(4)+' GeV');
+    setV('oIamp', (d.I_A*1e3).toFixed(4)+' mA');
+    const T_PBAR=5.6296, T_NBAR=5.6394, eg=d.E_GeV;
+    let amS='', amC='';
+    if(eg>=T_NBAR) amS='✓ FULL ANTIMATTER SUITE (p̄ + n̄ + e⁺)';
+    else if(eg>=T_PBAR) amS='✓ p̄ only – n̄ needs +'+((T_NBAR-eg)*1000).toFixed(0)+' MeV';
+    else amS='✗ below p̄ threshold', amC='err';
+    setV('oAMstatus', eg.toFixed(4)+' GeV  '+amS, amC);
+    setV('oLiHcons', (d.LIH_PA*1e9).toFixed(3)+' ng/s per amp');
+    const lih_g = d.LiH_req*1e3;
+    setV('oLiHreq', lih_g>=1000 ? d.LiH_req.toFixed(3)+' kg' : lih_g.toFixed(3)+' g');
+
+    // Mission
+    if(mp.ok){
+        setV('oCruise', (mp.v_c/1e3).toFixed(2)+' km/s');
+        setV('oDvSplit', (mp.dv1/1e3).toFixed(2)+' / '+(mp.dv2/1e3).toFixed(2)+' km/s');
+        setV('oPhases', fmtDays(mp.bt1)+' / '+fmtDays(mp.t_coast)+' / '+fmtDays(mp.bt2));
+        const yr = mp.total_t/3.156e7;
+        setV('oTransit', yr.toFixed(3)+' yr  ('+(mp.total_t/86400).toFixed(0)+' days)');
+        const okDur = yr <= mp.dur_yr;
+        if(okDur) setV('oSGL', yr.toFixed(3)+' yr  ← within '+mp.dur_yr.toFixed(1)+' yr target','');
+        else {
+            const mds = mp.dur_yr*3.156e7;
+            const t_min_s = mp.tgt_m/mp.v_c;
+            const t_min_yr = t_min_s/3.156e7;
+            if(t_min_yr > mp.dur_yr){
+                const vc_need = mp.tgt_m/mds;
+                const dv_need = 2*vc_need - mp.v_arr;
+                const mr_need = d.v_eff>0 ? Math.exp(C/d.v_eff*Math.atanh(Math.min(0.9999, dv_need/C))) : Infinity;
+                setV('oSGL', yr.toFixed(3)+' yr ← Δv insufficient. Need mass ratio ≥ '+mr_need.toFixed(1), 'warn');
+            } else {
+                const bf = (mp.bt1+mp.bt2)/mp.total_t;
+                const mm = d.prop/(mds*(1+d.K));
+                setV('oSGL', yr.toFixed(3)+' yr ← burn-time limited. Increase ṁ_nuc to ≥ '+(mm*1e6).toFixed(1)+' mg/s, burns '+ (bf*100).toFixed(0)+'%', 'warn');
+            }
+        }
+    } else if(mp.reason==='overshoot'){
+        setV('oCruise', (mp.v_c/1e3).toFixed(2)+' km/s (burn distance constraint)');
+        setV('oDvSplit', mp.x_total_au.toFixed(0)+' AU burn > '+get('inAU')+' AU destination');
+        setV('oPhases', 'No coast phase');
+        setV('oTransit', '—');
+        setV('oSGL', 'ṁ_nuc too low. Increase boot power or reduce K/mass ratio', 'warn');
+    } else {
+        ['oCruise','oDvSplit','oPhases','oTransit'].forEach(id=>setV(id,'—'));
+        setV('oSGL', d.delta_v<=get('inVa')*1e3 ? 'Δv ≤ arrival speed' : 'check propulsion', 'warn');
+    }
+
+    const dvKms = Math.floor(d.delta_v/1e3);
+    const vaSlider = el('inVa');
+    const prevMax = parseFloat(vaSlider.max);
+    const wasAtMax = parseFloat(vaSlider.value) >= prevMax-0.5;
+    vaSlider.max = dvKms;
+    el('vVaMax').textContent = dvKms+' km/s';
+    if(wasAtMax) vaSlider.value = dvKms;
+    el('vVa').textContent = Math.round(parseFloat(vaSlider.value));
+
+    return {d, mp};
+}
+
+function warpLabel(){const exp=get('inWp'),w=Math.pow(10,exp);el('vWexp').textContent=exp.toFixed(2);el('vWfmt').textContent=w>=1e9?(w/1e9).toFixed(1)+'B':w>=1e6?(w/1e6).toFixed(1)+'M':w>=1e3?(w/1e3).toFixed(1)+'k':w.toFixed(0);}
+
+function frame(now){
+    if(!lastRAF) lastRAF=now;
+    const realDt = Math.min((now-lastRAF)/1000, 0.15);
+    lastRAF = now;
+    const {d, mp} = updateAll();
+    const warp = Math.pow(10, get('inWp'));
+    if(running){
+        missionTime += (clockMode ? realDt : FSTEP) * warp;
+        const arrivalT = mp.ok ? mp.total_t : null;
+        if(arrivalT!==null && missionTime >= arrivalT){
+            missionTime = arrivalT; running = false;
+            el('btnStart').innerHTML = '▶ Start';
+        }
+    }
+    const st = state(missionTime, d, mp);
+    const tgt_m = mp ? mp.tgt_m : get('inAU')*AU_M;
+    const prog = tgt_m>0 ? Math.min(1, st.pos/tgt_m) : 0;
+    draw(prog, st.phase);
+    el('status').textContent =
+        `[${clockMode?'CLOCK':'PHYSICS'}]  Mission time: ${fmtTime(missionTime)}  |  Progress: ${(prog*100).toFixed(4)}%  |  Phase: ${st.phase}
+Position: ${(st.pos/AU_M).toFixed(5)} AU  /  ${get('inAU')} AU Destination
+Velocity: ${(st.vel/1e3).toFixed(2)} km/s  (${(st.vel/C*100).toFixed(5)}% c)
+Mass:     ${st.mass.toFixed(0)} kg  (burned ${(d.m_wet-st.mass).toFixed(0)} kg of ${d.prop.toFixed(0)} kg propellant)`;
+    if(vizReady){
+        const ff = Math.max(0, Math.min(1, (st.mass-d.m_dry)/Math.max(1,d.prop)));
+        vizS.on = running;
+        vizS.f = ff*d.prop;
+        vizS.fMax = d.prop;
+        vizS.v = st.vel;
+        vizS.vArr = get('inVa')*1e3;
+        vizS.dv = d.delta_v;
+        vizS.reg = st.phase==='ACCEL'?3:st.phase==='DECEL'?4:st.phase==='COAST'?5:st.phase==='ARRIVED'?6:1;
+    }
+    requestAnimationFrame(frame);
+}
+
+function wireRange(mn,sl,mx){
+    el(mn).addEventListener('change',()=>{
+        const s=el(sl); let v=parseFloat(el(mn).value); if(isNaN(v))return;
+        const step=parseFloat(s.step)||0.01;
+        v=Math.min(v, parseFloat(s.max)-step); el(mn).value=v;
+        const prevMin=parseFloat(s.min), prevVal=parseFloat(s.value);
+        const wasAtMin=prevVal<=prevMin+0.5*step;
+        s.min=v; if(wasAtMin||prevVal<v) s.value=v;
+        s.dispatchEvent(new Event('input'));
+    });
+    el(mx).addEventListener('change',()=>{
+        const s=el(sl); let v=parseFloat(el(mx).value); if(isNaN(v))return;
+        const step=parseFloat(s.step)||0.01;
+        v=Math.max(v, parseFloat(s.min)+step); el(mx).value=v;
+        const prevMax=parseFloat(s.max), prevVal=parseFloat(s.value);
+        const wasAtMax=prevVal>=prevMax-0.5*step;
+        s.max=v; if(wasAtMax||prevVal>v) s.value=v;
+        s.dispatchEvent(new Event('input'));
+    });
+}
+[['mn_dry','inDry','mx_dry'],['mn_mr','inMR','mx_mr'],['mn_K','inK','mx_K'],['mn_vff','inVff','mx_vff'],
+ ['mn_ec','inEc','mx_ec'],['mn_eta','inEta','mx_eta'],['mn_hs','inHs','mx_hs'],['mn_ke','inKe','mx_ke'],
+ ['mn_pb','inPb','mx_pb'],['mn_zt','inZT','mx_zt'],
+ ['mn_rsm','inRSM','mx_rsm'],['mn_tmax','inTmax','mx_tmax'],['mn_bf','inBF','mx_bf'],
+ ['mn_br','inBR','mx_br'],['mn_au','inAU','mx_au'],['mn_md','inMD','mx_md'],
+ ['mn_wp','inWp','mx_wp']].forEach(([mn,sl,mx])=>wireRange(mn,sl,mx));
+
+[['inDry','vDry',v=>(+v).toFixed(1)],['inMR','vMR',v=>(+v).toFixed(2)],
+ ['inK','vK',v=>(+v).toFixed(1)],['inVff','vVff',v=>(+v).toFixed(2)],
+ ['inEc','vEc',v=>(+v).toFixed(2)],['inEta','vEta',v=>(+v).toFixed(3)],
+ ['inHs','vHs',v=>Math.round(v)],['inKe','vKe',v=>(+v).toFixed(4)],
+ ['inPb','vPb',v=>(+v).toFixed(3)],
+ ['inZT','vZT',v=>(+v).toFixed(2)],['inRSM','vRSM',v=>Math.round(v)],
+ ['inTmax','vTmax',v=>Math.round(v)],['inBF','vBF',v=>(+v).toFixed(3)],
+ ['inBR','vBR',v=>(+v).toFixed(6)],['inAU','vAU',v=>Math.round(v)],
+ ['inVa','vVa',v=>Math.round(v)],['inMD','vMD',v=>(+v).toFixed(1)]
+].forEach(([id,vid,fmt])=>{el(id).addEventListener('input',()=>{el(vid).textContent=fmt(el(id).value);});});
+el('inWp').addEventListener('input',warpLabel);
+
+el('btnStart').onclick = ()=>{ running=true; lastRAF=null; el('btnStart').innerHTML='⏹ Running…'; };
+el('btnReset').onclick = ()=>{ running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='▶ Start'; draw(0,'PRE'); el('status').textContent='Reset. Press Start to begin.'; };
+el('btnToggle').onclick = ()=>{ clockMode=!clockMode; el('btnToggle').innerHTML = clockMode?'⏱ CLOCK':'⚙ PHYSICS'; el('btnToggle').className=clockMode?'':'active'; lastRAF=null; };
+el('btnRel').onclick = ()=>{ relMode=!relMode; el('btnRel').innerHTML = relMode?'γ RELATIVISTIC':'∼ CLASSICAL'; el('btnRel').className=relMode?'active':''; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='▶ Start'; };
+
+warpLabel();
+el('btnToggle').className='active';
+el('btnRel').className='active';
+updateAll();
+draw(0,'PRE');
+initViz();
+requestAnimationFrame(frame);
+requestAnimationFrame(vizLoop);
+
+// ── 3D VISUALIZATION (unchanged) ─────────────────────────────
+function _gTC(t){t=Math.max(0,Math.min(1,t));for(let i=0;i<_BB.length-1;i++)if(t>=_BB[i].t&&t<=_BB[i+1].t)return _BB[i].c.clone().lerp(_BB[i+1].c,(t-_BB[i].t)/(_BB[i+1].t-_BB[i].t));return _BB[_BB.length-1].c.clone();}
+function _vdot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function _vnrm(v){const l=Math.hypot(v[0],v[1],v[2]);return l<1e-6?[0,0,0]:[v[0]/l,v[1]/l,v[2]/l];}
+function _vcrs(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+const _aS=s=>{s.uniforms.ablationCenter={get value(){return _aC;}};s.uniforms.ablationRadius={get value(){return _aR.value;}};s.vertexShader='varying vec3 vWP;\n'+s.vertexShader;s.vertexShader=s.vertexShader.replace('void main() {','void main(){vWP=(modelMatrix*vec4(position,1.0)).xyz;');s.fragmentShader='uniform vec3 ablationCenter;\nuniform float ablationRadius;\nvarying vec3 vWP;\n'+s.fragmentShader;s.fragmentShader=s.fragmentShader.replace('void main() {','void main(){if(ablationRadius>0.0&&distance(vWP,ablationCenter)<ablationRadius)discard;');};
+function _bSW(base,fD,radius,tLen){const ax=_vnrm(fD),rad=Math.hypot(base[1],base[2]);if(rad<.001)return null;const er=[0,base[1]/rad,base[2]/rad],ad=_vdot(ax,er);let p=[er[0]-ad*ax[0],er[1]-ad*ax[1],er[2]-ad*ax[2]];const pL=Math.hypot(...p);if(pL<.001)return null;p=[p[0]/pL,p[1]/pL,p[2]/pL];const q=_vcrs(ax,p),AR=18,AX=48,vs=[],ix=[];for(let ai=0;ai<=AX;ai++){const t=ai/AX,dd=t*tLen,ct=[base[0]+ax[0]*dd,base[1]+ax[1]*dd,base[2]+ax[2]*dd];vs.push(ct[0],ct[1],ct[2]);for(let ri=0;ri<=AR;ri++){const a=-vPI/3+(ri/AR)*(2*vPI/3);vs.push(ct[0]+radius*(vCo(a)*p[0]+vSi(a)*q[0]),ct[1]+radius*(vCo(a)*p[1]+vSi(a)*q[1]),ct[2]+radius*(vCo(a)*p[2]+vSi(a)*q[2]));}}const st2=AR+2;for(let ai=0;ai<AX;ai++){const r0=ai*st2,r1=(ai+1)*st2;for(let ri=0;ri<AR;ri++){ix.push(r0+1+ri,r1+1+ri,r1+1+ri+1,r0+1+ri,r1+1+ri+1,r0+1+ri+1);}ix.push(r0,r0+1,r1+1,r0,r1+1,r1,r0,r1+1+AR,r0+1+AR,r0,r1,r1+1+AR);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(vs),3));g.setIndex(ix);g.computeVertexNormals();return g;}
+function _bBwl(sC,fD,base,radius,pS=20,aS=24){const eD=[...fD],bC=[sC[0]+eD[0]*radius,sC[1]+eD[1]*radius,sC[2]+eD[2]*radius],rad=Math.hypot(base[1],base[2]);if(rad<.001)return null;const er=[0,base[1]/rad,base[2]/rad],ad=_vdot(fD,er);let p=[er[0]-ad*fD[0],er[1]-ad*fD[1],er[2]-ad*fD[2]];const pL=Math.hypot(...p);if(pL<.001)return null;p=[p[0]/pL,p[1]/pL,p[2]/pL];const q=_vcrs(fD,p),vs=[],ix=[];for(let ip=0;ip<=pS;ip++){const phi=vPI/2+(ip/pS)*(vPI/2),x=radius*vCo(phi),rho=radius*vSi(phi);for(let ia=0;ia<=aS;ia++){const th=-vPI/3+(ia/aS)*(2*vPI/3),y=rho*vCo(th),z=rho*vSi(th);vs.push(bC[0]+x*eD[0]+y*p[0]+z*q[0],bC[1]+x*eD[1]+y*p[1]+z*q[1],bC[2]+x*eD[2]+y*p[2]+z*q[2]);}}for(let ip=0;ip<pS;ip++)for(let ia=0;ia<aS;ia++){const a=ip*(aS+1)+ia,b=a+1,c=(ip+1)*(aS+1)+ia,dv=c+1;ix.push(a,c,b,b,c,dv);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(vs),3));g.setIndex(ix);g.computeVertexNormals();return g;}
+function _wCols(geom,stage,pulse,apX,tMax=null){let tT=0,bT=0;if(tMax!==null){tT=tMax;bT=0;}else if(stage<=2){tT=.75+.25*pulse;bT=stage===1?0:.08;}else if(stage>=3&&stage<=6){tT=1;bT=.15+(stage-3)*.12;}const pos=geom.attributes.position.array,cols=geom.attributes.color?geom.attributes.color.array:new Float32Array(pos.length),rng=_hAft-apX;for(let i=0;i<pos.length/3;i++){const x=pos[i*3];let t=rng===0?1:(_hAft-x)/rng;t=Math.max(0,Math.min(1,t));const c=_gTC(bT+(tT-bT)*Math.pow(t,2.2));cols[i*3]=c.r;cols[i*3+1]=c.g;cols[i*3+2]=c.b;}if(!geom.attributes.color)geom.setAttribute('color',new THREE.BufferAttribute(cols,3));else geom.attributes.color.needsUpdate=true;}
+function _rCdl(stage,ff,residual=false){vizCandleMeshes.forEach(m=>{m.geometry?.dispose();vizScene.remove(m);});vizCandleGlows.forEach(m=>{m.geometry?.dispose();vizScene.remove(m);});vizPadMeshes.forEach(p=>{p.geometry?.dispose();p.material?.dispose();vizScene.remove(p);});vizCandleMeshes=[];vizCandleGlows=[];vizPadMeshes=[];const hasC=(stage>=1&&stage<=6)&&(ff>.01||residual),cLen=_fcl*(hasC?(residual&&ff<=.01?0.04:Math.max(.05,ff)):0),apX=_hAft-cLen,sCX=apX-_rSz*1.1,oR=_rSz*.88;_aC.set(sCX,0,0);_aR.value=hasC?oR:0;if(!_csm){_csm=new THREE.MeshStandardMaterial({color:0x30343d,metalness:.6,roughness:.7,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});_csm.onBeforeCompile=_aS;}if(!_cgm){_cgm=new THREE.MeshBasicMaterial({vertexColors:true,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,side:THREE.DoubleSide});_cgm.onBeforeCompile=_aS;}const pC=new THREE.Color(0x223344).lerp(new THREE.Color(0x00ffff),Math.min(1,Math.max(0,(stage-1)/3.5))),pI=Math.min(1,Math.max(0,(stage-1)/4))*3.5;for(let i=0;i<3;i++){const ca=_ang[i],sw=vPI/2.5,rin=_rSz*.15,rout=_hRad,th=.3,vs=[],ix=[],aS2=24,rS=2;for(let j=0;j<=aS2;j++){const a=ca-sw/2+(j/aS2)*sw,co=vCo(a),si=vSi(a);for(let k=0;k<=rS;k++){const r=rin+(k/rS)*(rout-rin);vs.push(0,r*co,r*si);}}for(let j=0;j<=aS2;j++){const a=ca-sw/2+(j/aS2)*sw,co=vCo(a),si=vSi(a);for(let k=0;k<=rS;k++){const r=rin+(k/rS)*(rout-rin);vs.push(-th,r*co,r*si);}}const vO=(aS2+1)*(rS+1);for(let j=0;j<aS2;j++)for(let k=0;k<rS;k++){const a=j*(rS+1)+k,b=(j+1)*(rS+1)+k,c=b+1,dv=a+1;ix.push(a,b,dv,b,c,dv,vO+a,vO+dv,vO+b,vO+b,vO+dv,vO+c);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(vs),3));g.setIndex(ix);g.computeVertexNormals();vizPadMeshes.push(new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x111520,emissive:pC,emissiveIntensity:Math.max(.25,pI),metalness:.8,roughness:.2,side:THREE.DoubleSide})));vizPadMeshes[vizPadMeshes.length-1].position.x=_hAft;vizScene.add(vizPadMeshes[vizPadMeshes.length-1]);}if(hasC&&cLen>.1){for(let i=0;i<3;i++){const base=_rBases[i],toA=[apX-base[0],-base[1],-base[2]],dA=Math.hypot(...toA),fD=[toA[0]/dA,toA[1]/dA,toA[2]/dA],pL=dA+_rSz*1.5;const wG=_bSW(base,fD,_rSz,pL),bG=_bBwl([apX,0,0],fD,base,_rSz);if(wG){vizScene.add(new THREE.Mesh(wG,_csm));vizCandleMeshes.push(vizScene.children[vizScene.children.length-1]);const gg=wG.clone();_wCols(gg,stage,1,apX,residual?0.12:null);vizScene.add(new THREE.Mesh(gg,_cgm));vizCandleGlows.push(vizScene.children[vizScene.children.length-1]);}if(bG){vizScene.add(new THREE.Mesh(bG,_csm));vizCandleMeshes.push(vizScene.children[vizScene.children.length-1]);const bg=bG.clone();_wCols(bg,stage,1,apX,residual?0.12:null);vizScene.add(new THREE.Mesh(bg,_cgm));vizCandleGlows.push(vizScene.children[vizScene.children.length-1]);}}}if(vizOuterSphere){vizOuterSphere.position.set(sCX,0,0);vizOuterSphere.geometry.dispose();vizOuterSphere.geometry=new THREE.SphereGeometry(oR,32,24);}if(vizInnerLocus)vizInnerLocus.position.set(sCX,0,0);if(vizP2Line){vizP2Line.geometry.dispose();vizP2Line.geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(sCX,0,0),new THREE.Vector3(sCX-4.2,0,0)]);vizP2Line.computeLineDistances();}vizWakeRings.forEach(r=>vizScene.remove(r));vizWakeRings=[];for(let i=0;i<8;i++){const rx=sCX-.5-i*.65,rr=.18+i*.26,pts=[];for(let j=0;j<=42;j++){const a=j/42*vPI*2;pts.push(new THREE.Vector3(rx,vCo(a)*rr,vSi(a)*rr));}const rl=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x44ffff,transparent:true,opacity:0}));vizScene.add(rl);vizWakeRings.push(rl);}return apX;}
+
+function initViz(){
+    const container=el('viz3d');if(!container||typeof THREE==='undefined')return;
+    const w=container.clientWidth||720,h=300;
+    vizScene=new THREE.Scene();vizScene.background=new THREE.Color(0x05070a);vizScene.fog=new THREE.FogExp2(0x05070a,.008);
+    vizCam=new THREE.PerspectiveCamera(36,w/h,.2,280);
+    vizRen=new THREE.WebGLRenderer({antialias:true});vizRen.setSize(w,h);vizRen.setPixelRatio(Math.min(devicePixelRatio,2));
+    container.appendChild(vizRen.domElement);
+    vizScene.add(new THREE.AmbientLight(0x202530,.8));
+    const kl=new THREE.DirectionalLight(0xffffff,1);kl.position.set(8,14,12);vizScene.add(kl);
+    const bl=new THREE.DirectionalLight(0x4466aa,.6);bl.position.set(-10,-5,-10);vizScene.add(bl);
+    const camL=new THREE.DirectionalLight(0xffffff,.4);vizScene.add(camL);
+    window.vizApexLight=new THREE.PointLight(0xffeedd,0,25);vizScene.add(window.vizApexLight);
+    (()=>{const vs=[],ix=[],R=64,A=32;for(let i=0;i<=A;i++){const x=_hAft+(i/A)*_half*2;for(let j=0;j<=R;j++){const a=(j/R)*vPI*2;vs.push(x,_hRad*vCo(a),_hRad*vSi(a));}}for(let i=0;i<A;i++)for(let j=0;j<R;j++){const a=i*(R+1)+j,b=a+1,c=(i+1)*(R+1)+j,dv=c+1;ix.push(a,b,c,b,dv,c);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(vs),3));g.setIndex(ix);g.computeVertexNormals();vizScene.add(new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x202b3a,metalness:.7,roughness:.5,transparent:true,opacity:.65,side:THREE.DoubleSide})));})();
+    const cg=new THREE.CylinderGeometry(_fR,0,_fMouth,64,32,false);cg.rotateZ(-vPI/2);
+    vizFunnel=new THREE.Mesh(cg,new THREE.MeshStandardMaterial({color:0x8b5cf6,emissive:0x2a1a4a,transparent:true,opacity:.075,side:THREE.DoubleSide,depthWrite:false}));
+    vizFunnel.position.set(_fMouth/2,0,0);vizScene.add(vizFunnel);
+    const bpG=new THREE.SphereGeometry(.07,5,5);
+    for(let i=0;i<100;i++){const m=new THREE.Mesh(bpG,new THREE.MeshStandardMaterial({color:0x44ddff,emissive:0x88eeff,emissiveIntensity:1}));vizScene.add(m);vizBeamParticles.push({mesh:m,distance:Math.random()*40,speed:15+Math.random()*15});}
+    vizOuterSphere=new THREE.Mesh(new THREE.SphereGeometry(_rSz,32,24),new THREE.MeshStandardMaterial({color:0xffaa44,emissive:0xff6622,emissiveIntensity:.5,transparent:true,opacity:0,side:THREE.DoubleSide}));vizScene.add(vizOuterSphere);
+    vizInnerLocus=new THREE.Mesh(new THREE.SphereGeometry(.32,32,24),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:3}));vizScene.add(vizInnerLocus);
+    vizP2Line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(-4.2,0,0)]),new THREE.LineBasicMaterial({color:0x88ffcc,transparent:true,opacity:0}));vizP2Line.computeLineDistances();vizScene.add(vizP2Line);
+    const ismG=new THREE.SphereGeometry(.058,6,6);
+    for(let i=0;i<48;i++){const sx=_fMouth*(.2+.8*Math.random()),t2=sx/_fMouth,mr=_fR*t2,r=Math.sqrt(Math.random())*mr,a=Math.random()*vPI*2;const m=new THREE.Mesh(ismG,new THREE.MeshStandardMaterial({color:0x66ccff,emissive:0x44aaff,emissiveIntensity:.8,transparent:true,opacity:.7}));m.position.set(sx,vCo(a)*r,vSi(a)*r);vizScene.add(m);vizIsmParticles.push({mesh:m,x:sx,nr:r/(mr||1),a,sf:.7+Math.random()*.9});}
+    let drag=false,mpx=0,mpy=0,theta=2.25,phi=.48,dist=54;
+    function uCam(){vizCam.position.set(dist*vSi(phi)*vCo(theta),dist*vCo(phi),dist*vSi(phi)*vSi(theta));vizCam.lookAt(0,0,0);camL.position.copy(vizCam.position);}
+    const cvEl=vizRen.domElement;
+    cvEl.style.touchAction='none';
+    cvEl.addEventListener('pointerdown',e=>{drag=true;mpx=e.clientX;mpy=e.clientY;cvEl.setPointerCapture(e.pointerId);cvEl.style.cursor='grabbing';});
+    cvEl.addEventListener('pointermove',e=>{if(!drag)return;theta-=(e.clientX-mpx)*.005;phi=Math.max(.12,Math.min(vPI-.12,phi-(e.clientY-mpy)*.005));mpx=e.clientX;mpy=e.clientY;uCam();});
+    cvEl.addEventListener('pointerup',()=>{drag=false;cvEl.style.cursor='grab';});
+    cvEl.addEventListener('pointercancel',()=>{drag=false;cvEl.style.cursor='grab';});
+    cvEl.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(7,Math.min(112,dist+e.deltaY*.045));uCam();},{passive:false});
+    uCam();vizReady=true;
+}
+
+function updateViz(dt){if(!vizReady)return;const stage=vizS.reg,ff=Math.max(0,Math.min(1,vizS.f/Math.max(1,vizS.fMax)));const isDepl=ff<=0.01;const vSt=(vizS.f>100&&stage===6)?1:stage,hasF=vSt>=1&&vSt<=6&&ff>.01;_rCdl(vSt,ff,isDepl);const showSph=hasF&&(vSt===3||vSt===4);vizOuterSphere.visible=showSph;if(showSph&&stage>=3){vizInnerLocus.visible=true;vizInnerLocus.material.emissiveIntensity=4;vizOuterSphere.material.emissiveIntensity=1.5;vizOuterSphere.material.opacity=.65;}else if(showSph){vizInnerLocus.visible=true;vizOuterSphere.material.emissiveIntensity=.5;vizOuterSphere.material.opacity=0;}else{vizInnerLocus.visible=false;vizOuterSphere.material.emissiveIntensity=0;}const beamOn=stage!==7&&stage>=2&&vizS.v>0;if(beamOn){const exL=40;vizBeamParticles.forEach(bp=>{bp.mesh.visible=true;bp.distance+=dt*bp.speed;if(bp.distance>exL)bp.distance=0;bp.mesh.position.x=-bp.distance;const t=bp.distance/exL;bp.mesh.material.emissiveIntensity=Math.max(0.2,1-t);bp.mesh.scale.setScalar(0.3+0.7*(1-t));});}else vizBeamParticles.forEach(bp=>bp.mesh.visible=false);const ismV=stage!==7&&stage>=2;vizFunnel.visible=ismV;vizIsmParticles.forEach(p=>{p.mesh.visible=ismV;if(!ismV)return;const sp=(.9+(_fR-.9)*(1-p.x/_fMouth))*p.sf;p.x-=sp*dt;if(p.x<=0){p.x=_fMouth;const r=Math.sqrt(Math.random())*_fR,a=Math.random()*vPI*2;p.nr=r/_fR;p.a=a;p.sf=.7+Math.random()*.9;}const mr=_fR*(p.x/_fMouth),r=p.nr*mr;p.mesh.position.set(p.x,vCo(p.a)*r,vSi(p.a)*r);const pr=1-(p.x/_fMouth),ion=Math.pow(pr,1.2);const bC=new THREE.Color(0x66ccff),iC=new THREE.Color(0xffffff);p.mesh.material.color.copy(bC).lerp(iC,ion);p.mesh.material.emissive.copy(bC).lerp(iC,ion);p.mesh.material.emissiveIntensity=.8+12*Math.pow(ion,.7);p.mesh.material.opacity=.5+.5*pr;p.mesh.scale.setScalar(.8+.8*ion);});if((stage===3||stage===4)&&showSph){const CY=.28,cyc=(vizAnimTime%CY)/CY,isP1=cyc<.5,ph=isP1?cyc/.5:(cyc-.5)/.5;const p1=isP1?.5+.5*vSi(ph*vPI):Math.max(0,1-ph*2.8),p2=isP1?0:.5+.5*vSi(ph*vPI);vizInnerLocus.material.emissiveIntensity=3+3*p1;vizOuterSphere.material.opacity=.3+.4*p1;vizOuterSphere.material.emissiveIntensity=.8+1.5*p1;vizP2Line.material.opacity=.9*p2;vizWakeRings.forEach(l=>l.material.opacity=p2*1.2);}else{vizP2Line.material.opacity=0;vizWakeRings.forEach(l=>l.material.opacity=0);}window.vizApexLight.intensity=hasF&&(stage===3||stage===4)?2+stage*1.5:0;vizRen.render(vizScene,vizCam);}
+function vizLoop(now){requestAnimationFrame(vizLoop);if(!vizReady)return;const dt=Math.min(.033,(now-_vLTs)/1000);_vLTs=now;vizAnimTime+=dt;updateViz(dt);}
+</script>
+</body>
+</html>
