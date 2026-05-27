@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEARL-GATE · SDS-FAR: Mission Physics Companion v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg:       #070d15;
+    --surface:  #0d1825;
+    --border:   #1a2e44;
+    --accent:   #00c8ff;
+    --gold:     #f4c542;
+    --green:    #00ff88;
+    --red:      #ff4455;
+    --muted:    #4a7090;
+    --text:     #c8dcea;
+    --head:     #e8f4ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    padding: 2rem 1rem;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  /* ── HEADER ── */
+  .masthead {
+    border-left: 4px solid var(--gold);
+    padding: 1.2rem 1.6rem;
+    background: linear-gradient(135deg, #0d1825 0%, #071020 100%);
+    border-radius: 0 12px 12px 0;
+    margin-bottom: 2rem;
+  }
+  .masthead h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.5rem;
+    color: var(--head);
+    letter-spacing: 0.04em;
+    margin-bottom: 0.3rem;
+  }
+  .masthead .sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .badge {
+    display: inline-block;
+    background: #0d1825;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.2rem 0.7rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    margin: 0.5rem 0.3rem 0 0;
+  }
+
+  /* ── SECTIONS ── */
+  h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.4rem;
+    margin: 2.5rem 0 1rem;
+  }
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 1.6rem 0 0.6rem;
+  }
+  h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--head);
+    margin: 1.2rem 0 0.4rem;
+  }
+
+  p { margin: 0.7rem 0; color: var(--text); }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+  }
+  th {
+    background: #0d1825;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  td {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+  }
+  tr:nth-child(even) td { background: #0a1520; }
+  td strong { color: var(--head); }
+  td .val { color: var(--green); font-family: 'IBM Plex Mono', monospace; }
+  td .warn { color: var(--gold); }
+  td .new  { color: var(--accent); font-size: 0.78rem; }
+
+  /* ── CODE / EQUATION BLOCKS ── */
+  .eq {
+    background: #060d16;
+    border-left: 3px solid var(--accent);
+    padding: 0.8rem 1.2rem;
+    border-radius: 0 8px 8px 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.83rem;
+    color: #a0d4f0;
+    margin: 0.8rem 0;
+    white-space: pre-wrap;
+    line-height: 1.8;
+  }
+  .eq .comment { color: var(--muted); }
+
+  /* ── CALLOUT BOXES ── */
+  .note {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    background: #0d1825;
+    border-radius: 0 8px 8px 0;
+    padding: 0.9rem 1.2rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  .note.gold  { border-left-color: var(--gold); }
+  .note.green { border-left-color: var(--green); }
+  .note.red   { border-left-color: var(--red); }
+  .note-head  { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem;
+                letter-spacing: 0.08em; text-transform: uppercase;
+                margin-bottom: 0.4rem; }
+  .note.gold .note-head  { color: var(--gold); }
+  .note.green .note-head { color: var(--green); }
+  .note.red .note-head   { color: var(--red); }
+  .note.blue .note-head  { color: var(--accent); }
+
+  /* ── GRID ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* ── PARAM BOX ── */
+  .pbox {
+    background: #0a1520;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+  }
+  .pbox .label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.2rem; }
+  .pbox .value { font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: var(--green); }
+  .pbox .unit  { font-size: 0.78rem; color: var(--muted); margin-left: 0.3rem; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  ul { margin: 0.5rem 0 0.5rem 1.5rem; }
+  ul li { margin: 0.25rem 0; }
+
+  .footer {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin-top: 3rem;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ═══ MASTHEAD ═══ -->
+<div class="masthead">
+  <h1>PEARL-GATE · SDS-FAR: Mission Physics Companion</h1>
+  <div class="sub">Spallation-Driven Subcritical Fragment+Ablator Rocket · 0-D Model and Simulator v2 (Physics-Corrected)</div>
+  <div>
+    <span class="badge">Patent GB2522564.0</span>
+    <span class="badge">Inventor: Kazik Huppert</span>
+    <span class="badge">May 2026</span>
+    <span class="badge">Simulator: SDS-FAR v2</span>
+  </div>
+</div>
+
+<div class="note">
+  <div class="note-head blue">What this document is</div>
+  This companion document describes the physics, equations, and design decisions behind the SDS-FAR v2 simulator. It supersedes the March 2026 PEARL-GATE Complete Mission Physics document. The simulator is a feasibility exploration framework. Limitations: no CFD, no neutron transport, no plasma instability modelling, no transient structural analysis, no full relativistic particle cascade simulation. All specific values should be read from the simulator — this document explains what those values mean and how they are computed.
+</div>
+
+<!-- ═══ 1. ARCHITECTURE ═══ -->
+<h2>1. Architecture: What SDS-FAR Models</h2>
+
+<p>SDS-FAR is a Spallation-Driven Subcritical Fragment+Ablator Rocket. It is the simplified 0-D physics representation of the PEARL-GATE Beam-Target Propulsion architecture, tractable for real-time parametric exploration while remaining physically grounded.</p>
+
+<p>The core concept: a spallation beam drives a subcritical fission assembly. Fission fragments are produced at relativistic speeds (~4–8%c). A fraction ε escapes aft as direct thrust. The remainder (1−ε) is trapped and deposits its energy into a graphene ablator, which sublimates and is expelled as a high-velocity jet. A Phononic Crystal Thermoelectric (PCT) array converts waste heat into beam power to close the feedback loop.</p>
+
+<div class="grid2">
+  <div class="pbox"><div class="label">Architecture type</div><div class="value" style="font-size:0.85rem;color:var(--accent)">Fragment + Ablator Rocket</div></div>
+  <div class="pbox"><div class="label">Propellant composition</div><div class="value" style="font-size:0.85rem;color:var(--accent)">Nuclear fuel + graphene ablator (ratio K)</div></div>
+  <div class="pbox"><div class="label">Energy source</div><div class="value" style="font-size:0.85rem;color:var(--accent)">Subcritical spallation fission</div></div>
+  <div class="pbox"><div class="label">Power recovery</div><div class="value" style="font-size:0.85rem;color:var(--accent)">PCT thermoelectrics → beam</div></div>
+</div>
+
+<!-- ═══ 2. GOVERNING EQUATIONS ═══ -->
+<h2>2. Governing Equations</h2>
+
+<h3>2.1 Mass Partition</h3>
+<div class="eq">m_wet  =  m_dry × R                                     <span class="comment">(R = mass ratio)</span>
+m_prop =  m_wet − m_dry                                  <span class="comment">(total propellant)</span>
+m_nuc  =  m_prop / (1 + K)                               <span class="comment">(nuclear fuel)</span>
+m_abl  =  K × m_nuc                                      <span class="comment">(graphene ablator)</span>
+m_jet  =  (K + 1 − ε) × m_nuc                           <span class="comment">(jet mixture = ablator + trapped frags)</span>
+m_free =  m_prop − m_jet                                  <span class="comment">(free fragments = ε × m_nuc)</span></div>
+
+<h3>2.2 Fragment Physics (Relativistic)</h3>
+<div class="eq">γ       =  1 / √(1 − v_ff²/c²)                          <span class="comment">(Lorentz factor)</span>
+KE_unit =  (γ − 1) × c²                                  <span class="comment">(specific KE of fragment, J/kg)</span>
+Q_ff    =  (1 − ε) × KE_unit                             <span class="comment">(energy deposited in ablator per kg fuel)</span>
+
+<span class="comment">NOTE: v2 uses rapidity-corrected fragment contribution:</span>
+u_ff    =  c × atanh(v_ff / c)                           <span class="comment">(rapidity, more rigorous than γv at v > 3%c)</span></div>
+
+<h3>2.3 Ablator Jet</h3>
+<div class="eq">E_ab_mix  =  η × Q_ff / (K + 1 − ε)                    <span class="comment">(energy per kg of jet mixture)</span>
+v_p       =  √(2 × max(0, E_ab_mix − H_sub))            <span class="comment">(ablator jet speed, m/s)</span>
+            <span class="comment">H_sub = sublimation enthalpy of graphene ≈ 50–60 MJ/kg</span></div>
+
+<h3>2.4 Combined Exhaust Velocity (v2 rapidity-corrected)</h3>
+<div class="eq">v_eff_rapidity  =  (ε × u_ff  +  (K + 1 − ε) × v_p) / (1 + K)
+v_eff           =  c × tanh(v_eff_rapidity / c)         <span class="comment">(coordinate exhaust velocity)</span>
+
+<span class="comment">v1 formula (retained for classical mode):</span>
+v_eff_std       =  (ε × γ × v_ff  +  (K + 1 − ε) × v_p) / (1 + K)
+
+<span class="comment">At v_ff = 4%c: rapidity correction ≈ +0.07 km/s (small but real — saves 1 day at 550 AU)</span>
+<span class="comment">At v_ff = 8%c: rapidity correction ≈ +1.7 km/s (more significant)</span></div>
+
+<h3>2.5 Mission Δv (Relativistic Tsiolkovsky)</h3>
+<div class="eq">Δv  =  c × tanh(v_eff / c × ln(m_wet / m_dry))         <span class="comment">(relativistic)</span>
+Δv  =  v_eff × ln(R)                                    <span class="comment">(classical mode)</span></div>
+
+<h3>2.6 Thrust</h3>
+<div class="eq">F_ff   =  ε × ṁ_nuc × γ × v_ff                         <span class="comment">(fragment thrust, relativistic momentum flux)</span>
+F_jet  =  (K + 1 − ε) × ṁ_nuc × v_p                   <span class="comment">(ablator jet thrust)</span>
+F_tot  =  F_ff + F_jet
+
+ṁ_nuc  =  P_boot × Π₁ / KE_unit                        <span class="comment">(steady-state mass flow from boot power)</span>
+ṁ_tot  =  (1 + K) × ṁ_nuc                              <span class="comment">(total propellant flow)</span>
+ṁ_jet  =  (K + 1 − ε) × ṁ_nuc                         <span class="comment">(jet mixture flow)</span>
+
+Π₁     =  1 / (1 − k_eff)                               <span class="comment">(subcritical gain = neutron multiplication)</span></div>
+
+<h3>2.7 Subcritical Power Budget</h3>
+<div class="eq">P_nuc     =  ṁ_nuc × KE_unit
+P_esc     =  ε × P_nuc                                  <span class="comment">(escaping fragment power → direct thrust)</span>
+P_trapped =  (1 − ε) × P_nuc                            <span class="comment">(trapped → ablator heating)</span>
+P_abl_in  =  η × P_trapped                              <span class="comment">(Marshak-coupled to ablator jet)</span>
+P_unman   =  (1 − η) × P_trapped                        <span class="comment">(unmanaged waste heat → PCT/radiator)</span></div>
+
+<h3>2.8 Phononic Crystal Thermoelectric (PCT) — v2 correction</h3>
+<div class="eq"><span class="comment">v2 derives T_hot from actual Q_rej and explicit areal density (not hardcoded 2 MW reference):</span>
+
+rad_area  =  rad_mass / ρ_areal                         <span class="comment">(ρ_areal = kg/m², user slider)</span>
+T_hot     =  (Q_rej / (σ × ε_emit × rad_area))^0.25   <span class="comment">(Stefan-Boltzmann, physically derived)</span>
+
+carnot    =  1 − T_amb / T_hot
+η_TEG     =  carnot × (√(1+ZT) − 1) / (√(1+ZT) + T_amb/T_hot)   <span class="comment">(Ioffe formula)</span>
+P_PCT     =  η_TEG × P_unman
+Q_rej     =  P_unman − P_PCT</div>
+
+<h3>2.9 Self-Sustaining Ratio (Π₃)</h3>
+<div class="eq">P_to_beam  =  P_PCT × f_beam                            <span class="comment">(fraction of PCT output to beam)</span>
+Π₃         =  P_to_beam / P_boot                        <span class="comment">(must be ≥ 1.0 for self-sustaining operation)</span>
+SSR ≥ 1.0  → TEGs sustain beam without external power</div>
+
+<!-- ═══ 3. WHAT CHANGED IN V2 ═══ -->
+<h2>3. What Changed in v2 (Physics Corrections)</h2>
+
+<table>
+  <tr><th>Issue</th><th>v1 behaviour</th><th>v2 correction</th><th>Effect at 4%c / 550 AU</th></tr>
+  <tr>
+    <td>Fragment exhaust velocity</td>
+    <td>Used γ·v_ff directly in v_eff numerator</td>
+    <td>Rapidity u_ff = c·atanh(v_ff/c) used for Tsiolkovsky integral</td>
+    <td class="val">+0.07 km/s v_eff → +1 day transit (real, not rounding)</td>
+  </tr>
+  <tr>
+    <td>Radiator temperature T_hot</td>
+    <td>Derived from hardcoded 2 MW/unit reference — decoupled from actual Q_rej</td>
+    <td>T_hot = (Q_rej / σεA)^0.25 using actual Q_rej and explicit areal density slider</td>
+    <td class="val">T_hot now physically tracks waste heat load</td>
+  </tr>
+  <tr>
+    <td>Radiator area assumption</td>
+    <td>radArea = radMass/2 (hidden 2 kg/m² assumption)</td>
+    <td>Explicit areal density slider (0.5–10 kg/m²) — assumption visible to user</td>
+    <td class="val">Labelled: "X.X kg/m²" shown in readout</td>
+  </tr>
+  <tr>
+    <td>Mission non-determinism</td>
+    <td>cascade() and mission() both cached — arrival speed stale after Δv change</td>
+    <td>cascade() cached (expensive), mission() fresh every frame (cheap)</td>
+    <td class="val">Same settings always give same result regardless of path</td>
+  </tr>
+  <tr>
+    <td>Sprint-only trajectory</td>
+    <td>Flagged "ṁ_nuc too low" when burn distance exceeded destination</td>
+    <td>Binary search finds v_c such that x1+x2 = destination exactly; shows fuel remaining</td>
+    <td class="val">Destination reached mid-burn is a valid result, not an error</td>
+  </tr>
+  <tr>
+    <td>Full-burn coast trajectory</td>
+    <td>Flagged as error when v_arr ≥ Δv</td>
+    <td>Valid case: burns all fuel, coasts to destination at full speed</td>
+    <td class="val">"Arrives at full speed — no decel fuel remaining"</td>
+  </tr>
+  <tr>
+    <td>Antimatter readout</td>
+    <td>Separate "Antimatter status" row with error colouring</td>
+    <td>Inline threshold check per species; production rate in fg/s; informational only</td>
+    <td class="val">Antimatter is a side-effect, not an error condition</td>
+  </tr>
+  <tr>
+    <td>TEG labelling</td>
+    <td>"TEG Figure of Merit ZT"</td>
+    <td>"Phononic Crystal Thermoelectric ZT (clathrate 1.35 / half-Heusler 2.5 / topological 5.0)"</td>
+    <td class="val">Realistic near-future material range shown on slider</td>
+  </tr>
+</table>
+
+<!-- ═══ 4. DEFAULT PARAMETERS ═══ -->
+<h2>4. Default Parameters and Physical Rationale</h2>
+
+<table>
+  <tr><th>Parameter</th><th>Symbol</th><th>Default</th><th>Range</th><th>Physical rationale</th></tr>
+  <tr><td>Dry mass</td><td>m_dry</td><td class="val">36.5 t</td><td>20–37 t</td><td>36.5 t baseline: structure + payload + engine per PEARL-GATE dry mass budget</td></tr>
+  <tr><td>Mass ratio</td><td>R</td><td class="val">2.76</td><td>2.71–5.8</td><td>2.71 ≈ e (Euler's number) — minimum meaningful mass ratio for rocket equation; 5.8 upper operational limit</td></tr>
+  <tr><td>Ablator ratio</td><td>K</td><td class="val">30.0</td><td>0.01–32</td><td>K=30 gives ablator-dominant mode at 4%c; K=0.01 approaches pure FFRE; K=32 is graphene ablation ceiling</td></tr>
+  <tr><td>Fragment speed</td><td>v_ff</td><td class="val">4%c</td><td>3–8%c</td><td>Fission fragment species at 4–8%c (U-235/Pu-239 fragments); 8%c upper bound for heavy species</td></tr>
+  <tr><td>Escape fraction</td><td>ε</td><td class="val">0.50</td><td>0.49–0.51</td><td>Open isotropic geometry: exactly half the fragments escape aft; the narrow range reflects the geometric constraint</td></tr>
+  <tr><td>Sublimation enthalpy</td><td>H_sub</td><td class="val">59.7 MJ/kg</td><td>50–60 MJ/kg</td><td>Graphene sublimation 59.7 MJ/kg (highest of structural ablators); floor 50 MJ/kg for engineering margin</td></tr>
+  <tr><td>Marshak coupling</td><td>η</td><td class="val">0.9084</td><td>0.896–0.99</td><td>Marshak wave coupling efficiency; 0.896 demonstrated lower bound; 0.99 theoretical ceiling</td></tr>
+  <tr><td>Boot power</td><td>P_boot</td><td class="val">13 MW</td><td>2.5–210 MW</td><td>13 MW: PCT self-sustaining at ZT=2.9, RSM=300; ceiling 210 MW for high-power configurations</td></tr>
+  <tr><td>k_eff</td><td>k_eff</td><td class="val">0.9910</td><td>0.98–0.995</td><td>Subcritical regime: Π₁ = 111×; 0.995 ceiling keeps well below prompt criticality (k_eff = 1.0)</td></tr>
+  <tr><td>PCT figure of merit</td><td>ZT</td><td class="val">2.90</td><td>0.8–5.0</td><td>2.90: advanced nanostructured material; 1.35 demonstrated clathrate; 5.0 topological insulator upper bound</td></tr>
+  <tr><td>Radiator specific mass</td><td>ρ_sm</td><td class="val">300 kg/MW</td><td>50–2000 kg/MW</td><td>300 kg/MW: near-term carbon composite panels; 50 kg/MW: advanced LDR technology</td></tr>
+  <tr><td>Destination</td><td>d</td><td class="val">550 AU</td><td>550–269,000 AU</td><td>550 AU: Solar Gravitational Lens focus; 269,000 AU ≈ inner Oort cloud boundary</td></tr>
+</table>
+
+<!-- ═══ 5. PERFORMANCE AT DEFAULT SETTINGS ═══ -->
+<h2>5. Performance at Default Settings</h2>
+
+<div class="note green">
+  <div class="note-head">Reference configuration</div>
+  m_dry = 36.5 t · R = 2.76 · K = 30 · v_ff = 4%c · η = 0.9084 · P_boot = 13 MW · k_eff = 0.991 · ZT = 2.90 · Destination = 550 AU · v_arr = 0 km/s
+</div>
+
+<div class="grid2">
+  <div class="pbox"><div class="label">v_eff (rapidity-corrected)</div><div class="value">~1,630<span class="unit">km/s</span></div></div>
+  <div class="pbox"><div class="label">Δv (relativistic Tsiolkovsky)</div><div class="value">~1,625<span class="unit">km/s</span></div></div>
+  <div class="pbox"><div class="label">Total thrust F_tot</div><div class="value">~1,020<span class="unit">N</span></div></div>
+  <div class="pbox"><div class="label">Nuclear power P_nuc</div><div class="value">~1.46<span class="unit">GW</span></div></div>
+  <div class="pbox"><div class="label">Burn time</div><div class="value">~3.2<span class="unit">yr</span></div></div>
+  <div class="pbox"><div class="label">Transit to 550 AU</div><div class="value">~4.61<span class="unit">yr</span></div></div>
+  <div class="pbox"><div class="label">PCT efficiency (ZT=2.90)</div><div class="value">~19.7<span class="unit">%</span></div></div>
+  <div class="pbox"><div class="label">SSR Π₃</div><div class="value">&gt; 1.0<span class="unit"> ✓ self-sustaining</span></div></div>
+</div>
+
+<p style="font-size:0.82rem; color:var(--muted); margin-top:0.5rem;">All values are indicative. Read exact values from the simulator — they update live with any slider change.</p>
+
+<!-- ═══ 6. THE RAPIDITY CORRECTION ═══ -->
+<h2>6. Why the Rapidity Correction Matters</h2>
+
+<p>At first glance, the difference between v1 and v2 at 4%c appears negligible — γ = 1.0008, barely above 1. The rapidity correction adds only ~0.07 km/s to v_eff. Yet this propagates through the rocket equation and mission geometry to produce a one-day difference in transit time to 550 AU. One day of consumables on a 4.6-year crewed mission is not negligible.</p>
+
+<div class="eq">v1: uses γ·v_ff in Tsiolkovsky numerator (correct for momentum thrust but approximate for Δv)
+v2: uses rapidity u = c·atanh(v/c) — the rigorous relativistic treatment
+
+At v_ff = 4%c:  u = c·atanh(0.04) = 12,009 km/s  vs  γ·v = 12,010 km/s  (Δ = 1 m/s)
+At v_ff = 8%c:  u = c·atanh(0.08) = 24,097 km/s  vs  γ·v = 24,077 km/s  (Δ = 20 m/s → +1 day)</div>
+
+<p>The v1 formula is not wrong — it is self-consistent for momentum thrust calculation. The v2 rapidity formula is more rigorous for integrating the Tsiolkovsky equation at relativistic speeds. The simulator implements both and reports the delta explicitly.</p>
+
+<!-- ═══ 7. PCT MATERIAL REFERENCE ═══ -->
+<h2>7. Phononic Crystal Thermoelectric Materials Reference</h2>
+
+<table>
+  <tr><th>Material</th><th>ZT</th><th>Temp range</th><th>Status</th><th>Notes</th></tr>
+  <tr><td>Bismuth telluride (Bi₂Te₃)</td><td class="val">1.0–1.4</td><td>300–500 K</td><td>Demonstrated</td><td>Room temperature reference; too low for SDS-FAR operating range</td></tr>
+  <tr><td>Type I clathrate (Ba₈Ga₁₆Ge₃₀)</td><td class="val">1.35</td><td>800–1000 K</td><td>Demonstrated</td><td>Simulator default reference; PGEC concept — phonon glass, electron crystal</td></tr>
+  <tr><td>Skutterudites (CoSb₃ + rare earth)</td><td class="val">1.5–2.0</td><td>500–900 K</td><td>Demonstrated</td><td>Rattler atoms suppress phonon transport; good mechanical robustness</td></tr>
+  <tr><td>Half-Heusler alloys (ZrNiSn, HfNiSn)</td><td class="val">2.5–3.5</td><td>600–1200 K</td><td>Near-future</td><td>Excellent match for SDS-FAR temperature range; radiation-hard</td></tr>
+  <tr><td>Oxide thermoelectrics (SrTiO₃, ZnO)</td><td class="val">1.5–2.5</td><td>800–1500 K</td><td>Near-future</td><td>Best high-T match; extremely radiation-hard — critical for fission environment</td></tr>
+  <tr><td>Topological insulators (Bi₂Te₃ variants)</td><td class="val">4.0–5.0</td><td>400–800 K</td><td>Speculative</td><td>Surface electron conduction decoupled from bulk phonon transport</td></tr>
+  <tr><td>Phononic crystal nanostructures</td><td class="val">5.0–8.0</td><td>Design-dependent</td><td>Theoretical</td><td>Engineered periodic blocking of phonons; 15–25 year horizon</td></tr>
+</table>
+
+<!-- ═══ 8. BEAM-TARGET PROPULSION ═══ -->
+<h2>8. Beam-Target Propulsion: Category Definition (Unchanged)</h2>
+
+<p>BTP is defined by three simultaneous conditions: (1) a high-energy particle beam driver is generated and fired aboard the spacecraft; (2) it strikes a high-Z condensed-phase target inducing hadronic cascade reactions including spallation, fission-fusion and pion/kaon showers; (3) the energetic reaction products are expelled directly as directed thrust.</p>
+
+<p>SDS-FAR models conditions (1) and (2) in simplified 0-D form. The full PEARL-GATE architecture includes condition (3) with hadronic cascade multiplier Π₁ up to 293×, Double Punch wakefield boost (×1.200), and ISM kinetic energy harvesting — none of which are yet in the simulator.</p>
+
+<div class="note gold">
+  <div class="note-head">Prior art</div>
+  No prior propulsion system satisfies all three BTP conditions simultaneously. ADS (Rubbia, MYRRHA) uses conditions (1) and (2) but treats products as shielding and waste, not thrust. ICF pulse (Daedalus) uses onboard beams but fires at low-Z targets — no hadronic cascade. PEARL-GATE is the first and only example of Beam-Target Propulsion.
+</div>
+
+<!-- ═══ 9. WHAT FROM PEARL-GATE COULD IMPROVE THE SIMULATOR ═══ -->
+<h2>9. Features from PEARL-GATE Not Yet in Simulator</h2>
+
+<div class="note red">
+  <div class="note-head">Potential simulator improvements</div>
+  The following physics from the full PEARL-GATE architecture are not yet modelled in SDS-FAR v2. Each is a tractable addition to the 0-D framework.
+</div>
+
+<table>
+  <tr><th>#</th><th>Feature</th><th>Physics</th><th>Simulator impact</th><th>Complexity</th></tr>
+  <tr>
+    <td><strong>1</strong></td>
+    <td>Double Punch wakefield boost</td>
+    <td>Pulsed beam into open ablation cavity creates longitudinal plasma wakefield; second thrust impulse per cycle. Analytically: boost = (η_c1 + η_c2)/2 / η_c1 = 1.200× at 50/50 duty cycle</td>
+    <td>F_tot × 1.200; Δv × 1.200; shown as toggleable WAKE ON/OFF</td>
+    <td class="warn">Low — one multiplier on F_tot</td>
+  </tr>
+  <tr>
+    <td><strong>2</strong></td>
+    <td>ISM funnel collection</td>
+    <td>ṁ_ISM = ρ_ISM × A_funnel × v_ship × γ; ISM protons arrive blue-shifted, boosting ECM and adding propellant mass at no cost</td>
+    <td>Additional thrust term at v &gt; ~5%c; ECM boost increases Π₁ dynamically</td>
+    <td class="warn">Medium — needs funnel area slider and v-dependent calculation</td>
+  </tr>
+  <tr>
+    <td><strong>3</strong></td>
+    <td>Stage-dependent exhaust velocity</td>
+    <td>Stages 1–3 burn at v_ex = 15,000–70,000 km/s as beam power ramps; current model assumes constant v_eff throughout. Early-burn drag is real and significant at mass ratios &gt; 3</td>
+    <td>More accurate Δv for high mass ratios; adds startup warmup phase to animation</td>
+    <td class="warn">Medium — needs time-dependent cascade ramp model</td>
+  </tr>
+  <tr>
+    <td><strong>4</strong></td>
+    <td>ECM threshold cascade channels</td>
+    <td>Full multiplier: Π = 1 + f_fus×2 + f_pos×5 + f_anti×80 + f_had×500, where fractions open at ECM thresholds. Current simulator has Π₁ = 1/(1−k_eff) which is the neutron multiplication only</td>
+    <td>Replaces fixed Π₁ with dynamic cascade multiplier; hadronic channel adds major thrust at &gt;5 GeV</td>
+    <td class="red">High — requires ECM→fraction table and threshold logic</td>
+  </tr>
+  <tr>
+    <td><strong>5</strong></td>
+    <td>UV seeding of ablator plasma</td>
+    <td>Small fraction (~1–2% by mass) of UV-emitting species (MgF₂, Al₂O₃) in ablator radiates strongly upstream of PCT, slowing radiator warm-up and acting as massless heat sink until PCT bootstraps</td>
+    <td>Reduces radiator mass warning; improves thermal margin at high P_nuc</td>
+    <td class="warn">Medium — needs upstream radiation fraction slider</td>
+  </tr>
+  <tr>
+    <td><strong>6</strong></td>
+    <td>Liquid Droplet Radiator overflow</td>
+    <td>When PCT saturated and radiator overloaded, LDR activates thermally. Droplets (Sn, Li at 900–1400 K) radiate then recirculate. Effective areal density 10–100× lower than panel radiators</td>
+    <td>Removes radiator mass warning; adds LDR mass and activation threshold readout</td>
+    <td class="warn">Medium — threshold-activated secondary radiator model</td>
+  </tr>
+</table>
+
+<!-- ═══ 10. LIMITATIONS ═══ -->
+<h2>10. Simulator Limitations</h2>
+
+<p>SDS-FAR is a zero-dimensional lumped-parameter model. It resolves energy flows and momentum integrals correctly but cannot predict:</p>
+<ul>
+  <li><strong>Spatial effects:</strong> no temperature gradient inside ablator, no beam profile, no plasma density distribution</li>
+  <li><strong>Stability:</strong> no plasma instability modelling, no neutron transport, no criticality transient analysis</li>
+  <li><strong>Structures:</strong> no transient thermal-structural coupling, no ablator erosion geometry</li>
+  <li><strong>Radiation:</strong> no full relativistic particle cascade simulation, no radiation damage accumulation</li>
+  <li><strong>Fluid dynamics:</strong> no CFD, no magnetohydrodynamics, no plasma sheath modelling</li>
+</ul>
+
+<p>These require 1-D/2-D MHD, PIC simulation, and neutronics codes. The 0-D model is the necessary foundation — it reveals the amplification chain and the parameter space. It cannot replace higher-fidelity models for engineering design.</p>
+
+<div class="note green">
+  <div class="note-head">What the simulator does correctly</div>
+  Fragment kinetic energy partition, ablator sublimation thermodynamics, relativistic exhaust velocity (rapidity-corrected), Tsiolkovsky Δv, thrust and acceleration, PCT efficiency (Ioffe formula), radiator thermal balance (Stefan-Boltzmann, v2), three trajectory modes (sprint-only, normal, full-burn coast), mission timing and fuel accounting. These are all conserved-physics calculations with no free parameters beyond the user-set sliders.
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<hr>
+<div class="footer">
+  Document: PEARL-GATE · SDS-FAR Mission Physics Companion v2 · May 2026<br>
+  Simulator: SDS-FAR v2 (Physics-Corrected) — rapidity correction, explicit radiator areal density, PCT thermoelectrics, mission trajectory corrections<br>
+  Supersedes: PEARL-GATE Complete Mission Physics (March 2026)<br>
+  Patent GB2522564.0 · Inventor: Kazik Huppert · International Space Engineering Academy (DrKH@ispacee.org)<br>
+  Prior-art analysis and BTP category definition are the intellectual property of the inventor.
+</div>
+
+</div>
+</body>
+</html>
