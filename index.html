@@ -84,6 +84,7 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
 <div class="rrow"><span class="rlbl">Operating mode</span><span class="rval" id="oMode">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">&Pi;&#8322; = &eta;&middot;Q_ff / (H_sub&middot;(K+1&#8209;&epsilon;))  (ablation overheat ratio)</span><span class="rval" id="oPi2">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">&Pi;&#8325; = v_p / v_ff  (jet-to-fragment speed ratio)</span><span class="rval" id="oPi5">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">&Pi;&#8326; = K / (1&#8209;&epsilon;)  (ablator mass vs trapped fragments)</span><span class="rval" id="oPi6">&mdash;</span></div>
 
 <div class="srow"><span class="slbl">Double Punch wakefield boost  &eta;_wake  (1.000 = off &nbsp; 1.200 = PEARL-GATE analytical)</span><input type="number" class="rbox" id="mn_wk" value="1.000"><input type="range" id="inWake" min="1.000" max="2.000" step="0.001" value="1.000"><input type="number" class="rbox" id="mx_wk" value="2.000"><span class="vdisp" id="vWake">1.000</span><span class="unit"> &times;</span></div>
 <div class="srow"><span class="slbl">Subcritical  k_eff</span><input type="number" class="rbox" id="mn_ke" value="0.98"><input type="range" id="inKe" min="0.98" max="0.9950" step="0.0001" value="0.991"><input type="number" class="rbox" id="mx_ke" value="0.995"><span class="vdisp" id="vKe">0.9910</span></div>
@@ -159,6 +160,7 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
   <button id="btnReset">&#8634; Reset</button>
   <button id="btnToggle">&#9883; PHYSICS</button>
   <button id="btnRel">&gamma; RELATIVISTIC</button>
+  <button id="btnMission" style="border-color:#00ff44; color:#00ff44;" title="Toggle between the SGL design point and the Proxima sprint settings">&#8644; Switch to Proxima mission</button>
   <div style="color:#555; font-size:11px; max-width:480px; line-height:1.6;">
     <b style="color:#888;">CLOCK</b>: missionTime advances by realDt&times;warp &mdash; CPU-dependent.<br>
     <b style="color:#888;">PHYSICS</b>: missionTime advances by (1/60 s)&times;warp &mdash; repeatable.<br>
@@ -277,6 +279,12 @@ function cascade(){
 
     const Pi2 = (denom_mix > 0 && H_sub > 0) ? (eta * Q_ff) / (H_sub * denom_mix) : 0;
     const Pi5 = (v_ff > 0) ? v_p / v_ff : 0;
+    // Ablator sufficiency: graphene mass flow must at least match the trapped-fragment
+    // mass flow it has to entrain and turn aft. Below K = (1-eps) there is no working
+    // fluid and the jet thrust credited to the trapped half is fictitious.
+    const ablFloor = 1 - eps;
+    const Pi6 = ablFloor > 0 ? K / ablFloor : Infinity;
+    const ablShort = K < ablFloor;
 
     const ZT = get('inZT'), rSM = get('inRSM'), T_MAX = get('inTmax'), T_AMB=293;
     const rad_areal = get('inRad');  // kg/m² — explicit areal density
@@ -324,6 +332,7 @@ function cascade(){
         F_ff, F_jet, F_tot, burn_t, ff_pct, wake,
         P_esc, P_trapped, P_abl_in, P_unman,
         Pi2, Pi5,
+        Pi6, ablFloor, ablShort,
         T_hot:T_hot_final, T_hot_raw:T_hot_final, overTemp:(T_hot_final>T_MAX), eta_TEG, P_TEG, Q_rej, radMass, radArea, rad_areal,
         beam_frac, P_to_beam, P_to_sys, ss_ratio, radOverHalf,
         P_boot, boot_ok: P_to_beam>=P_beam_req,
@@ -369,9 +378,33 @@ function mission(d){
                 x1:x1s, x2:tgt_m-x1s, x_coast:0, t_coast:0, total_t:total_ts,
                 dv1:vc_sprint, dv2:vc_sprint-v_arr, fuel_remaining};
     }
-    const t_coast = x_coast / v_c;
+    // Coast time under the SAME constant ISM acceleration that state() integrates
+    // (mdot frozen at flip-point v_c; coast mass m1 fixed — no propellant burned in coast).
+    // a_ism = mdot_ism·(v_eff − v_c)/m1 :  >0 net thrust (scoop helps), <0 net drag (v_c > v_eff).
+    const rho_ism_c = get('inISM') * 1.67262192369e-27 * 1e6; // p/cm³ → kg/m³
+    const A_fun_c   = get('inAF');
+    const gam_cc    = 1/Math.sqrt(1 - Math.min(0.999999,(v_c/C)**2));
+    const mdot_ism_c= rho_ism_c * A_fun_c * v_c * gam_cc;
+    const a_ism_c   = m1>0 ? mdot_ism_c * (d.v_eff - v_c) / m1 : 0;
+    // Solve x_coast = v_c·t + ½·a_ism·t²  for the first positive root.
+    let t_coast, ism_halt = false;
+    if(Math.abs(a_ism_c) < 1e-15){
+        t_coast = x_coast / v_c;                       // no net ISM force → constant velocity
+    } else {
+        const disc = v_c*v_c + 2*a_ism_c*x_coast;
+        if(disc < 0){
+            // net drag brings the ship to rest before the target — coast cannot complete
+            t_coast = Infinity; ism_halt = true;
+        } else {
+            const sq = Math.sqrt(disc);
+            const r1 = (-v_c + sq)/a_ism_c, r2 = (-v_c - sq)/a_ism_c;
+            const pos = [r1, r2].filter(t => t > 1e-9);
+            t_coast = pos.length ? Math.min(...pos) : x_coast / v_c;
+        }
+    }
     const total_t = bt1 + t_coast + bt2;
     return {ok:true, sprint_only:false, full_burn_coast, v_arr, tgt_m, dur_yr, v_c, m1, m2, bt1, bt2, x1, x2, x_coast, t_coast, total_t,
+            a_ism:a_ism_c, ism_halt,
             dv1:v_c, dv2:v_c-v_arr, fuel_remaining:m2-d.m_dry};
 }
 
@@ -456,6 +489,13 @@ function updateAll(){
     const pi5 = d.Pi5;
     let pi5Note = pi5<0.1?'  \u2190 FFR-dominant':pi5>10?'  \u2190 NTR-dominant':'  \u2190 hybrid';
     setV('oPi5', pi5.toFixed(4)+pi5Note);
+    const pi6 = d.Pi6;
+    setV('oPi6', isFinite(pi6)
+        ? pi6.toFixed(3)+'\u00d7  '+(d.ablShort
+            ? '\u2717 INSUFFICIENT ABLATOR \u2014 trapped fragments unhandled, jet thrust fictitious'
+            : '\u2713 ablator carries the trapped fragments')
+        : '\u221e  \u2713 (no trapped fragments)',
+        d.ablShort?'err':'');
 
     const bootMsg = d.P_to_beam >= d.P_beam_req ?
         (d.P_boot/1e6).toFixed(3)+' MW boot \u2192 '+(d.P_to_beam/1e6).toFixed(3)+' MW TEG \u2265 '+(d.P_beam_req/1e6).toFixed(3)+' MW required  \u2713' :
@@ -513,11 +553,13 @@ function updateAll(){
             fmtDays(mp.bt1)+' accel  /  '+fmtDays(mp.t_coast)+' coast  /  — (no decel)' :
             fmtDays(mp.bt1)+' / '+fmtDays(mp.t_coast)+' / '+fmtDays(mp.bt2));
         const yr = mp.total_t/3.156e7;
-        setV('oTransit', yr.toFixed(3)+' yr  ('+(mp.total_t/86400).toFixed(0)+' days)');
+        setV('oTransit', isFinite(yr) ? yr.toFixed(3)+' yr  ('+(mp.total_t/86400).toFixed(0)+' days)' : '\u2014  (does not arrive)');
         const fuel_t = (mp.fuel_remaining/1e3).toFixed(3);
         const fuelNote = '  —  fuel remaining at arrival: '+fuel_t+' t';
         const okDur = yr <= mp.dur_yr;
-        if(mp.sprint_only){
+        if(mp.ism_halt){
+            setV('oSGL', 'ISM ram drag halts the ship mid-coast (v_c > v_eff) \u2014 destination never reached', 'err');
+        } else if(mp.sprint_only){
             setV('oSGL', yr.toFixed(3)+' yr  \u2190 Sprint only \u2014 destination reached mid-burn'+fuelNote, '');
         } else if(mp.full_burn_coast){
             setV('oSGL', yr.toFixed(3)+' yr  \u2190 arrives at full speed \u2014 no deceleration fuel remaining', '');
@@ -548,7 +590,7 @@ function updateAll(){
     // ── ISM readouts ──
     const rho_ism = get('inISM') * 1.67262192369e-27 * 1e6; // p/cm³ → kg/m³
     const A_funnel = get('inAF');
-    const v_cruise = (mp && mp.ok && !mp.sprint_only && !mp.full_burn_coast) ? mp.v_c : 0;
+    const v_cruise = (mp && mp.ok && !mp.sprint_only) ? mp.v_c : 0;  // full-burn-coast also coasts (at Δv)
     const gam_cr = v_cruise > 0 ? 1/Math.sqrt(1 - Math.min(0.999999,(v_cruise/C)**2)) : 1;
     const mdot_ism = rho_ism * A_funnel * v_cruise * gam_cr;           // kg/s
     const P_ism = mdot_ism * (gam_cr - 1) * C * C;                    // KE in ship frame (J/s = W)
@@ -666,6 +708,45 @@ el('btnStart').onclick = ()=>{
 el('btnReset').onclick = ()=>{ running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start'; draw(0,'PRE'); el('status').textContent='Reset. Press Start to begin.'; };
 el('btnToggle').onclick = ()=>{ clockMode=!clockMode; el('btnToggle').innerHTML = clockMode?'&#9201; CLOCK':'&#9883; PHYSICS'; el('btnToggle').className=clockMode?'':'active'; lastRAF=null; };
 el('btnRel').onclick = ()=>{ relMode=!relMode; _physicsDirty=true; el('btnRel').innerHTML = relMode?'&gamma; RELATIVISTIC':'&#8767; CLASSICAL'; el('btnRel').className=relMode?'active':''; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start'; };
+
+// ── Slider presets: Proxima 81.7-yr optimum  &  as-shipped baseline ──
+const PROX_OPT = [
+    ['inAU',269000],['inMD',96],['inDry',30.2],['inMR',2.720],['inK',0.5],
+    ['inVff',6.00],['inEc',0.50],['inEta',0.9769],['inHs',50.7],['inKe',0.9950],
+    ['inPb',76.8],['inWake',1.000],['inZT',5.00],['inRSM',150],['inRad',42.6],
+    ['inTmax',1500],['inBF',0.9999]
+];
+const BASELINE = [
+    ['inAU',550],['inMD',5],['inDry',36.5],['inMR',2.76],['inK',30],
+    ['inVff',4],['inEc',0.5],['inEta',0.9084],['inHs',59.7],['inKe',0.991],
+    ['inPb',13],['inWake',1.000],['inZT',2.9],['inRSM',300],['inRad',2],
+    ['inTmax',1500],['inBF',0.9999]
+];
+function applyPreset(cfg, va, msg){
+    cfg.forEach(([id,v])=>{ const s=el(id); s.value=v; s.dispatchEvent(new Event('input')); });
+    intended_v_arr = va;                                  // arrival speed (1e9 → clamps to max Δv)
+    if(!relMode){ relMode=true; el('btnRel').innerHTML='&gamma; RELATIVISTIC'; el('btnRel').className='active'; }
+    _physicsDirty=true; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start';
+    updateAll(); el('status').textContent=msg;
+}
+let missionMode = 'SGL';   // file boots at the SGL design point (550 AU, K=30 ...)
+function setProxima(){
+    // widen the two ranges the sprint corner needs (must precede value-set so the browser doesn't clamp)
+    el('inRSM').min=150; el('mn_rsm').value=150;
+    el('inRad').max=50;  el('mx_rad').value=50;
+    applyPreset(PROX_OPT, 1e9,
+      'PROXIMA mission \u2014 269,000 AU, ~95.4 yr, all interlocks green (Π₆ = 1.0, ablator at the sufficiency floor).  Still a speculative-tech, ablator-light sprint on rSM 150 kg/MW / areal 42.6 kg/m\u00b2 \u2014 NOT your SGL design point. Click again to return to SGL.');
+    missionMode='Proxima';
+    el('btnMission').innerHTML='&#8644; Switch to SGL mission';
+}
+function setSGL(){
+    applyPreset(BASELINE, 100,
+      'SGL mission \u2014 550 AU, your PEARL-GATE engineering defaults (K=30, v_ff 4%c, P_boot 13 MW). Click again to load the Proxima sprint.');
+    missionMode='SGL';
+    el('btnMission').innerHTML='&#8644; Switch to Proxima mission';
+}
+el('btnMission').onclick = ()=>{ if(missionMode==='SGL') setProxima(); else setSGL(); };
+
 
 warpLabel();
 el('btnToggle').className='active';
