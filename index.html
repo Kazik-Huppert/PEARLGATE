@@ -62,7 +62,7 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
 <!-- ═══════════ MASS ═══════════ -->
 <div class="sec">2.  MASS</div>
 <div class="srow"><span class="slbl">Dry Mass  (structure + payload + engine)</span><input type="number" class="rbox" id="mn_dry" value="20"><input type="range" id="inDry" min="20" max="37" step="0.05" value="36.5"><input type="number" class="rbox" id="mx_dry" value="37"><span class="vdisp" id="vDry">36.5</span><span class="unit"> t</span></div>
-<div class="srow"><span class="slbl">Mass Ratio  m_wet / m_dry</span><input type="number" class="rbox" id="mn_mr" value="2.71"><input type="range" id="inMR" min="2.71" max="9.25" step="0.0001" value="2.76"><input type="number" class="rbox" id="mx_mr" value="9.25"><span class="vdisp" id="vMR">2.7600</span></div>
+<div class="srow"><span class="slbl">Mass Ratio  m_wet / m_dry</span><input type="number" class="rbox" id="mn_mr" value="2.71"><input type="range" id="inMR" min="2.71" max="10" step="0.0001" value="2.76"><input type="number" class="rbox" id="mx_mr" value="10"><span class="vdisp" id="vMR">2.7600</span></div>
 <div class="rrow"><span class="rlbl">Wet Mass  =  dry &times; ratio</span><span class="rval green" id="oWet">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">Total propellant  (wet &minus; dry) = (1+K)&times;nuc_fuel</span><span class="rval" id="oFuel">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">Nuclear fuel mass</span><span class="rval" id="oNuc">&mdash;</span></div>
@@ -72,8 +72,8 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
 
 <!-- ═══════════ PROPULSION PHYSICS ═══════════ -->
 <div class="sec">3.  PROPULSION  PHYSICS</div>
-<div class="srow"><span class="slbl">Graphene Ablator / Nuclear fuel ratio  K</span><input type="number" class="rbox" id="mn_K" value="0.01"><input type="range" id="inK" min="0.01" max="32" step="0.05" value="30"><input type="number" class="rbox" id="mx_K" value="32"><span class="vdisp" id="vK">30.0</span></div>
-<div class="srow"><span class="slbl">Fragment species speed  v_ff</span><input type="number" class="rbox" id="mn_vff" value="3"><input type="range" id="inVff" min="3" max="6" step="0.01" value="4"><input type="number" class="rbox" id="mx_vff" value="6"><span class="vdisp" id="vVff">4.00</span><span class="unit"> %c</span></div>
+<div class="srow"><span class="slbl">Graphene Ablator / Nuclear fuel ratio  K</span><input type="number" class="rbox" id="mn_K" value="0.01"><input type="range" id="inK" min="0.01" max="32" step="0.01" value="30"><input type="number" class="rbox" id="mx_K" value="32"><span class="vdisp" id="vK">30.0</span></div>
+<div class="srow"><span class="slbl">Fragment species speed  v_ff</span><input type="number" class="rbox" id="mn_vff" value="3"><input type="range" id="inVff" min="3" max="7.75" step="0.01" value="4"><input type="number" class="rbox" id="mx_vff" value="7.75"><span class="vdisp" id="vVff">4.00</span><span class="unit"> %c</span></div>
 <div class="rrow"><span class="rlbl">Q_ff  (deposited KE per kg nuclear fuel, forward hemisphere)</span><span class="rval" id="oQff">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">Lorentz factor  &gamma;  (relativistic correction)</span><span class="rval" id="oGamma">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">E_ab_mix = &eta;&middot;Q_ff / (K+1&#8209;&epsilon;)  (energy per kg of jet mixture)</span><span class="rval" id="oEab">&mdash;</span></div>
@@ -86,8 +86,8 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
 <div class="rrow"><span class="rlbl">&Pi;&#8325; = v_p / v_ff  (jet-to-fragment speed ratio)</span><span class="rval" id="oPi5">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">&Pi;&#8326; = K / (1&#8209;&epsilon;)  (ablator mass vs trapped fragments)</span><span class="rval" id="oPi6">&mdash;</span></div>
 
-<div class="srow"><span class="slbl">Double Punch wakefield boost  &eta;_wake  (1.000 = off &nbsp; 1.200 = PEARL-GATE analytical)</span><input type="number" class="rbox" id="mn_wk" value="1.000"><input type="range" id="inWake" min="1.000" max="2.000" step="0.001" value="1.000"><input type="number" class="rbox" id="mx_wk" value="2.000"><span class="vdisp" id="vWake">1.000</span><span class="unit"> &times;</span></div>
-<div class="srow"><span class="slbl">Subcritical  k_eff</span><input type="number" class="rbox" id="mn_ke" value="0.98"><input type="range" id="inKe" min="0.98" max="0.9950" step="0.0001" value="0.991"><input type="number" class="rbox" id="mx_ke" value="0.995"><span class="vdisp" id="vKe">0.9910</span></div>
+<div class="srow"><span class="slbl">Double Punch wakefield boost  &eta;_wake  (1.000 = off &nbsp; 1.200 = PEARL-GATE analytical)</span><input type="number" class="rbox" id="mn_wk" value="1.000"><input type="range" id="inWake" min="1.000" max="1.1356" step="0.000001" value="1.000"><input type="number" class="rbox" id="mx_wk" value="1.1356"><span class="vdisp" id="vWake">1.000</span><span class="unit"> &times;</span></div>
+<div class="srow"><span class="slbl">Subcritical  k_eff</span><input type="number" class="rbox" id="mn_ke" value="0.98"><input type="range" id="inKe" min="0.98" max="0.9990" step="0.0001" value="0.991"><input type="number" class="rbox" id="mx_ke" value="0.999"><span class="vdisp" id="vKe">0.9910</span></div>
 <div class="rrow"><span class="rlbl">Subcritical gain  &Pi;&#8321; = 1/(1&#8209;k_eff)</span><span class="rval" id="oPi1">&mdash;</span></div>
 <div class="srow"><span class="slbl">ADS boot-up power  P_boot</span><input type="number" class="rbox" id="mn_pb" value="2.5"><input type="range" id="inPb" min="2.5" max="210" step="0.001" value="13"><input type="number" class="rbox" id="mx_pb" value="210"><span class="vdisp" id="vPb">13.000</span><span class="unit"> MW</span></div>
 <div class="rrow"><span class="rlbl">Startup check</span><span class="rval" id="oBootCheck">&mdash;</span></div>
@@ -103,13 +103,14 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
 <div class="rrow"><span class="rlbl">Initial acceleration  F_tot / m_wet</span><span class="rval" id="oAcc0">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">Final acceleration   F_tot / m_dry</span><span class="rval" id="oAccF">&mdash;</span></div>
 <div class="srow"><span class="slbl">Energy recovery efficiency  &eta;  (Marshak coupling)</span><input type="number" class="rbox" id="mn_eta" value="0.896"><input type="range" id="inEta" min="0.896" max="0.99" step="0.0001" value="0.9084"><input type="number" class="rbox" id="mx_eta" value="0.99"><span class="vdisp" id="vEta">0.9084</span></div>
-<div class="srow"><span class="slbl">Fragment Escape Fraction  &epsilon;_coll  (0.5 = open isotropic default)</span><input type="number" class="rbox" id="mn_ec" value="0.49"><input type="range" id="inEc" min="0.49" max="0.51" step="0.01" value="0.5"><input type="number" class="rbox" id="mx_ec" value="0.51"><span class="vdisp" id="vEc">0.50</span></div>
+<div class="srow"><span class="slbl">Fragment Escape Fraction  &epsilon;_coll  (0.5 = isotropic &nbsp;&middot;&nbsp; &gt;0.5 = shaped geometry)</span><input type="number" class="rbox" id="mn_ec" value="0.49"><input type="range" id="inEc" min="0.49" max="0.75" step="0.01" value="0.5"><input type="number" class="rbox" id="mx_ec" value="0.75"><span class="vdisp" id="vEc">0.50</span></div>
 <div class="rrow"><span class="rlbl">Escaping fragment power  &epsilon;&middot;P_nuc  &rarr; thrust</span><span class="rval" id="oPesc">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">Trapped fragment power  (1&#8209;&epsilon;)&middot;P_nuc  &rarr; ablator mixture</span><span class="rval" id="oPtrap">&mdash;</span></div>
-<div class="srow"><span class="slbl">Graphene Ablator Sublimation enthalpy  H_sub</span><input type="number" class="rbox" id="mn_hs" value="50"><input type="range" id="inHs" min="50" max="60" step="1" value="59.7"><input type="number" class="rbox" id="mx_hs" value="60"><span class="vdisp" id="vHs">59.7</span><span class="unit"> MJ/kg</span></div>
+<div class="srow"><span class="slbl">Graphene Ablator Sublimation enthalpy  H_sub</span><input type="number" class="rbox" id="mn_hs" value="50"><input type="range" id="inHs" min="50" max="60" step="0.01" value="59.7"><input type="number" class="rbox" id="mx_hs" value="60"><span class="vdisp" id="vHs">59.7</span><span class="unit"> MJ/kg</span></div>
 
 <!-- ═══════════ THRUST & POWER ═══════════ -->
 
+<!-- ═══════════ THRUST & POWER ═══════════ -->
 <div class="sec">4.  POWER &amp;  THERMAL MANAGEMENT</div>
 
 <!-- ═══════════ THERMAL MANAGEMENT & BEAM ═══════════ -->
@@ -117,8 +118,8 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
 <div class="rrow"><span class="rlbl">Ablator-coupled power  &eta;&middot;P_trapped</span><span class="rval" id="oPabl">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">Unmanaged waste heat  (1&#8209;&eta;)&middot;P_trapped</span><span class="rval" id="oPunman">&mdash;</span></div>
 <div class="srow"><span class="slbl">Phononic Crystal Thermoelectric  ZT  (clathrate 1.35 / half-Heusler 2.5 / topological 5.0)</span><input type="number" class="rbox" id="mn_zt" value="0.8"><input type="range" id="inZT" min="0.8" max="5.0" step="0.05" value="2.9"><input type="number" class="rbox" id="mx_zt" value="5.0"><span class="vdisp" id="vZT">2.90</span></div>
-<div class="srow"><span class="slbl">Radiator Specific Mass</span><input type="number" class="rbox" id="mn_rsm" value="300"><input type="range" id="inRSM" min="300" max="2000" step="10" value="300"><input type="number" class="rbox" id="mx_rsm" value="2000"><span class="vdisp" id="vRSM">300</span><span class="unit"> kg/MW</span></div>
-<div class="srow"><span class="slbl">Radiator areal density  (kg/m²)  — fixes T_hot to waste heat</span><input type="number" class="rbox" id="mn_rad" value="0.5"><input type="range" id="inRad" min="0.5" max="10" step="0.1" value="2"><input type="number" class="rbox" id="mx_rad" value="10"><span class="vdisp" id="vRad">2.0</span><span class="unit"> kg/m²</span></div>
+<div class="srow"><span class="slbl">Radiator Specific Mass</span><input type="number" class="rbox" id="mn_rsm" value="150"><input type="range" id="inRSM" min="150" max="2000" step="10" value="300"><input type="number" class="rbox" id="mx_rsm" value="2000"><span class="vdisp" id="vRSM">300</span><span class="unit"> kg/MW</span></div>
+<div class="srow"><span class="slbl">Radiator areal density  (kg/m²)  — fixes T_hot to waste heat</span><input type="number" class="rbox" id="mn_rad" value="0.5"><input type="range" id="inRad" min="0.5" max="50" step="0.1" value="2"><input type="number" class="rbox" id="mx_rad" value="50"><span class="vdisp" id="vRad">2.0</span><span class="unit"> kg/m²</span></div>
 <div class="srow"><span class="slbl">Max Radiator / Structure Temp</span><input type="number" class="rbox" id="mn_tmax" value="500"><input type="range" id="inTmax" min="500" max="1500" step="50" value="1500"><input type="number" class="rbox" id="mx_tmax" value="1500"><span class="vdisp" id="vTmax">1500</span><span class="unit"> K</span></div>
 <div class="rrow"><span class="rlbl">Radiator equilibrium temp  T_hot</span><span class="rval" id="oTrad">&mdash;</span></div>
 <div class="rrow"><span class="rlbl">PCT efficiency  &eta;_TEG  (Phononic Crystal Thermoelectric)</span><span class="rval" id="oEtaTEG">&mdash;</span></div>
@@ -144,12 +145,12 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
 <div class="sec">5.  INTERSTELLAR MEDIUM (ISM) HARVESTING &mdash; NEP Coast Mode</div>
 <div class="srow"><span class="slbl">Funnel / hull mouth cross-section area</span><input type="number" class="rbox" id="mn_af" value="100"><input type="range" id="inAF" min="100" max="10000" step="10" value="1000"><input type="number" class="rbox" id="mx_af" value="10000"><span class="vdisp" id="vAF">1000</span><span class="unit"> m&sup2;</span></div>
 <div class="srow"><span class="slbl">ISM proton density</span><input type="number" class="rbox" id="mn_ism" value="0.01"><input type="range" id="inISM" min="0.01" max="10" step="0.01" value="0.3"><input type="number" class="rbox" id="mx_ism" value="10"><span class="vdisp" id="vISM">0.30</span><span class="unit"> p/cm&sup3;</span></div>
-<div class="rrow"><span class="rlbl">ISM mass flow &#7745;_ISM  (at cruise speed &mdash; coast phase only)</span><span class="rval" id="oMdotISM">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Free beam power from ISM kinetic energy  P_ISM  (no TEG cost)</span><span class="rval" id="oPismFree">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">ISM augmented beam total  P_boot + P_ISM</span><span class="rval" id="oPbeamAug">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">ISM thrust contribution  F_ISM = &#7745;_ISM &times; v_eff  (expelled at exhaust speed)</span><span class="rval" id="oFism">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">ISM drag  (ram pressure opposing motion)</span><span class="rval" id="oFdrag">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Net ISM contribution  F_ISM &minus; F_drag</span><span class="rval" id="oFismNet">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">ISM feedstock mass flow  &#7745;_ISM = &rho;&middot;A&middot;v_c  (free beam mass)</span><span class="rval" id="oMdotISM">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">Free beam power  P_ram = &#7745;_ISM&middot;(&gamma;&minus;1)c&sup2;  (offsets beam demand)</span><span class="rval" id="oPismFree">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">Net beam demand  P_beam_req &minus; P_ram  (ship must self-supply)</span><span class="rval" id="oPbeamAug">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">Self-sustaining incl. ISM credit  &Pi;&#8323;&prime; = P_TEG&middot;f / (P_beam_req &minus; P_ram)</span><span class="rval" id="oFism">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">Conservation drag  F_drag = P_ram / v_c  (reaction cost)</span><span class="rval" id="oFdrag">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">Funnel verdict</span><span class="rval" id="oFismNet">&mdash;</span></div>
 
 <!-- ═══════════ ANIMATION ═══════════ -->
 <div class="sec">6.  ANIMATION</div>
@@ -159,7 +160,7 @@ Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider
   <button id="btnReset">&#8634; Reset</button>
   <button id="btnToggle">&#9883; PHYSICS</button>
   <button id="btnRel">&gamma; RELATIVISTIC</button>
-  <button id="btnMission" style="border-color:#00ff44; color:#00ff44;" title="Toggle between the SGL design point and the Proxima sprint settings">&#8644; Switch to Proxima mission</button>
+  <button id="btnMission" style="border-color:#00ff44; color:#00ff44;" title="SGL ↔ Proxima rendezvous">&#8644; Proxima</button>
   <div style="color:#555; font-size:11px; max-width:480px; line-height:1.6;">
     <b style="color:#888;">CLOCK</b>: missionTime advances by realDt&times;warp &mdash; CPU-dependent.<br>
     <b style="color:#888;">PHYSICS</b>: missionTime advances by (1/60 s)&times;warp &mdash; repeatable.<br>
@@ -377,14 +378,17 @@ function mission(d){
                 x1:x1s, x2:tgt_m-x1s, x_coast:0, t_coast:0, total_t:total_ts,
                 dv1:vc_sprint, dv2:vc_sprint-v_arr, fuel_remaining};
     }
-    // Coast time under the SAME constant ISM acceleration that state() integrates
-    // (mdot frozen at flip-point v_c; coast mass m1 fixed — no propellant burned in coast).
-    // a_ism = mdot_ism·(v_eff − v_c)/m1 :  >0 net thrust (scoop helps), <0 net drag (v_c > v_eff).
+    // ISM is electromagnetic-funnel FEEDSTOCK, not bulk reaction mass: the field redirects
+    // without doing work, so there is no v_eff-capped reaction drag. Running the funnel to
+    // harvest free beam power costs only the conservation-clean reaction F_drag = P_ram / v_c,
+    // a tiny, always-positive drag (P_ram ∝ ρ·A·v_c³).
     const rho_ism_c = get('inISM') * 1.67262192369e-27 * 1e6; // p/cm³ → kg/m³
     const A_fun_c   = get('inAF');
     const gam_cc    = 1/Math.sqrt(1 - Math.min(0.999999,(v_c/C)**2));
-    const mdot_ism_c= rho_ism_c * A_fun_c * v_c * gam_cc;
-    const a_ism_c   = m1>0 ? mdot_ism_c * (d.v_eff - v_c) / m1 : 0;
+    const mdot_ism_c= rho_ism_c * A_fun_c * v_c * gam_cc;      // feedstock mass flux
+    const P_ram_c   = mdot_ism_c * (gam_cc - 1) * C * C;       // free beam power (ship frame)
+    const F_drag_c  = v_c>0 ? P_ram_c / v_c : 0;               // matching conservation drag
+    const a_ism_c   = m1>0 ? -F_drag_c / m1 : 0;               // always a (tiny) drag, never thrust
     // Solve x_coast = v_c·t + ½·a_ism·t²  for the first positive root.
     let t_coast, ism_halt = false;
     if(Math.abs(a_ism_c) < 1e-15){
@@ -392,7 +396,7 @@ function mission(d){
     } else {
         const disc = v_c*v_c + 2*a_ism_c*x_coast;
         if(disc < 0){
-            // net drag brings the ship to rest before the target — coast cannot complete
+            // (only reachable with an enormous funnel) harvest drag halts the ship pre-target
             t_coast = Infinity; ism_halt = true;
         } else {
             const sq = Math.sqrt(disc);
@@ -420,14 +424,15 @@ function state(t, d, mp){
     }
     if(!sprint_only && t <= bt1+t_coast){
         const tc = t - bt1;
-        // ISM thrust integration during NEP coast
+        // Feedstock funnel during coast: harvest free beam power, pay only the
+        // conservation reaction drag F_drag = P_ram/v_c (no v_eff-capped reaction-mass term).
         const rho_ism_s = get('inISM') * 1.67262192369e-27 * 1e6; // kg/m³
         const A_fun_s   = get('inAF');
         const gam_c     = 1/Math.sqrt(1 - Math.min(0.999999,(v_c/C)**2));
         const mdot_c    = rho_ism_s * A_fun_s * v_c * gam_c;
-        const F_ism_c   = mdot_c * d.v_eff;   // thrust: ISM expelled at v_eff
-        const F_drag_c  = mdot_c * v_c;         // ram drag
-        const a_ism     = (F_ism_c - F_drag_c) / m1; // net acceleration
+        const P_ram_s   = mdot_c * (gam_c - 1) * C * C;       // free beam power
+        const F_drag_s  = v_c>0 ? P_ram_s / v_c : 0;           // matching drag
+        const a_ism     = -F_drag_s / m1;                      // always a tiny drag
         const vel_coast = v_c + a_ism * tc;
         const pos_coast = x1 + v_c * tc + 0.5 * a_ism * tc * tc;
         return {pos:Math.min(tgt_m, pos_coast), vel:vel_coast, mass:m1, phase:'NEP_COAST'};
@@ -476,7 +481,7 @@ function updateAll(){
     const corr_note = relMode && v_diff>0.01 ? '  (rapidity correction: +'+(v_diff/1e3).toFixed(4)+' km/s)' : '';
     const wake_note = d.wake>1.0005 ? '  [⚡ WAKE ×'+d.wake.toFixed(3)+']' : '';
     setV('oVeff', (d.v_eff/1e3).toFixed(3)+' km/s  ('+(d.v_eff/C*100).toFixed(5)+'% c)'+corr_note+wake_note);
-    setV('oDv', (d.delta_v/1e3).toFixed(3)+' km/s  ('+(d.delta_v/C*100).toFixed(5)+'% c)'+(d.wake>1?' [⚡ WAKE ON ×1.200]':''));
+    setV('oDv', (d.delta_v/1e3).toFixed(3)+' km/s  ('+(d.delta_v/C*100).toFixed(5)+'% c)'+(d.wake>1.0005?'  [⚡ WAKE ×'+d.wake.toFixed(6)+']':''));
     setV('oIsp', (d.isp/1e3).toFixed(1)+' ks  ('+(d.isp).toFixed(0)+' s)');
 
     const mstr = d.K<=0 ? 'PURE FFR' :
@@ -586,17 +591,16 @@ function updateAll(){
     vaSlider.value = Math.min(intended_v_arr, dvKms);
     el('vVa').textContent = Math.round(parseFloat(vaSlider.value));
 
-    // ── ISM readouts ──
+    // ── ISM feedstock readouts (electromagnetic funnel: free beam power, not reaction mass) ──
     const rho_ism = get('inISM') * 1.67262192369e-27 * 1e6; // p/cm³ → kg/m³
     const A_funnel = get('inAF');
-    const v_cruise = (mp && mp.ok && !mp.sprint_only) ? mp.v_c : 0;  // full-burn-coast also coasts (at Δv)
+    const v_cruise = (mp && mp.ok && !mp.sprint_only) ? mp.v_c : 0;
     const gam_cr = v_cruise > 0 ? 1/Math.sqrt(1 - Math.min(0.999999,(v_cruise/C)**2)) : 1;
-    const mdot_ism = rho_ism * A_funnel * v_cruise * gam_cr;           // kg/s
-    const P_ism = mdot_ism * (gam_cr - 1) * C * C;                    // KE in ship frame (J/s = W)
-    const F_ism = mdot_ism * d.v_eff;                                  // thrust if expelled at v_eff
-    const F_drag = mdot_ism * v_cruise;                                // ram drag (ISM not yet accelerated)
-    const F_ism_net = F_ism - F_drag;                                  // net contribution
-    const P_beam_aug = d.P_boot + P_ism;                               // total beam power with ISM
+    const mdot_ism = rho_ism * A_funnel * v_cruise * gam_cr;          // feedstock mass flux, kg/s
+    const P_ram = mdot_ism * (gam_cr - 1) * C * C;                    // free beam power (ship frame)
+    const F_drag = v_cruise>0 ? P_ram / v_cruise : 0;                 // conservation-clean reaction drag
+    const P_beam_net = Math.max(0, d.P_beam_req - P_ram);             // beam the ship must self-supply
+    const ss_eff = P_beam_net>0 ? (d.P_to_beam / P_beam_net) : Infinity;
     function fmtForce(f){
         const a=Math.abs(f); const s=f<0?'-':'';
         if(a<1e-9) return s+(a*1e12).toFixed(2)+' pN';
@@ -613,13 +617,12 @@ function updateAll(){
         if(a>=1)    return a.toFixed(4)+' fg/s';
         return (a*1e3).toFixed(4)+' ag/s';
     }
-    setV('oMdotISM', v_cruise>0 ? fmtMdot(mdot_ism)+'  (v_cruise='+(v_cruise/1e3).toFixed(0)+' km/s)' : '— active during coast phase only');
-    setV('oPismFree', v_cruise>0 ? fmtPow(P_ism)+'  (free — no TEG power consumed)' : '—');
-    setV('oPbeamAug', v_cruise>0 ? fmtPow(P_beam_aug)+'  (vs P_boot = '+fmtPow(d.P_boot)+')' : '—');
-    setV('oFism', v_cruise>0 ? fmtForce(F_ism) : '—');
+    setV('oMdotISM', v_cruise>0 ? fmtMdot(mdot_ism)+'  (v_c='+(v_cruise/1e3).toFixed(0)+' km/s)' : '— funnel runs only while moving');
+    setV('oPismFree', v_cruise>0 ? fmtPow(P_ram)+'  (free — offsets beam demand)' : '—');
+    setV('oPbeamAug', v_cruise>0 ? fmtPow(P_beam_net)+'  (vs P_beam_req = '+fmtPow(d.P_beam_req)+')' : '—');
+    setV('oFism', v_cruise>0 ? ((isFinite(ss_eff)?ss_eff.toFixed(3)+'\u00d7':'\u221e (beam fully ISM-fed)')+(ss_eff>=1?'  \u2713':'  \u26a0')) : '—', (v_cruise>0&&ss_eff<1)?'warn':'');
     setV('oFdrag', v_cruise>0 ? fmtForce(F_drag) : '—');
-    const netSign = F_ism_net>=0 ? '✓ net positive' : '⚠ net drag';
-    setV('oFismNet', v_cruise>0 ? fmtForce(F_ism_net)+'  '+netSign : '—', v_cruise>0&&F_ism_net<0?'warn':'');
+    setV('oFismNet', v_cruise>0 ? '\u2713 feedstock credit \u2014 funnel never a net loss (no v_eff cap)' : '—', '');
 
     return {d, mp};
 }
@@ -686,11 +689,11 @@ function wireRange(mn,sl,mx){
  ['mn_br','inBR','mx_br'],['mn_au','inAU','mx_au'],['mn_md','inMD','mx_md'],
  ['mn_wp','inWp','mx_wp']].forEach(([mn,sl,mx])=>wireRange(mn,sl,mx));
 
-[['inWake','vWake',v=>(+v).toFixed(3)],['inAF','vAF',v=>Math.round(v)],['inISM','vISM',v=>(+v).toFixed(2)],
+[['inWake','vWake',v=>(+v).toFixed(6)],['inAF','vAF',v=>Math.round(v)],['inISM','vISM',v=>(+v).toFixed(2)],
 ['inRad','vRad',v=>(+v).toFixed(1)],['inDry','vDry',v=>(+v).toFixed(1)],['inMR','vMR',v=>(+v).toFixed(4)],
- ['inK','vK',v=>(+v).toFixed(1)],['inVff','vVff',v=>(+v).toFixed(2)],
+ ['inK','vK',v=>(+v).toFixed(2)],['inVff','vVff',v=>(+v).toFixed(2)],
  ['inEc','vEc',v=>(+v).toFixed(2)],['inEta','vEta',v=>(+v).toFixed(4)],
- ['inHs','vHs',v=>Math.round(v)],['inKe','vKe',v=>(+v).toFixed(4)],
+ ['inHs','vHs',v=>(+v).toFixed(2)],['inKe','vKe',v=>(+v).toFixed(4)],
  ['inPb','vPb',v=>(+v).toFixed(3)],
  ['inZT','vZT',v=>(+v).toFixed(2)],['inRSM','vRSM',v=>Math.round(v)],
  ['inTmax','vTmax',v=>Math.round(v)],['inBF','vBF',v=>(+v).toFixed(4)],
@@ -708,17 +711,17 @@ el('btnReset').onclick = ()=>{ running=false; missionTime=0; lastRAF=null; el('b
 el('btnToggle').onclick = ()=>{ clockMode=!clockMode; el('btnToggle').innerHTML = clockMode?'&#9201; CLOCK':'&#9883; PHYSICS'; el('btnToggle').className=clockMode?'':'active'; lastRAF=null; };
 el('btnRel').onclick = ()=>{ relMode=!relMode; _physicsDirty=true; el('btnRel').innerHTML = relMode?'&gamma; RELATIVISTIC':'&#8767; CLASSICAL'; el('btnRel').className=relMode?'active':''; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start'; };
 
-// ── Slider presets: Proxima 81.7-yr optimum  &  as-shipped baseline ──
-const PROX_OPT = [
-    ['inAU',269000],['inMD',96],['inDry',30.2],['inMR',9.25],['inK',0.5],
-    ['inVff',6.00],['inEc',0.50],['inEta',0.9769],['inHs',50.7],['inKe',0.9950],
-    ['inPb',76.8],['inWake',1.000],['inZT',5.00],['inRSM',150],['inRad',42.6],
-    ['inTmax',1500],['inBF',0.9999]
-];
+// ── Mission presets: three-state cycle ──
 const BASELINE = [
     ['inAU',550],['inMD',5],['inDry',36.5],['inMR',2.76],['inK',30],
     ['inVff',4],['inEc',0.5],['inEta',0.9084],['inHs',59.7],['inKe',0.991],
     ['inPb',13],['inWake',1.000],['inZT',2.9],['inRSM',300],['inRad',2],
+    ['inTmax',1500],['inBF',0.9999]
+];
+const PROX_SPRINT = [  // Max defensible within 80yr: ke=0.9973(Π₁=370), vff=7.25%c, K=0.50(Π₆=1.43), H_sub=59.67
+    ['inAU',269000],['inMD',80],['inDry',30.2],['inMR',8.670],['inK',0.50],
+    ['inVff',7.25],['inEc',0.65],['inEta',0.9825],['inHs',59.67],['inKe',0.9973],
+    ['inPb',79.0],['inWake',1.1356],['inZT',5.00],['inRSM',150],['inRad',42.6],
     ['inTmax',1500],['inBF',0.9999]
 ];
 function applyPreset(cfg, va, msg){
@@ -728,23 +731,20 @@ function applyPreset(cfg, va, msg){
     _physicsDirty=true; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start';
     updateAll(); el('status').textContent=msg;
 }
-let missionMode = 'SGL';   // file boots at the SGL design point (550 AU, K=30 ...)
-function setProxima(){
-    // widen the two ranges the sprint corner needs (must precede value-set so the browser doesn't clamp)
-    el('inRSM').min=150; el('mn_rsm').value=150;
-    el('inRad').max=50;  el('mx_rad').value=50;
-    applyPreset(PROX_OPT, 1e9,
-      'PROXIMA mission \u2014 269,000 AU, ~95.4 yr, all interlocks green (Π₆ = 1.0, ablator at the sufficiency floor).  Still a speculative-tech, ablator-light sprint on rSM 150 kg/MW / areal 42.6 kg/m\u00b2 \u2014 NOT your SGL design point. Click again to return to SGL.');
-    missionMode='Proxima';
-    el('btnMission').innerHTML='&#8644; Switch to SGL mission';
+const MISSIONS = [
+    { cfg:BASELINE, va:100, next:'Proxima',
+      msg:'SGL mission \u2014 550 AU, your PEARL-GATE engineering defaults (K=30, v_ff 4%c, P_boot 13 MW).' },
+    { cfg:PROX_SPRINT, va:1482, next:'SGL',
+      msg:'PROXIMA RENDEZVOUS (max defensible, 79.98 yr) \u2014 Four parameters tightened to their defensible limit within 80yr: k_eff 0.9980\u21920.9973 (\u03a0\u2081: 500\u2192370, 27% less multiplication), v_ff 7.75\u21927.25%c (fission-fragment dilution), K 0.35\u21920.50 (\u03a0\u2086=1.43), H_sub 59.67 MJ/kg (NIST). STILL LOCKED at 80yr limit: rSM=150, ZT=5, SSR=1.0003, \u03b5=0.65.' }
+];
+let missionIdx = 0;   // file boots at SGL
+function loadMission(i){
+    const m = MISSIONS[i];
+    applyPreset(m.cfg, m.va, m.msg);
+    missionIdx = i;
+    el('btnMission').innerHTML = '&#8644; Switch to ' + m.next;
 }
-function setSGL(){
-    applyPreset(BASELINE, 100,
-      'SGL mission \u2014 550 AU, your PEARL-GATE engineering defaults (K=30, v_ff 4%c, P_boot 13 MW). Click again to load the Proxima sprint.');
-    missionMode='SGL';
-    el('btnMission').innerHTML='&#8644; Switch to Proxima mission';
-}
-el('btnMission').onclick = ()=>{ if(missionMode==='SGL') setProxima(); else setSGL(); };
+el('btnMission').onclick = ()=>{ loadMission((missionIdx + 1) % MISSIONS.length); };
 
 
 warpLabel();
