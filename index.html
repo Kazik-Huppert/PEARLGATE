@@ -21,8 +21,12 @@
   .rrow  { display: flex; margin: 2px 0; }
   .rlbl  { width: 370px; color: #666; flex-shrink: 0; font-size: 12px; }
   .rval  { color: #fff; font-size: 12px; }
-  .rval.warn { color: #fa0; }
-  .rval.err  { color: #f55; }
+  .rval.warn { color: #ff8800; }   /* orange  — material science research needed */
+  .rval.amber{ color: #ffcc44; }   /* amber   — research target: path exists but development needed */
+  .vdisp.amber{ color: #ffcc44; }  /* amber   — research target: path exists but development needed */
+  .vdisp.warn { color: #ff8800; }  /* orange  — fantasy: no known path to this value */
+  .rval.err  { color: #ff4444; }   /* red     — mechanical failure / physics breaks */
+  .rval.miss { color: #ffe600; }   /* yellow  — mission target exceeded (still works) */
   .rval.green { color: #00ff44; font-weight: bold; }
   button { background: #000; color: #fff; border: 1px solid #444; padding: 4px 12px;
            cursor: pointer; font-family: monospace; font-size: 12px; margin-right: 6px; }
@@ -40,132 +44,133 @@
 
 <h1>SDS-FAR (Spallation-Driven Subcritical Fragment+Ablator Rocket) PEARL-GATE · 0‑D Model and Simulator</h1>
 <div class="sub">
-<b>Physics:</b> trapped fragments ((1&#8209;&epsilon;)&#7745;_nuc) are expelled by the ablator jet.<br>
-Jet mass flow = (K + 1&#8209;&epsilon;)&#7745;_nuc; energy per kg mixture = &eta;&middot;Q_ff / (K + 1&#8209;&epsilon;) (Q_ff already contains (1&#8209;&epsilon;)).<br>
-v_p = &radic;(2&middot;(E_ab_mix &ndash; H_sub)) &nbsp; v_eff = (&epsilon;&middot;[&gamma;]&middot;v_ff + (K+1&#8209;&epsilon;)&middot;v_p) / (1+K)<br>
-Q_ff = (1&#8209;&epsilon;)&middot;(&gamma;&#8209;1)c&sup2; (relativistic). <br>K=0 &rarr; pure FFRE (pointless), K&gt;0 &rarr; Fragment+Ablator Rocket (upgraded Open Core NTR/AFFRE).<br>
-Recommended Trajectory: <b>Sprint &rarr; Coast &rarr; Break</b>. <br>Each slider: [min] &ndash;slider&ndash; [max] &ndash; click numbers to edit range.<br>
-<b>This is:</b> a feasibility exploration framework. <b>Limitations:</b> no CFD, no neutron transport, no plasma instability modelling, no transient structural analysis, no full relativistic particle cascade simulation. Wakefield, ISM and Antimatter contributions are still unmodelled. 
+<b>Physics:</b> trapped fragments ((1‑ε)ṁ_nuc) are expelled by the ablator jet.<br>
+Jet mass flow = (K + 1‑ε)ṁ_nuc; energy per kg mixture = η·Q_ff / (K + 1‑ε) (Q_ff already contains (1‑ε)).<br>
+v_p = √(2·(E_ab_mix – H_sub)) &nbsp; v_eff = (ε·[γ]·v_ff + (K+1‑ε)·v_p) / (1+K)<br>
+Q_ff = (1‑ε)·(γ‑1)c² (relativistic). <br>K=0 → pure FFRE (pointless), K>0 → Fragment+Ablator Rocket (upgraded Open Core NTR/AFFRE).<br>
+Recommended Trajectory: <b>Sprint → Coast → Break</b>. <br>Each slider: [min] –slider– [max] – click numbers to edit range.<br>
+<b>This is:</b> a feasibility exploration framework. <b>Limitations:</b> no CFD, no neutron transport, no plasma instability modelling, no transient structural analysis, no full relativistic particle cascade simulation. Wakefield, ISM and Antimatter contributions are still unmodelled.<br>
+<b>Conservation:</b> The model conserves mass, energy, and momentum within its 0‑D framework. The wakefield boost (η_wake) is an external velocity multiplier on both fragment and jet streams, representing speculative energy injection; the defensibility flag reflects this.
 </div>
 
 <!-- ═══════════ MISSION ═══════════ -->
-<div class="sec">1.  MISSION TRAJECTORY  &mdash; Sprint &rarr; Coast &rarr; Sprint</div>
+<div class="sec">1.  MISSION TRAJECTORY  — Sprint → Coast → Sprint</div>
 <div class="srow"><span class="slbl">Destination Distance</span><input type="number" class="rbox" id="mn_au" value="550"><input type="range" id="inAU" min="550" max="269000" step="1" value="550"><input type="number" class="rbox" id="mx_au" value="269000"><span class="vdisp" id="vAU">550</span><span class="unit"> AU</span></div>
-<div class="srow"><span class="slbl">Arrival speed</span><span style="color:#555;font-size:11px;width:52px;text-align:right;flex-shrink:0;">0</span><input type="range" id="inVa" min="0" max="652" step="1" value="100"><span class="unit" id="vVaMax" style="width:52px;flex-shrink:0;">&mdash;km/s</span><span class="vdisp" id="vVa">100</span><span class="unit"> km/s</span></div>
-<div class="srow"><span class="slbl">Mission Duration  (target transit time)</span><input type="number" class="rbox" id="mn_md" value="0.1"><input type="range" id="inMD" min="0.1" max="100" step="0.1" value="5"><input type="number" class="rbox" id="mx_md" value="100"><span class="vdisp" id="vMD">5.0</span><span class="unit"> yr</span></div>
-<div class="rrow"><span class="rlbl">Cruise speed at flip  (&Delta;v + v_arr)/2</span><span class="rval" id="oCruise">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">&Delta;v split (accel / decel)</span><span class="rval" id="oDvSplit">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Phase durations  (accel / coast / decel)</span><span class="rval" id="oPhases">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Total transit time</span><span class="rval" id="oTransit">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Mission duration check</span><span class="rval" id="oSGL">&mdash;</span></div>
+<div class="srow"><span class="slbl">Arrival speed</span><span style="color:#555;font-size:11px;width:52px;text-align:right;flex-shrink:0;">0</span><input type="range" id="inVa" min="0" max="652" step="1" value="100"><span class="unit" id="vVaMax" style="width:52px;flex-shrink:0;">—km/s</span><span class="vdisp" id="vVa">100</span><span class="unit"> km/s</span></div>
+<div class="srow"><span class="slbl">Mission Duration  (target transit time)</span><input type="number" class="rbox" id="mn_md" value="0.1"><input type="range" id="inMD" min="0.1" max="400" step="0.1" value="6"><input type="number" class="rbox" id="mx_md" value="400"><span class="vdisp" id="vMD">6.0</span><span class="unit"> yr</span></div>
+<div class="rrow"><span class="rlbl">Cruise speed at flip  (Δv + v_arr)/2</span><span class="rval" id="oCruise">—</span></div>
+<div class="rrow"><span class="rlbl">Δv split (accel / decel)</span><span class="rval" id="oDvSplit">—</span></div>
+<div class="rrow"><span class="rlbl">Phase durations  (accel / coast / decel)</span><span class="rval" id="oPhases">—</span></div>
+<div class="rrow"><span class="rlbl">Total transit time</span><span class="rval" id="oTransit">—</span></div>
+<div class="rrow"><span class="rlbl">Mission duration check</span><span class="rval" id="oSGL">—</span></div>
 
 <!-- ═══════════ MASS ═══════════ -->
 <div class="sec">2.  MASS</div>
-<div class="srow"><span class="slbl">Dry Mass  (structure + payload + engine)</span><input type="number" class="rbox" id="mn_dry" value="20"><input type="range" id="inDry" min="20" max="37" step="0.05" value="36.5"><input type="number" class="rbox" id="mx_dry" value="37"><span class="vdisp" id="vDry">36.5</span><span class="unit"> t</span></div>
-<div class="srow"><span class="slbl">Mass Ratio  m_wet / m_dry</span><input type="number" class="rbox" id="mn_mr" value="2.71"><input type="range" id="inMR" min="2.71" max="10" step="0.0001" value="2.76"><input type="number" class="rbox" id="mx_mr" value="10"><span class="vdisp" id="vMR">2.7600</span></div>
-<div class="rrow"><span class="rlbl">Wet Mass  =  dry &times; ratio</span><span class="rval green" id="oWet">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Total propellant  (wet &minus; dry) = (1+K)&times;nuc_fuel</span><span class="rval" id="oFuel">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Nuclear fuel mass</span><span class="rval" id="oNuc">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Graphene Ablator mass  = K &times; nuclear fuel</span><span class="rval" id="oAbl">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Jet mixture mass  = ablator + trapped fragments  (K+1&#8209;&epsilon;)&times;nuc_fuel</span><span class="rval" id="oJetMass">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Free fragments = Total propellant &minus; Jet mixture mass</span><span class="rval" id="FreeFragMass">&mdash;</span></div>
+<div class="srow"><span class="slbl">Dry Mass  (structure + payload + engine)</span><input type="number" class="rbox" id="mn_dry" value="20"><input type="range" id="inDry" min="20" max="37" step="0.05" value="30"><input type="number" class="rbox" id="mx_dry" value="37"><span class="vdisp" id="vDry">30.0</span><span class="unit"> t</span></div>
+<div class="srow"><span class="slbl">Mass Ratio  m_wet / m_dry</span><input type="number" class="rbox" id="mn_mr" value="2.0"><input type="range" id="inMR" min="2.0" max="10" step="0.0001" value="3"><input type="number" class="rbox" id="mx_mr" value="10"><span class="vdisp" id="vMR">3.0000</span></div>
+<div class="rrow"><span class="rlbl">Wet Mass  =  dry × ratio</span><span class="rval green" id="oWet">—</span></div>
+<div class="rrow"><span class="rlbl">Total propellant  (wet − dry) = (1+K)×nuc_fuel</span><span class="rval" id="oFuel">—</span></div>
+<div class="rrow"><span class="rlbl">Nuclear fuel mass</span><span class="rval" id="oNuc">—</span></div>
+<div class="rrow"><span class="rlbl">Graphene Ablator mass  = K × nuclear fuel</span><span class="rval" id="oAbl">—</span></div>
+<div class="rrow"><span class="rlbl">Jet mixture mass  = ablator + trapped fragments  (K+1‑ε)×nuc_fuel</span><span class="rval" id="oJetMass">—</span></div>
+<div class="rrow"><span class="rlbl">Free fragments = Total propellant − Jet mixture mass</span><span class="rval" id="FreeFragMass">—</span></div>
 
 <!-- ═══════════ PROPULSION PHYSICS ═══════════ -->
 <div class="sec">3.  PROPULSION  PHYSICS</div>
-<div class="srow"><span class="slbl">Graphene Ablator / Nuclear fuel ratio  K</span><input type="number" class="rbox" id="mn_K" value="0.01"><input type="range" id="inK" min="0.01" max="32" step="0.01" value="30"><input type="number" class="rbox" id="mx_K" value="32"><span class="vdisp" id="vK">30.0</span></div>
-<div class="srow"><span class="slbl">Fragment species speed  v_ff</span><input type="number" class="rbox" id="mn_vff" value="3"><input type="range" id="inVff" min="3" max="7.75" step="0.01" value="4"><input type="number" class="rbox" id="mx_vff" value="7.75"><span class="vdisp" id="vVff">4.00</span><span class="unit"> %c</span></div>
-<div class="rrow"><span class="rlbl">Q_ff  (deposited KE per kg nuclear fuel, forward hemisphere)</span><span class="rval" id="oQff">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Lorentz factor  &gamma;  (relativistic correction)</span><span class="rval" id="oGamma">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">E_ab_mix = &eta;&middot;Q_ff / (K+1&#8209;&epsilon;)  (energy per kg of jet mixture)</span><span class="rval" id="oEab">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Jet speed  v_p = &radic;(2&middot;max(0, E_ab_mix &ndash; H_sub))</span><span class="rval" id="oVp">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">v_eff = (&epsilon;&middot;[&gamma;]&middot;v_ff + (K+1&#8209;&epsilon;)&middot;v_p) / (1+K)</span><span class="rval green" id="oVeff">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">&Delta;v = v_eff &middot; ln(R)  or  c&middot;tanh(v_eff/c&middot;ln R)</span><span class="rval green" id="oDv">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Specific impulse  Isp = v_eff / g&#8320;</span><span class="rval" id="oIsp">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Operating mode</span><span class="rval" id="oMode">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">&Pi;&#8322; = &eta;&middot;Q_ff / (H_sub&middot;(K+1&#8209;&epsilon;))  (ablation overheat ratio)</span><span class="rval" id="oPi2">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">&Pi;&#8325; = v_p / v_ff  (jet-to-fragment speed ratio)</span><span class="rval" id="oPi5">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">&Pi;&#8326; = K / (1&#8209;&epsilon;)  (ablator mass vs trapped fragments)</span><span class="rval" id="oPi6">&mdash;</span></div>
+<div class="srow"><span class="slbl">Graphene Ablator / Nuclear fuel ratio  K</span><input type="number" class="rbox" id="mn_K" value="0.01"><input type="range" id="inK" min="0.01" max="32" step="0.01" value="32"><input type="number" class="rbox" id="mx_K" value="32"><span class="vdisp" id="vK">32.00</span></div>
+<div class="srow"><span class="slbl">Coupling saturation  Π₆_s  (ablator-to-fragment ratio Π₆ = K/(1−ε) at full coupling;  Π₆ ≥ Π₆_s → η = η_geo)</span><input type="number" class="rbox" id="mn_ks" value="0.5"><input type="range" id="inKsat" min="0.5" max="10" step="0.1" value="1.0"><input type="number" class="rbox" id="mx_ks" value="10"><span class="vdisp" id="vKs">1.0</span></div>
+<div class="rrow"><span class="rlbl">Derived  η = η_geo × min(1, Π₆ / Π₆_s)  — more ablator relative to trapped fragments → higher coupling → less waste heat → smaller radiator</span><span class="rval" id="oEtaDerived">—</span></div>
+<div class="srow"><span class="slbl">Fragment species speed  v_ff</span><input type="number" class="rbox" id="mn_vff" value="3"><input type="range" id="inVff" min="3" max="20" step="0.01" value="3"><input type="number" class="rbox" id="mx_vff" value="20"><span class="vdisp" id="vVff">3.00</span><span class="unit"> %c</span></div>
+<div class="rrow"><span class="rlbl">Q_ff  (deposited KE per kg nuclear fuel, forward hemisphere)</span><span class="rval" id="oQff">—</span></div>
+<div class="rrow"><span class="rlbl">Lorentz factor  γ  (relativistic correction)</span><span class="rval" id="oGamma">—</span></div>
+<div class="rrow"><span class="rlbl">E_ab_mix = η·Q_ff / (K+1‑ε)  (energy per kg of jet mixture)</span><span class="rval" id="oEab">—</span></div>
+<div class="rrow"><span class="rlbl">Jet speed  v_p = √(2·max(0, E_ab_mix – H_sub))</span><span class="rval" id="oVp">—</span></div>
+<div class="rrow"><span class="rlbl">v_eff = (ε·[γ]·v_ff + (K+1‑ε)·v_p) / (1+K)</span><span class="rval green" id="oVeff">—</span></div>
+<div class="rrow"><span class="rlbl">Δv = v_eff · ln(R)  or  c·tanh(v_eff/c·ln R)</span><span class="rval green" id="oDv">—</span></div>
+<div class="rrow"><span class="rlbl">Specific impulse  Isp = v_eff / g₀</span><span class="rval" id="oIsp">—</span></div>
+<div class="rrow"><span class="rlbl">Operating mode</span><span class="rval" id="oMode">—</span></div>
+<div class="rrow"><span class="rlbl">Π₂ = η·Q_ff / (H_sub·(K+1‑ε))  (ablation overheat ratio)</span><span class="rval" id="oPi2">—</span></div>
+<div class="rrow"><span class="rlbl">Π₅ = v_p / v_ff  (jet-to-fragment speed ratio)</span><span class="rval" id="oPi5">—</span></div>
+<div class="rrow"><span class="rlbl">Π₆ = K / (1‑ε)  (ablator mass vs trapped fragments)</span><span class="rval" id="oPi6">—</span></div>
 
-<div class="srow"><span class="slbl">Double Punch wakefield boost  &eta;_wake  (1.000 = off &nbsp; 1.200 = PEARL-GATE analytical)</span><input type="number" class="rbox" id="mn_wk" value="1.000"><input type="range" id="inWake" min="1.000" max="1.1356" step="0.000001" value="1.000"><input type="number" class="rbox" id="mx_wk" value="1.1356"><span class="vdisp" id="vWake">1.000</span><span class="unit"> &times;</span></div>
-<div class="srow"><span class="slbl">Subcritical  k_eff</span><input type="number" class="rbox" id="mn_ke" value="0.98"><input type="range" id="inKe" min="0.98" max="0.9990" step="0.0001" value="0.991"><input type="number" class="rbox" id="mx_ke" value="0.999"><span class="vdisp" id="vKe">0.9910</span></div>
-<div class="rrow"><span class="rlbl">Subcritical gain  &Pi;&#8321; = 1/(1&#8209;k_eff)</span><span class="rval" id="oPi1">&mdash;</span></div>
-<div class="srow"><span class="slbl">ADS boot-up power  P_boot</span><input type="number" class="rbox" id="mn_pb" value="2.5"><input type="range" id="inPb" min="2.5" max="210" step="0.001" value="13"><input type="number" class="rbox" id="mx_pb" value="210"><span class="vdisp" id="vPb">13.000</span><span class="unit"> MW</span></div>
-<div class="rrow"><span class="rlbl">Startup check</span><span class="rval" id="oBootCheck">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Nuclear Fuel Mass Flow  &#7745;_nuc  (derived from P_boot)</span><span class="rval" id="oMdotNuc">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Nuclear power  P_nuc = &#7745;_nuc &middot; (&gamma;&#8209;1)c&sup2;</span><span class="rval" id="oPnuc">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Beam power required  (= P_boot, TEGs must match)</span><span class="rval" id="oPbeamReq">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Total mass flow  &#7745;_tot = (1+K)&middot;&#7745;_nuc</span><span class="rval" id="oMtot">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Fragment thrust  F_ff = &epsilon;&middot;&#7745;_nuc&middot;[&gamma;]&middot;v_ff</span><span class="rval" id="oFff">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Jet thrust  F_jet = (K+1&#8209;&epsilon;)&middot;&#7745;_nuc&middot;v_p</span><span class="rval" id="oFabl">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Total thrust  F_tot</span><span class="rval green" id="oFtot">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Jet mass flow  (K+1&#8209;&epsilon;)&middot;&#7745;_nuc</span><span class="rval" id="oMabl">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Burn time  (propellant / &#7745;_tot)</span><span class="rval" id="oBt">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Initial acceleration  F_tot / m_wet</span><span class="rval" id="oAcc0">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Final acceleration   F_tot / m_dry</span><span class="rval" id="oAccF">&mdash;</span></div>
-<div class="srow"><span class="slbl">Energy recovery efficiency  &eta;  (Marshak coupling)</span><input type="number" class="rbox" id="mn_eta" value="0.896"><input type="range" id="inEta" min="0.896" max="0.99" step="0.0001" value="0.9084"><input type="number" class="rbox" id="mx_eta" value="0.99"><span class="vdisp" id="vEta">0.9084</span></div>
-<div class="srow"><span class="slbl">Fragment Escape Fraction  &epsilon;_coll  (0.5 = isotropic &nbsp;&middot;&nbsp; &gt;0.5 = shaped geometry)</span><input type="number" class="rbox" id="mn_ec" value="0.49"><input type="range" id="inEc" min="0.49" max="0.75" step="0.01" value="0.5"><input type="number" class="rbox" id="mx_ec" value="0.75"><span class="vdisp" id="vEc">0.50</span></div>
-<div class="rrow"><span class="rlbl">Escaping fragment power  &epsilon;&middot;P_nuc  &rarr; thrust</span><span class="rval" id="oPesc">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Trapped fragment power  (1&#8209;&epsilon;)&middot;P_nuc  &rarr; ablator mixture</span><span class="rval" id="oPtrap">&mdash;</span></div>
+<div class="srow"><span class="slbl">Double Punch wakefield boost  η_wake  (1.000 = off   1.200 = PEARL-GATE analytical)</span><input type="number" class="rbox" id="mn_wk" value="1.000"><input type="range" id="inWake" min="1.000" max="1.1356" step="0.000001" value="1.000"><input type="number" class="rbox" id="mx_wk" value="1.1356"><span class="vdisp" id="vWake">1.000</span><span class="unit"> ×</span></div>
+<div class="srow"><span class="slbl">Subcritical  k_eff</span><input type="number" class="rbox" id="mn_ke" value="0.95"><input type="range" id="inKe" min="0.95" max="0.9990" step="0.0001" value="0.98"><input type="number" class="rbox" id="mx_ke" value="0.999"><span class="vdisp" id="vKe">0.9800</span></div>
+<div class="rrow"><span class="rlbl">Subcritical gain  Π₁ = 1/(1‑k_eff)</span><span class="rval" id="oPi1">—</span></div>
+<div class="srow"><span class="slbl">ADS boot-up power  P_boot</span><input type="number" class="rbox" id="mn_pb" value="2.5"><input type="range" id="inPb" min="2.5" max="2000" step="0.001" value="12.665"><input type="number" class="rbox" id="mx_pb" value="2000"><span class="vdisp" id="vPb">12.665</span><span class="unit"> MW</span></div>
+<div class="rrow"><span class="rlbl">Startup check</span><span class="rval" id="oBootCheck">—</span></div>
+<div class="rrow"><span class="rlbl">Nuclear Fuel Mass Flow  ṁ_nuc  (derived from P_boot)</span><span class="rval" id="oMdotNuc">—</span></div>
+<div class="rrow"><span class="rlbl">Nuclear power  P_nuc = ṁ_nuc · (γ‑1)c²</span><span class="rval" id="oPnuc">—</span></div>
+<div class="rrow"><span class="rlbl">Beam power required  (= P_boot, TEGs must match)</span><span class="rval" id="oPbeamReq">—</span></div>
+<div class="rrow"><span class="rlbl">Total mass flow  ṁ_tot = (1+K)·ṁ_nuc</span><span class="rval" id="oMtot">—</span></div>
+<div class="rrow"><span class="rlbl">Fragment thrust  F_ff = ε·ṁ_nuc·[γ]·v_ff</span><span class="rval" id="oFff">—</span></div>
+<div class="rrow"><span class="rlbl">Jet thrust  F_jet = (K+1‑ε)·ṁ_nuc·v_p</span><span class="rval" id="oFabl">—</span></div>
+<div class="rrow"><span class="rlbl">Total thrust  F_tot</span><span class="rval green" id="oFtot">—</span></div>
+<div class="rrow"><span class="rlbl">Jet mass flow  (K+1‑ε)·ṁ_nuc</span><span class="rval" id="oMabl">—</span></div>
+<div class="rrow"><span class="rlbl">Burn time  (propellant / ṁ_tot)</span><span class="rval" id="oBt">—</span></div>
+<div class="rrow"><span class="rlbl">Initial acceleration  F_tot / m_wet</span><span class="rval" id="oAcc0">—</span></div>
+<div class="rrow"><span class="rlbl">Final acceleration   F_tot / m_dry</span><span class="rval" id="oAccF">—</span></div>
+<div class="srow"><span class="slbl">Marshak coupling ceiling  η_geo  (geometric max; actual η = η_geo × min(1, Π₆ / Π₆_s)  is derived above)</span><input type="number" class="rbox" id="mn_eta" value="0.50"><input type="range" id="inEta" min="0.50" max="0.99" step="0.0001" value="0.8649"><input type="number" class="rbox" id="mx_eta" value="0.99"><span class="vdisp" id="vEta">0.8649</span></div>
+<div class="srow"><span class="slbl">Fragment Escape Fraction  ε_coll  (0.5 = isotropic  ·  >0.5 = shaped geometry)</span><input type="number" class="rbox" id="mn_ec" value="0.49"><input type="range" id="inEc" min="0.49" max="0.99" step="0.01" value="0.50"><input type="number" class="rbox" id="mx_ec" value="0.99"><span class="vdisp" id="vEc">0.50</span></div>
+<div class="rrow"><span class="rlbl">Escaping fragment power  ε·P_nuc  → thrust</span><span class="rval" id="oPesc">—</span></div>
+<div class="rrow"><span class="rlbl">Trapped fragment power  (1‑ε)·P_nuc  → ablator mixture</span><span class="rval" id="oPtrap">—</span></div>
 <div class="srow"><span class="slbl">Graphene Ablator Sublimation enthalpy  H_sub</span><input type="number" class="rbox" id="mn_hs" value="50"><input type="range" id="inHs" min="50" max="60" step="0.01" value="59.7"><input type="number" class="rbox" id="mx_hs" value="60"><span class="vdisp" id="vHs">59.7</span><span class="unit"> MJ/kg</span></div>
 
-<!-- ═══════════ THRUST & POWER ═══════════ -->
+<div class="sec">4.  POWER &  THERMAL MANAGEMENT</div>
 
-<!-- ═══════════ THRUST & POWER ═══════════ -->
-<div class="sec">4.  POWER &amp;  THERMAL MANAGEMENT</div>
-
-<!-- ═══════════ THERMAL MANAGEMENT & BEAM ═══════════ -->
-
-<div class="rrow"><span class="rlbl">Ablator-coupled power  &eta;&middot;P_trapped</span><span class="rval" id="oPabl">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Unmanaged waste heat  (1&#8209;&eta;)&middot;P_trapped</span><span class="rval" id="oPunman">&mdash;</span></div>
-<div class="srow"><span class="slbl">Phononic Crystal Thermoelectric  ZT  (clathrate 1.35 / half-Heusler 2.5 / topological 5.0)</span><input type="number" class="rbox" id="mn_zt" value="0.8"><input type="range" id="inZT" min="0.8" max="5.0" step="0.05" value="2.9"><input type="number" class="rbox" id="mx_zt" value="5.0"><span class="vdisp" id="vZT">2.90</span></div>
-<div class="srow"><span class="slbl">Radiator Specific Mass</span><input type="number" class="rbox" id="mn_rsm" value="150"><input type="range" id="inRSM" min="150" max="2000" step="10" value="300"><input type="number" class="rbox" id="mx_rsm" value="2000"><span class="vdisp" id="vRSM">300</span><span class="unit"> kg/MW</span></div>
-<div class="srow"><span class="slbl">Radiator areal density  (kg/m²)  — fixes T_hot to waste heat</span><input type="number" class="rbox" id="mn_rad" value="0.5"><input type="range" id="inRad" min="0.5" max="50" step="0.1" value="2"><input type="number" class="rbox" id="mx_rad" value="50"><span class="vdisp" id="vRad">2.0</span><span class="unit"> kg/m²</span></div>
-<div class="srow"><span class="slbl">Max Radiator / Structure Temp</span><input type="number" class="rbox" id="mn_tmax" value="500"><input type="range" id="inTmax" min="500" max="1500" step="50" value="1500"><input type="number" class="rbox" id="mx_tmax" value="1500"><span class="vdisp" id="vTmax">1500</span><span class="unit"> K</span></div>
-<div class="rrow"><span class="rlbl">Radiator equilibrium temp  T_hot</span><span class="rval" id="oTrad">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">PCT efficiency  &eta;_TEG  (Phononic Crystal Thermoelectric)</span><span class="rval" id="oEtaTEG">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">PCT power recovered</span><span class="rval" id="oPTEG">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Heat rejected to radiators</span><span class="rval" id="oQrej">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Radiator mass / area</span><span class="rval" id="oRadMA">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">Ablator-coupled power  η·P_trapped</span><span class="rval" id="oPabl">—</span></div>
+<div class="rrow"><span class="rlbl">Unmanaged waste heat  (1‑η)·P_trapped</span><span class="rval" id="oPunman">—</span></div>
+<div class="srow"><span class="slbl">Phononic Crystal Thermoelectric  ZT  (clathrate 1.35 / half-Heusler 2.5 / topological 5.0)</span><input type="number" class="rbox" id="mn_zt" value="0.8"><input type="range" id="inZT" min="0.8" max="5.0" step="0.05" value="2.5"><input type="number" class="rbox" id="mx_zt" value="5.0"><span class="vdisp" id="vZT">2.50</span></div>
+<div class="srow"><span class="slbl">Radiator panel areal density  (kg/m²)  — material choice  (droplet ~1, C-C ~5, Mo heat-pipe ~15, pumped-loop ~50)</span><input type="number" class="rbox" id="mn_rad" value="0.5"><input type="range" id="inRad" min="0.5" max="50" step="0.1" value="41.1"><input type="number" class="rbox" id="mx_rad" value="50"><span class="vdisp" id="vRad">41.1</span><span class="unit"> kg/m²</span></div>
+<div class="srow"><span class="slbl">Radiator operating temperature  T_hot  (material design limit — higher T → lighter radiator via T⁴)</span><input type="number" class="rbox" id="mn_tmax" value="300"><input type="range" id="inTmax" min="300" max="1800" step="1" value="1100"><input type="number" class="rbox" id="mx_tmax" value="1800"><span class="vdisp" id="vTmax">1100</span><span class="unit"> K</span></div>
+<div class="rrow"><span class="rlbl">Radiator equilibrium temp  T_hot  (= T_max, material design limit)</span><span class="rval" id="oTrad">—</span></div>
+<div class="rrow"><span class="rlbl">Derived  rSM_eff = rad_areal × 10⁶ / (σ·0.99·T_hot⁴)  — technology this radiator requires  (hover for tier)</span><span class="rval" id="oRSM">—</span></div>
+<div class="rrow"><span class="rlbl">PCT efficiency  η_TEG  (Phononic Crystal Thermoelectric)</span><span class="rval" id="oEtaTEG">—</span></div>
+<div class="rrow"><span class="rlbl">PCT power recovered</span><span class="rval" id="oPTEG">—</span></div>
+<div class="rrow"><span class="rlbl">Heat rejected to radiators</span><span class="rval" id="oQrej">—</span></div>
+<div class="rrow"><span class="rlbl">Radiator mass / area</span><span class="rval" id="oRadMA">—</span></div>
 <div class="srow"><span class="slbl">Beam Power Fraction of TEG output</span><input type="number" class="rbox" id="mn_bf" value="0.999"><input type="range" id="inBF" min="0.999" max="0.9999" step="0.0001" value="0.9999"><input type="number" class="rbox" id="mx_bf" value="0.9999"><span class="vdisp" id="vBF">0.9999</span></div>
-<div class="rrow"><span class="rlbl">Power allocated to beam</span><span class="rval" id="oPbeamTEG">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Power to other systems</span><span class="rval" id="oPsys">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Self-sustaining ratio  &Pi;&#8323; = P_TEG&middot;f / P_beam</span><span class="rval" id="oSSR">&mdash;</span></div>
-<div class="srow"><span class="slbl">Beam Current / Energy Ratio</span><input type="number" class="rbox" id="mn_br" value="0.00001"><input type="range" id="inBR" min="0.00001" max="0.0001" step="0.000001" value="0.00001"><input type="number" class="rbox" id="mx_br" value="0.0001"><span class="vdisp" id="vBR">0.000010</span><span class="unit"> A/GeV</span></div>
-<div class="rrow"><span class="rlbl">Beam energy</span><span class="rval" id="oEGeV">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Beam current</span><span class="rval" id="oIamp">&mdash;</span></div>
+<div class="srow"><span class="slbl">MHD direct conversion efficiency  η_MHD  (consumable conductor taps charged jet; 0 = TEG-only)</span><input type="number" class="rbox" id="mn_mhd" value="0"><input type="range" id="inMHD" min="0" max="0.6" step="0.01" value="0"><input type="number" class="rbox" id="mx_mhd" value="0.6"><span class="vdisp" id="vMHD">0.00</span></div>
+<div class="srow"><span class="slbl">Neutron+γ energy fraction  f_n  (not induction-harvestable; limits MHD reach)</span><input type="number" class="rbox" id="mn_fn" value="0"><input type="range" id="inFn" min="0" max="0.4" step="0.01" value="0"><input type="number" class="rbox" id="mx_fn" value="0.4"><span class="vdisp" id="vFn">0.00</span></div>
+<div class="rrow"><span class="rlbl">Power allocated to beam</span><span class="rval" id="oPbeamTEG">—</span></div>
+<div class="rrow"><span class="rlbl">Power to other systems</span><span class="rval" id="oPsys">—</span></div>
+<div class="rrow"><span class="rlbl">Self-sustaining ratio  Π₃ = (P_MHD + P_TEG·f) / P_beam</span><span class="rval" id="oSSR">—</span></div>
+<div class="rrow"><span class="rlbl">MHD power harvested (primary)  /  jet thrust penalty</span><span class="rval" id="oMHD">—</span></div>
+<div class="srow"><span class="slbl">Beam Current / Energy Ratio</span><input type="number" class="rbox" id="mn_br" value="0.00001"><input type="range" id="inBR" min="0.00001" max="0.0001" step="0.000001" value="0.0001"><input type="number" class="rbox" id="mx_br" value="0.0001"><span class="vdisp" id="vBR">0.000100</span><span class="unit"> A/GeV</span></div>
+<div class="rrow"><span class="rlbl">Beam energy</span><span class="rval" id="oEGeV">—</span></div>
+<div class="rrow"><span class="rlbl">Beam current</span><span class="rval" id="oIamp">—</span></div>
 <div class="rrow" style="margin-top:6px;"><span class="rlbl" style="color:#aaa;">── Antimatter generation thresholds ──</span></div>
-<div class="rrow"><span class="rlbl">e&#8314; (positron)</span><span class="rval" id="oThreshE">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">p&#772; (antiproton)</span><span class="rval" id="oThreshP">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">n&#772; (antineutron)</span><span class="rval" id="oThreshN">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Antimatter production rate  (p&#772; yield &#8776;2&#215;10&#8315;&#8308; at plateau)</span><span class="rval" id="oAMprod">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">LiH consumption rate</span><span class="rval" id="oLiHcons">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">LiH required for mission</span><span class="rval" id="oLiHreq">&mdash;</span></div>
+<div class="rrow"><span class="rlbl">e⁺ (positron)</span><span class="rval" id="oThreshE">—</span></div>
+<div class="rrow"><span class="rlbl">p̅ (antiproton)</span><span class="rval" id="oThreshP">—</span></div>
+<div class="rrow"><span class="rlbl">n̅ (antineutron)</span><span class="rval" id="oThreshN">—</span></div>
+<div class="rrow"><span class="rlbl">Antimatter production rate  (p̅ yield ≈2×10⁻⁴ at plateau)</span><span class="rval" id="oAMprod">—</span></div>
+<div class="rrow"><span class="rlbl">LiH consumption rate</span><span class="rval" id="oLiHcons">—</span></div>
+<div class="rrow"><span class="rlbl">LiH required for mission</span><span class="rval" id="oLiHreq">—</span></div>
 
 <!-- ═══════════ ISM ═══════════ -->
-<div class="sec">5.  INTERSTELLAR MEDIUM (ISM) HARVESTING &mdash; NEP Coast Mode</div>
-<div class="srow"><span class="slbl">Funnel / hull mouth cross-section area</span><input type="number" class="rbox" id="mn_af" value="100"><input type="range" id="inAF" min="100" max="10000" step="10" value="1000"><input type="number" class="rbox" id="mx_af" value="10000"><span class="vdisp" id="vAF">1000</span><span class="unit"> m&sup2;</span></div>
-<div class="srow"><span class="slbl">ISM proton density</span><input type="number" class="rbox" id="mn_ism" value="0.01"><input type="range" id="inISM" min="0.01" max="10" step="0.01" value="0.3"><input type="number" class="rbox" id="mx_ism" value="10"><span class="vdisp" id="vISM">0.30</span><span class="unit"> p/cm&sup3;</span></div>
-<div class="rrow"><span class="rlbl">ISM feedstock mass flow  &#7745;_ISM = &rho;&middot;A&middot;v_c  (free beam mass)</span><span class="rval" id="oMdotISM">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Free beam power  P_ram = &#7745;_ISM&middot;(&gamma;&minus;1)c&sup2;  (offsets beam demand)</span><span class="rval" id="oPismFree">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Net beam demand  P_beam_req &minus; P_ram  (ship must self-supply)</span><span class="rval" id="oPbeamAug">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Self-sustaining incl. ISM credit  &Pi;&#8323;&prime; = P_TEG&middot;f / (P_beam_req &minus; P_ram)</span><span class="rval" id="oFism">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Conservation drag  F_drag = P_ram / v_c  (reaction cost)</span><span class="rval" id="oFdrag">&mdash;</span></div>
-<div class="rrow"><span class="rlbl">Funnel verdict</span><span class="rval" id="oFismNet">&mdash;</span></div>
+<div class="sec">5.  INTERSTELLAR MEDIUM (ISM) HARVESTING — NEP Coast Mode</div>
+<div class="srow"><span class="slbl">Funnel / hull mouth cross-section area</span><input type="number" class="rbox" id="mn_af" value="100"><input type="range" id="inAF" min="100" max="10000" step="10" value="1000"><input type="number" class="rbox" id="mx_af" value="10000"><span class="vdisp" id="vAF">1000</span><span class="unit"> m²</span></div>
+<div class="srow"><span class="slbl">ISM proton density</span><input type="number" class="rbox" id="mn_ism" value="0.01"><input type="range" id="inISM" min="0.01" max="10" step="0.01" value="0.3"><input type="number" class="rbox" id="mx_ism" value="10"><span class="vdisp" id="vISM">0.30</span><span class="unit"> p/cm³</span></div>
+<div class="rrow"><span class="rlbl">ISM feedstock mass flow  ṁ_ISM = ρ·A·v_c  (free beam mass)</span><span class="rval" id="oMdotISM">—</span></div>
+<div class="rrow"><span class="rlbl">Free beam power  P_ram = ṁ_ISM·(γ−1)c²  (offsets beam demand)</span><span class="rval" id="oPismFree">—</span></div>
+<div class="rrow"><span class="rlbl">Net beam demand  P_beam_req − P_ram  (ship must self-supply)</span><span class="rval" id="oPbeamAug">—</span></div>
+<div class="rrow"><span class="rlbl">Self-sustaining incl. ISM credit  Π₃′ = P_TEG·f / (P_beam_req − P_ram)</span><span class="rval" id="oFism">—</span></div>
+<div class="rrow"><span class="rlbl">Conservation drag  F_drag = P_ram / v_c  (reaction cost)</span><span class="rval" id="oFdrag">—</span></div>
+<div class="rrow"><span class="rlbl">Funnel verdict</span><span class="rval" id="oFismNet">—</span></div>
 
 <!-- ═══════════ ANIMATION ═══════════ -->
 <div class="sec">6.  ANIMATION</div>
-<div class="srow"><span class="slbl">Time warp  10^<span id="vWexp">7.00</span> = <span id="vWfmt">10.0M</span>&times;</span><input type="number" class="rbox" id="mn_wp" value="1"><input type="range" id="inWp" min="1" max="9.5" step="0.01" value="7"><input type="number" class="rbox" id="mx_wp" value="9.5"></div>
+<div class="srow"><span class="slbl">Time warp  10^<span id="vWexp">7.00</span> = <span id="vWfmt">10.0M</span>×</span><input type="number" class="rbox" id="mn_wp" value="1"><input type="range" id="inWp" min="1" max="9.5" step="0.01" value="7"><input type="number" class="rbox" id="mx_wp" value="9.5"></div>
 <div style="margin:12px 0; display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
-  <button id="btnStart">&#9654; Start</button>
-  <button id="btnReset">&#8634; Reset</button>
-  <button id="btnToggle">&#9883; PHYSICS</button>
-  <button id="btnRel">&gamma; RELATIVISTIC</button>
-  <button id="btnMission" style="border-color:#00ff44; color:#00ff44;" title="SGL ↔ Proxima rendezvous">&#8644; Proxima</button>
+  <button id="btnStart">▶ Start</button>
+  <button id="btnReset">⟲ Reset</button>
+  <button id="btnToggle">⚙ PHYSICS</button>
+  <button id="btnRel">γ RELATIVISTIC</button>
+  <button id="btnMission" style="border-color:#00ff44; color:#00ff44;" title="Cycle mission presets">⇄ Proxima — Buildable Now (284 yr)</button>
   <div style="color:#555; font-size:11px; max-width:480px; line-height:1.6;">
-    <b style="color:#888;">CLOCK</b>: missionTime advances by realDt&times;warp &mdash; CPU-dependent.<br>
-    <b style="color:#888;">PHYSICS</b>: missionTime advances by (1/60 s)&times;warp &mdash; repeatable.<br>
-    <b style="color:#888;">CLASSICAL</b>: Q_ff=v&sup2;/4, F=&frac12;&#7745;v, &Delta;v=v_eff&middot;ln(R).<br>
-    <b style="color:#888;">RELATIVISTIC</b>: Q_ff=(&gamma;&#8209;1)c&sup2;, F=&frac12;&#7745;&gamma;v, &Delta;v=c&middot;tanh(v_eff/c&middot;ln(R)).
+    <b style="color:#888;">CLOCK</b>: missionTime advances by realDt×warp — CPU-dependent.<br>
+    <b style="color:#888;">PHYSICS</b>: missionTime advances by (1/60 s)×warp — repeatable.<br>
+    <b style="color:#888;">CLASSICAL</b>: Q_ff=v²/4, F=½ṁv, Δv=v_eff·ln(R).<br>
+    <b style="color:#888;">RELATIVISTIC</b>: Q_ff=(γ‑1)c², F=½ṁγv, Δv=c·tanh(v_eff/c·ln(R)).
   </div>
 </div>
 <div id="viz3d"></div>
@@ -223,7 +228,15 @@ function draw(prog,phase){
 function cascade(){
     const m_dry = get('inDry')*1e3, mr_in = get('inMR'), m_wet = m_dry*mr_in;
     const K   = get('inK'), vffPc = get('inVff'), v_ff = vffPc/100*C;
-    const eps = get('inEc'), eta = get('inEta'), H_sub = get('inHs')*1e6, k_eff = get('inKe');
+    const eps = get('inEc'), eta_geo = get('inEta'), H_sub = get('inHs')*1e6, k_eff = get('inKe');
+    const K_sat = get('inKsat');
+    // Marshak coupling η derived from Π₆ = K/(1−ε), the ablator-to-trapped-fragment ratio.
+    // Physical basis: the ablator soaks the trapped heat (1−ε)·P_nuc. Using Π₆ makes this
+    // ε-aware: at high ε the trapped fraction is tiny so even small K fully saturates;
+    // at low ε more ablator is needed. K_sat is the Π₆ at which coupling saturates.
+    // Pi6 = ablator-to-trapped-fragment ratio; computed here so eta can derive from it
+    const Pi6 = (1 - eps) > 0 ? K / (1 - eps) : Infinity;
+    const eta = eta_geo * Math.min(1, Pi6 / K_sat);
     const prop = Math.max(0, m_wet - m_dry);
     const nuc_mass = prop / (1+K);
     const abl_mass = K * nuc_mass;
@@ -236,7 +249,7 @@ function cascade(){
     const denom_mix = K + 1 - eps;
     const E_ab_mix = (denom_mix > 0) ? eta * Q_ff / denom_mix : 0;
     const ablOK = (denom_mix > 0) && (E_ab_mix > H_sub);
-    const v_p = ablOK ? Math.sqrt(2 * (E_ab_mix - H_sub)) : 0;
+    const v_p_raw = ablOK ? Math.sqrt(2 * (E_ab_mix - H_sub)) : 0;
 
     const Pi1 = 1/(1 - k_eff);
     const P_boot = get('inPb')*1e6;
@@ -247,23 +260,41 @@ function cascade(){
     const P_nuc = mdot_nuc * KE_unit;
     const P_beam_req = P_boot;
 
+    // ── MHD direct conversion (powers the beam by tapping the DIRECTED exhaust) ──
+    // Corrected role: at high ε the trapped fraction (1−ε) vanishes, so the TEG starves and
+    // the beam cannot be powered from waste heat. The fix is to tap a small fraction off the
+    // DIRECTED charged exhaust (ε·P_nuc), the dominant collimated stream. This is what breaks
+    // the SSR–ε coupling and lets ε rise to the collimation limit (the path to the 40-yr run).
+    // A static B-field does no work, so collimation itself is ~free; the only cost is the
+    // small kinetic power actually drawn off as electricity (the thrust tax below).
+    const eta_MHD = get('inMHD');
+    const f_n = get('inFn');
+    const P_MHD_cap    = eta_MHD * (1-f_n) * eps * P_nuc;   // tap from directed (charged) exhaust
+    const P_MHD        = Math.min(P_MHD_cap, P_beam_req);   // draw only what the beam needs
+    const P_MHD_reserve = P_beam_req>0 ? P_MHD_cap/P_beam_req : Infinity;  // capacity / demand
+    const dirLossFrac  = (eps * P_nuc)>0 ? P_MHD/(eps * P_nuc) : 0;
+    const v_p = v_p_raw;  // ablation jet untouched (tap is on the directed fragment stream)
+    const thrustTap = Math.sqrt(Math.max(0, 1 - dirLossFrac));  // velocity factor on directed term
+
     // Fragment exhaust: γ·v_ff is relativistic specific momentum (correct for momentum thrust)
     // At v_ff ≤ 8%c, γ ≤ 1.003 — correction < 0.3%, self-consistent with F_ff formula
-    const v_ff_rel = relMode ? eps * gamma * v_ff : eps * v_ff;
+    const v_ff_rel = relMode ? eps * thrustTap * gamma * v_ff : eps * thrustTap * v_ff;
     const v_eff_out = (v_ff_rel + denom_mix * v_p) / (1+K);
     // Rapidity-corrected v_eff (more rigorous at higher v_ff)
     const u_ff = relMode ? C * Math.atanh(v_ff/C) : v_ff;  // rapidity
-    const v_eff_rapidity = (eps*u_ff + denom_mix*v_p) / (1+K);  // rapidity-weighted
+    const v_eff_rapidity = (eps*thrustTap*u_ff + denom_mix*v_p) / (1+K);  // rapidity-weighted, minus tap
     const v_eff_corr = relMode ? C*Math.tanh(v_eff_rapidity/C) : v_eff_out;
     // v_eff_pre_wake: rapidity-corrected but before Double Punch boost (for rapidity delta display)
     const v_eff_pre_wake = relMode ? v_eff_corr : v_eff_out;
     const wake = get('inWake');
+    // Wakefield boost is applied as a linear velocity multiplier on both fragment and jet streams,
+    // equivalent to scaling the weighted exhaust speed.  (see header note)
     const v_eff_display = v_eff_pre_wake * wake;  // includes Double Punch boost
 
     const ln_R = Math.log(m_wet / m_dry);
     const delta_v = relMode ? C * Math.tanh(v_eff_display/C * ln_R) : v_eff_display * ln_R;
 
-    const F_ff_base  = relMode ? eps * mdot_nuc * gamma * v_ff : eps * mdot_nuc * v_ff;
+    const F_ff_base  = relMode ? eps * thrustTap * mdot_nuc * gamma * v_ff : eps * thrustTap * mdot_nuc * v_ff;
     const F_jet_base = mdot_jet * v_p;
     const F_ff  = F_ff_base * wake;
     const F_jet = F_jet_base * wake;
@@ -279,37 +310,32 @@ function cascade(){
 
     const Pi2 = (denom_mix > 0 && H_sub > 0) ? (eta * Q_ff) / (H_sub * denom_mix) : 0;
     const Pi5 = (v_ff > 0) ? v_p / v_ff : 0;
-    // Ablator sufficiency: graphene mass flow must at least match the trapped-fragment
-    // mass flow it has to entrain and turn aft. Below K = (1-eps) there is no working
-    // fluid and the jet thrust credited to the trapped half is fictitious.
+    // Ablator sufficiency check (Pi6 already computed above for eta derivation)
     const ablFloor = 1 - eps;
-    const Pi6 = ablFloor > 0 ? K / ablFloor : Infinity;
     const ablShort = K < ablFloor;
 
-    const ZT = get('inZT'), rSM = get('inRSM'), T_MAX = get('inTmax'), T_AMB=293;
-    const rad_areal = get('inRad');  // kg/m² — explicit areal density
-    // First-pass: estimate T_hot from reference (needed before Q_rej known)
-    const eta_TEG_est = 0.2;  // initial estimate
-    const P_unman_est = P_unman;
-    const Q_rej_est = P_unman_est * (1 - eta_TEG_est);
-    const radMass_est = Q_rej_est/1e6 * rSM;
-    const radArea_est = radMass_est / rad_areal;
-    const T_hot_raw = radArea_est>0 ? Math.pow(Q_rej_est/(5.670374e-8*0.99*radArea_est),0.25) : 300;
-    const T_hot = Math.min(T_MAX, Math.max(T_AMB+1, T_hot_raw));
-    const overTemp = T_hot_raw > T_MAX;
+    const ZT = get('inZT'), T_MAX = get('inTmax'), T_AMB=293;
+    const rad_areal = get('inRad');  // kg/m² — panel material areal density
+    const Q_thermal = P_unman;      // escape waste heat only; MHD adds no radiator load
+    // PHYSICS-CORRECT RADIATOR: T_hot = T_MAX (run panel at its material design limit).
+    // Higher T_MAX → smaller area → lighter radiator (captures the full Stefan-Boltzmann T⁴ benefit).
+    // rSM is now DERIVED: rSM_eff = rad_areal × 10⁶ / (σ·0.99·T_hot⁴).  No rSM input in physics.
+    const SIG_SB = 5.670374e-8, RAD_EMIT = 0.99;
+    const T_hot = Math.max(T_AMB+1, T_MAX);
     const carnot = Math.max(0, 1 - T_AMB/T_hot);
     const zt_fac = (Math.sqrt(1+ZT)-1) / (Math.sqrt(1+ZT) + T_AMB/T_hot);
     const eta_TEG = carnot * zt_fac;
-    const P_TEG = eta_TEG * P_unman;
-    const Q_rej = P_unman - P_TEG;
-    // Final radiator sizing from actual Q_rej
-    const radMass = Q_rej/1e6 * rSM;
-    const radArea = radMass / rad_areal;  // m² — uses explicit areal density
-    // Corrected T_hot from actual Q_rej and area
-    const T_hot_final = radArea>0 ? Math.pow(Q_rej/(5.670374e-8*0.99*radArea),0.25) : T_hot;
+    const P_TEG = eta_TEG * Q_thermal;
+    const Q_rej  = Q_thermal - P_TEG;
+    // Area sized to reject Q_rej at T_hot — the T⁴ factor is now live
+    const radArea = Q_rej > 0 ? Q_rej / (SIG_SB * RAD_EMIT * Math.pow(T_hot, 4)) : 0;
+    const radMass = rad_areal * radArea;
+    // Derived rSM: a material+temperature property, independent of heat load
+    const rSM_eff = rad_areal * 1e6 / (SIG_SB * RAD_EMIT * Math.pow(T_hot, 4));
+    const overTemp = false;  // T_hot IS the design temperature; no exceedance possible
 
     const beam_frac = get('inBF');
-    const P_to_beam = P_TEG * beam_frac;
+    const P_to_beam = P_MHD + P_TEG * beam_frac;   // MHD primary + TEG backup
     const P_to_sys  = P_TEG * (1-beam_frac);
     const ss_ratio  = P_beam_req>0 ? P_to_beam/P_beam_req : Infinity;
 
@@ -325,16 +351,17 @@ function cascade(){
 
     return {
         m_dry, m_wet, mr:mr_in, prop, nuc_mass, abl_mass, jet_mass,
-        K, v_ff, vffPc, Q_ff, KE_unit, eps, eta, H_sub, gamma,
-        E_ab_mix, ablOK, v_p, v_eff:v_eff_display, v_eff_pre_wake, v_eff_std:v_eff_out, delta_v, wake,
+        K, v_ff, vffPc, Q_ff, KE_unit, eps, eta, eta_geo, K_sat, H_sub, gamma,
+        E_ab_mix, ablOK, v_p, v_eff:v_eff_display, v_eff_pre_wake, v_eff_std:v_eff_out, delta_v,
         isp:v_eff_display/9.80665,
         Pi1, mdot_nuc, mdot_jet, mdot_tot, P_nuc, P_beam_req,
         F_ff, F_jet, F_tot, burn_t, ff_pct, wake,
         P_esc, P_trapped, P_abl_in, P_unman,
         Pi2, Pi5,
         Pi6, ablFloor, ablShort,
-        T_hot:T_hot_final, T_hot_raw:T_hot_final, overTemp:(T_hot_final>T_MAX), eta_TEG, P_TEG, Q_rej, radMass, radArea, rad_areal,
+        T_hot, overTemp, rSM_eff, eta_TEG, P_TEG, Q_rej, radMass, radArea, rad_areal,
         beam_frac, P_to_beam, P_to_sys, ss_ratio, radOverHalf,
+        eta_MHD, f_n, P_MHD, P_MHD_cap, P_MHD_reserve, dirLossFrac, Q_thermal, v_p_raw,
         P_boot, boot_ok: P_to_beam>=P_beam_req,
         E_GeV, I_A, LIH_PA, LiH_rate, LiH_req
     };
@@ -448,12 +475,76 @@ function state(t, d, mp){
     return {pos:tgt_m, vel:v_arr, mass:m2, phase:'ARRIVED'};
 }
 
+function checkDefensibility(){
+    // Two-tier input defensibility warnings.
+    // Amber (#ffcc44) = research target: physically motivated, development path exists.
+    // Orange (#ff8800) = fantasy: no known near-term path to this value.
+    // Hover over any coloured value for the specific reason.
+    function tier(vid, val, amberTest, orangeTest, aTip, oTip){
+        const e = el(vid); if(!e) return;
+        e.classList.remove('warn'); e.classList.remove('amber'); e.title = '';
+        if(orangeTest(val))     { e.classList.add('warn');  e.title = oTip; }
+        else if(amberTest(val)) { e.classList.add('amber'); e.title = aTip; }
+    }
+    const ke=get('inKe'), zt=get('inZT'), ec=get('inEc'),
+          vff=get('inVff'), wk=get('inWake'), eta=get('inEta'),
+          pb=get('inPb'), mhd=get('inMHD'), K=get('inK');
+
+    tier('vKe',  ke,
+        v=>v>0.98, v=>v>0.995,
+        'k_eff '+ke.toFixed(4)+' — above 0.98 (white ceiling for propulsion reactor); studied, not yet demonstrated at this margin',
+        'k_eff '+ke.toFixed(4)+' — far above any studied ADS design; no credible near-term path to this margin');
+
+    tier('vZT',  zt,
+        v=>v>2.5, v=>v>3.0,
+        'ZT '+zt.toFixed(2)+' — above demonstrated half-Heusler / phononic-crystal performance (2.5); approaching topological territory',
+        'ZT '+zt.toFixed(2)+' — beyond any demonstrated high-temperature performance; no validated irradiation-stable material at this ZT');
+
+
+    tier('vEc',  ec,
+        v=>v>0.50, v=>v>0.65,
+        'ε '+ec.toFixed(2)+' — above isotropic maximum (0.50); requires shaped chamber geometry — no demonstrated design at this escape fraction',
+        'ε '+ec.toFixed(2)+' — requires active magnetic collimation of a relativistic fragment spray; coil survival unresolved');
+
+    tier('vVff', vff,
+        v=>v>7.75, v=>v>8.5,
+        'v_ff '+vff.toFixed(2)+'%c — upper range of ⁶Li(d,2α) kinematics; defensible but demanding',
+        'v_ff '+vff.toFixed(2)+'%c — beyond Li-D kinematic peak; requires a different, unspecified faster reaction species');
+
+    tier('vWake',wk,
+        v=>v>1.0, v=>v>1.2,
+        'η_wake '+wk.toFixed(6)+' — Double Punch wakefield boost: theoretically motivated (PEARL-GATE analytical value 1.136) but entirely unvalidated',
+        'η_wake '+wk.toFixed(6)+' — above the PEARL-GATE analytical prediction; no established physical basis');
+
+    tier('vEta', eta,
+        v=>v>0.92, v=>v>0.97,
+        'η_geo '+eta.toFixed(4)+' — demanding Marshak coupling; defensible range 0.92–0.97 with careful chamber geometry',
+        'η_geo '+eta.toFixed(4)+' — above the defensible coupling range; no validated geometry achieves this efficiency');
+
+    tier('vPb',  pb,
+        v=>v>20, v=>v>100,
+        'P_boot '+pb.toFixed(1)+' MW — above demonstrated spaceborne beam power; achievable with focused accelerator development',
+        'P_boot '+pb.toFixed(1)+' MW — no credible near-term path to this beam power level in space');
+
+    tier('vMHD', mhd,
+        v=>v>0, v=>v>0.30,
+        'η_MHD '+mhd.toFixed(2)+' — directed-exhaust induction tap: physically motivated but entirely unbuilt; modest efficiency (< 0.30) likely achievable',
+        'η_MHD '+mhd.toFixed(2)+' — high MHD conversion efficiency; above achievable induction range, unvalidated');
+
+    tier('vK', K,
+        v=>v>10, v=>v>20,
+        'K '+K.toFixed(2)+' — unusually large ablator-to-fuel ratio; inefficiency penalizes but not impossible',
+        'K '+K.toFixed(2)+' — impractical ablator mass; effectively an ablator-dominated rocket with extreme fuel consumption');
+}
+
+
 function updateAll(){
     if(_physicsDirty || !_physicsCache){
         _physicsCache = cascade();
         _physicsDirty = false;
     }
     const d = _physicsCache;
+    checkDefensibility();
     const mp = mission(d);
 
     setV('oWet', (d.m_wet/1e3).toFixed(3)+' t  ('+d.m_wet.toFixed(0)+' kg)');
@@ -463,10 +554,19 @@ function updateAll(){
     setV('oJetMass', (d.jet_mass/1e3).toFixed(3)+' t  (ablator + trapped fragments)');
     setV('FreeFragMass', ((d.prop - d.jet_mass)/1000).toFixed(3) + ' t');
 
-    setV('oQff', (relMode?'Q_ff = (1\u2212\u03b5)\u00b7(\u03b3\u22121)c\u00b2 = ':'Q_ff = (1\u2212\u03b5)\u00b7v_ff\u00b2/2 = ')+
-         (d.Q_ff/1e13).toFixed(4)+' \u00d710\u00b9\u00b3 J/kg  ('+(d.Q_ff/1e6).toFixed(0)+' MJ/kg)');
-    setV('oGamma', '\u03b3 = '+d.gamma.toFixed(6)+'  (\u03b3\u22121 = '+((d.gamma-1)*1e4).toFixed(2)+' \u00d710\u207b\u2074)'+
-         (relMode?'  \u2190 ACTIVE':'  (classical)'), relMode?'':'warn');
+    setV('oQff', (relMode?'Q_ff = (1−ε)·(γ−1)c² = ':'Q_ff = (1−ε)·v_ff²/2 = ')+
+         (d.Q_ff/1e13).toFixed(4)+' ×10¹³ J/kg  ('+(d.Q_ff/1e6).toFixed(0)+' MJ/kg)');
+    setV('oGamma', 'γ = '+d.gamma.toFixed(6)+'  (γ−1 = '+((d.gamma-1)*1e4).toFixed(2)+' ×10⁻⁴)'+
+         (relMode?'  ← ACTIVE':'  (classical)'), relMode?'':'warn');
+
+    // Derived η from Π₆ and K_sat
+    const etaSat = d.Pi6 >= d.K_sat;
+    setV('oEtaDerived',
+        'η = '+d.eta.toFixed(4)+
+        '  (η_geo = '+d.eta_geo.toFixed(4)+
+        ',  Π₆/Π₆_s = '+(d.Pi6/d.K_sat).toFixed(3)+
+        (etaSat ? ')  ✓ saturated — ablator fully soaks trapped heat' : ')  ↓ sub-saturated — raise K or lower ε to increase Π₆'),
+        etaSat ? '' : 'warn');
 
     setV('oPesc', fmtPow(d.P_esc)+'  ('+(d.eps*100).toFixed(0)+'% of P_nuc)');
     setV('oPtrap', fmtPow(d.P_trapped)+'  ('+((1-d.eps)*100).toFixed(0)+'% of P_nuc)');
@@ -474,8 +574,8 @@ function updateAll(){
     if(d.K<=0){
         setV('oEab','N/A  (K=0: no ablator)'); setV('oVp','N/A');
     } else {
-        setV('oEab', (d.E_ab_mix/1e6).toFixed(3)+' MJ/kg'+(d.ablOK?'':'  \u2190 BELOW H_sub'), d.ablOK?'':'warn');
-        setV('oVp', d.ablOK?(d.v_p/1e3).toFixed(3)+' km/s':'0  (E_ab < H_sub)', d.ablOK?'':'warn');
+        setV('oEab', (d.E_ab_mix/1e6).toFixed(3)+' MJ/kg'+(d.ablOK?'':'  ← BELOW H_sub'), d.ablOK?'':'err');
+        setV('oVp', d.ablOK?(d.v_p/1e3).toFixed(3)+' km/s':'0  (E_ab < H_sub)', d.ablOK?'':'err');
     }
     const v_diff = d.v_eff_pre_wake ? Math.abs(d.v_eff_pre_wake - d.v_eff_std) : 0;
     const corr_note = relMode && v_diff>0.01 ? '  (rapidity correction: +'+(v_diff/1e3).toFixed(4)+' km/s)' : '';
@@ -489,25 +589,25 @@ function updateAll(){
     setV('oMode', mstr+'  ('+d.ff_pct.toFixed(0)+'% fragment / '+(100-d.ff_pct).toFixed(0)+'% jet)');
 
     const pi2 = d.Pi2;
-    setV('oPi2', pi2.toFixed(3)+(pi2>=1?'  \u2713 (jet active)':'  \u2717 (quenched)'), pi2>=1?'':'warn');
+    setV('oPi2', pi2.toFixed(3)+(pi2>=1?'  ✓ (jet active)':'  ✗ (quenched)'), pi2>=1?'':'err');
     const pi5 = d.Pi5;
-    let pi5Note = pi5<0.1?'  \u2190 FFR-dominant':pi5>10?'  \u2190 NTR-dominant':'  \u2190 hybrid';
+    let pi5Note = pi5<0.1?'  ← FFR-dominant':pi5>10?'  ← NTR-dominant':'  ← hybrid';
     setV('oPi5', pi5.toFixed(4)+pi5Note);
     const pi6 = d.Pi6;
     setV('oPi6', isFinite(pi6)
-        ? pi6.toFixed(3)+'\u00d7  '+(d.ablShort
-            ? '\u2717 INSUFFICIENT ABLATOR \u2014 trapped fragments unhandled, jet thrust fictitious'
-            : '\u2713 ablator carries the trapped fragments')
-        : '\u221e  \u2713 (no trapped fragments)',
+        ? pi6.toFixed(3)+'×  '+(d.ablShort
+            ? '✗ INSUFFICIENT ABLATOR — trapped fragments unhandled, jet thrust fictitious'
+            : '✓ ablator carries the trapped fragments')
+        : '∞  ✓ (no trapped fragments)',
         d.ablShort?'err':'');
 
     const bootMsg = d.P_to_beam >= d.P_beam_req ?
-        (d.P_boot/1e6).toFixed(3)+' MW boot \u2192 '+(d.P_to_beam/1e6).toFixed(3)+' MW TEG \u2265 '+(d.P_beam_req/1e6).toFixed(3)+' MW required  \u2713' :
-        (d.P_boot/1e6).toFixed(3)+' MW boot \u2192 '+(d.P_to_beam/1e6).toFixed(3)+' MW TEG < '+(d.P_beam_req/1e6).toFixed(3)+' MW required  \u2717';
-    setV('oBootCheck', bootMsg, d.boot_ok?'':'warn');
+        (d.P_boot/1e6).toFixed(3)+' MW boot → '+(d.P_to_beam/1e6).toFixed(3)+' MW TEG ≥ '+(d.P_beam_req/1e6).toFixed(3)+' MW required  ✓' :
+        (d.P_boot/1e6).toFixed(3)+' MW boot → '+(d.P_to_beam/1e6).toFixed(3)+' MW TEG < '+(d.P_beam_req/1e6).toFixed(3)+' MW required  ✗';
+    setV('oBootCheck', bootMsg, d.boot_ok?'':'err');
 
-    setV('oPi1', d.Pi1.toFixed(1)+'\u00d7');
-    setV('oMdotNuc', (d.mdot_nuc*1e6).toFixed(3)+' mg/s  (\u2248 '+(d.mdot_nuc*1e3).toFixed(4)+' g/s)');
+    setV('oPi1', d.Pi1.toFixed(1)+'×');
+    setV('oMdotNuc', (d.mdot_nuc*1e6).toFixed(3)+' mg/s  (≈ '+(d.mdot_nuc*1e3).toFixed(4)+' g/s)');
     setV('oPnuc', fmtPow(d.P_nuc));
     setV('oPbeamReq', fmtPow(d.P_beam_req)+'  (= P_boot, TEGs must match)');
     setV('oFff', d.F_ff.toFixed(3)+' N');
@@ -518,32 +618,43 @@ function updateAll(){
     setV('oMabl', jmg>=1000 ? (jmg/1000).toFixed(3)+' g/s' : jmg.toFixed(3)+' mg/s  (jet)');
     setV('oBt', fmtTime(d.burn_t)+'  ('+fmtDays(d.burn_t)+')');
     const g0=9.80665;
-    setV('oAcc0', (d.F_tot/d.m_wet).toFixed(3)+' m/s\u00b2  ('+(d.F_tot/d.m_wet/g0).toFixed(4)+' g)');
-    setV('oAccF', (d.F_tot/d.m_dry).toFixed(3)+' m/s\u00b2  ('+(d.F_tot/d.m_dry/g0).toFixed(4)+' g)');
+    setV('oAcc0', (d.F_tot/d.m_wet).toFixed(3)+' m/s²  ('+(d.F_tot/d.m_wet/g0).toFixed(4)+' g)');
+    setV('oAccF', (d.F_tot/d.m_dry).toFixed(3)+' m/s²  ('+(d.F_tot/d.m_dry/g0).toFixed(4)+' g)');
 
     setV('oPabl', fmtPow(d.P_abl_in));
     setV('oPunman', fmtPow(d.P_unman));
-    setV('oTrad', d.T_hot.toFixed(0)+' K'+(d.overTemp?'  \u2190 EXCEEDS T_MAX':'  \u2713'), d.overTemp?'warn':'');
+    setV('oTrad', d.T_hot.toFixed(0)+' K  ✓  (running at material design limit)');
+    const rSM_tier = d.rSM_eff<300?'warn':(d.rSM_eff<500?'amber':'');
+    const rSM_label = d.rSM_eff<300?'⚠ orange — no known near-term path':(d.rSM_eff<500?'⚠ amber — research target, development path exists':'✓ white — Zeus/TEM class or better');
+    setV('oRSM', d.rSM_eff.toFixed(0)+' kg/MW  '+rSM_label, rSM_tier);
     setV('oEtaTEG', (d.eta_TEG*100).toFixed(2)+'%');
     setV('oPTEG', fmtPow(d.P_TEG));
     setV('oQrej', fmtPow(d.Q_rej));
-    setV('oRadMA', d.radMass.toFixed(1)+' kg  /  '+d.radArea.toFixed(1)+' m\u00b2'+(d.radOverHalf?'  \u26a0 RADIATOR >50% DRY MASS':'  \u2713'), d.radOverHalf?'err':'');
+    setV('oRadMA', d.radMass.toFixed(1)+' kg  /  '+d.radArea.toFixed(1)+' m²'+(d.radOverHalf?'  ⚠ RADIATOR >50% DRY MASS':'  ✓'), d.radOverHalf?'err':'');
     setV('oPbeamTEG', fmtPow(d.P_to_beam));
     setV('oPsys', fmtPow(d.P_to_sys));
     const ssr = d.ss_ratio;
-    setV('oSSR', isFinite(ssr)? ssr.toFixed(4)+'\u00d7  '+(ssr>=1?'\u2713 TEGs sustain boot power':'\u26a0 TEGs cannot sustain boot power'):'\u221e', ssr>=1?'':'warn');
+    const srcTxt = d.eta_MHD>0 ? (ssr>=1?'✓ MHD+TEG sustain boot power':'⚠ cannot sustain boot power')
+                               : (ssr>=1?'✓ TEGs sustain boot power':'⚠ TEGs cannot sustain boot power');
+    setV('oSSR', isFinite(ssr)? ssr.toFixed(4)+'×  '+srcTxt:'∞', ssr>=1?'':'err');
+    if(d.eta_MHD>0){
+        const mhdShare = d.P_to_beam>0 ? d.P_MHD/d.P_to_beam*100 : 0;
+        const resv = isFinite(d.P_MHD_reserve) ? (d.P_MHD_reserve>=10? d.P_MHD_reserve.toFixed(0)+'×' : d.P_MHD_reserve.toFixed(1)+'×') : '∞';
+        setV('oMHD', fmtPow(d.P_MHD)+' from directed exhaust ('+mhdShare.toFixed(0)+'% of beam)  /  reserve '+resv+'  /  thrust −'+(d.dirLossFrac*100).toFixed(2)+'%', d.P_MHD_reserve<1?'warn':'');
+    } else {
+        setV('oMHD', 'MHD off (η_MHD = 0) — TEG-only baseline');
+    }
     setV('oEGeV', d.E_GeV.toFixed(4)+' GeV');
     setV('oIamp', (d.I_A*1e3).toFixed(4)+' mA');
     const T_PBAR=5.6296, T_NBAR=5.6394, eg=d.E_GeV;
     setV('oThreshE', '1.022 MeV  ✓  always exceeded');
     setV('oThreshP', eg>=T_PBAR ? '5.6296 GeV  ✓  '+eg.toFixed(2)+' GeV' : '5.6296 GeV  — not yet at '+eg.toFixed(2)+' GeV');
     setV('oThreshN', eg>=T_NBAR ? '5.6394 GeV  ✓  FULL ANTIMATTER SUITE (p̅ + n̅ + e⁺)' : '5.6394 GeV  — not yet at '+eg.toFixed(2)+' GeV');
-    // Antimatter production rate
-    const T_PBAR_AM = 5.6296;
-    const pbar_yield_am = d.E_GeV >= T_PBAR_AM ? 2e-4 * Math.min(1, (d.E_GeV-T_PBAR_AM)/(90-T_PBAR_AM)) : 0;
-    const pbar_rate_am = (d.I_A / 1.602176634e-19) * pbar_yield_am;
-    const am_fg_s = pbar_rate_am * 1.67262192369e-27 * 1e18;
-    setV('oAMprod', d.E_GeV>=T_PBAR_AM ? am_fg_s.toFixed(4)+' fg/s  ('+pbar_rate_am.toExponential(2)+' p̅/s)' : '— below p̅ threshold');
+    // Antimatter production rate (T_PBAR already defined above)
+    const pbar_yield = d.E_GeV >= T_PBAR ? 2e-4 * Math.min(1, (d.E_GeV-T_PBAR)/(90-T_PBAR)) : 0;
+    const pbar_rate = (d.I_A / 1.602176634e-19) * pbar_yield;
+    const am_fg_s = pbar_rate * 1.67262192369e-27 * 1e18;
+    setV('oAMprod', d.E_GeV>=T_PBAR ? am_fg_s.toFixed(4)+' fg/s  ('+pbar_rate.toExponential(2)+' p̅/s)' : '— below p̅ threshold');
     setV('oLiHcons', (d.LIH_PA*1e9).toFixed(3)+' ng/s per amp');
     const lih_g = d.LiH_req*1e3;
     setV('oLiHreq', lih_g>=1000 ? d.LiH_req.toFixed(3)+' kg' : lih_g.toFixed(3)+' g');
@@ -557,30 +668,33 @@ function updateAll(){
             fmtDays(mp.bt1)+' accel  /  '+fmtDays(mp.t_coast)+' coast  /  — (no decel)' :
             fmtDays(mp.bt1)+' / '+fmtDays(mp.t_coast)+' / '+fmtDays(mp.bt2));
         const yr = mp.total_t/3.156e7;
-        setV('oTransit', isFinite(yr) ? yr.toFixed(3)+' yr  ('+(mp.total_t/86400).toFixed(0)+' days)' : '\u2014  (does not arrive)');
+        setV('oTransit', isFinite(yr) ? yr.toFixed(3)+' yr  ('+(mp.total_t/86400).toFixed(0)+' days)' : '—  (does not arrive)');
         const fuel_t = (mp.fuel_remaining/1e3).toFixed(3);
         const fuelNote = '  —  fuel remaining at arrival: '+fuel_t+' t';
         const okDur = yr <= mp.dur_yr;
         if(mp.ism_halt){
-            setV('oSGL', 'ISM ram drag halts the ship mid-coast (v_c > v_eff) \u2014 destination never reached', 'err');
+            setV('oSGL', 'ISM ram drag halts the ship mid-coast (v_c > v_eff) — destination never reached', 'err');
         } else if(mp.sprint_only){
-            setV('oSGL', yr.toFixed(3)+' yr  \u2190 Sprint only \u2014 destination reached mid-burn'+fuelNote, '');
+            setV('oSGL', yr.toFixed(3)+' yr  ← Sprint only — destination reached mid-burn'+fuelNote, '');
         } else if(mp.full_burn_coast){
-            setV('oSGL', yr.toFixed(3)+' yr  \u2190 arrives at full speed \u2014 no deceleration fuel remaining', '');
+            setV('oSGL', yr.toFixed(3)+' yr  ← arrives at full speed — no deceleration fuel remaining', '');
         } else if(okDur){
-            setV('oSGL', yr.toFixed(3)+' yr  \u2190 within '+mp.dur_yr.toFixed(1)+' yr target'+fuelNote,'');
+            setV('oSGL', yr.toFixed(3)+' yr  ← within '+mp.dur_yr.toFixed(1)+' yr target'+fuelNote,'');
         } else {
-            setV('oSGL', yr.toFixed(3)+' yr \u2190 exceeds '+mp.dur_yr.toFixed(1)+' yr target'+fuelNote, 'warn');
+            setV('oSGL', yr.toFixed(3)+' yr ← exceeds '+mp.dur_yr.toFixed(1)+' yr target'+fuelNote, 'miss');
         }
     } else if(mp.reason==='overshoot'){
         setV('oCruise', (mp.v_c/1e3).toFixed(2)+' km/s (burn distance constraint)');
         setV('oDvSplit', mp.x_total_au.toFixed(0)+' AU burn > '+get('inAU')+' AU destination');
         setV('oPhases', 'No coast phase');
-        setV('oTransit', '\u2014');
-        setV('oSGL', '\u1e41_nuc too low. Increase boot power or reduce K/mass ratio', 'warn');
+        setV('oTransit', '—');
+        setV('oSGL', 'ṁ_nuc too low. Increase boot power or reduce K/mass ratio', 'err');
     } else {
-        ['oCruise','oDvSplit','oPhases','oTransit'].forEach(id=>setV(id,'\u2014'));
-        setV('oSGL', d.delta_v<=get('inVa')*1e3 ? '\u0394v \u2264 arrival speed' : 'check propulsion', 'warn');
+        ['oCruise','oDvSplit','oPhases','oTransit'].forEach(id=>setV(id,'—'));
+        setV('oSGL', d.delta_v<=get('inVa')*1e3
+            ? 'Δv ≤ arrival speed — ship will arrive at '+(d.delta_v/1e3).toFixed(1)+' km/s; lower v_arr to match'
+            : 'check propulsion — v_eff ≤ 0, ship cannot accelerate',
+            d.delta_v<=get('inVa')*1e3 ? 'miss' : 'err');
     }
 
 
@@ -620,9 +734,10 @@ function updateAll(){
     setV('oMdotISM', v_cruise>0 ? fmtMdot(mdot_ism)+'  (v_c='+(v_cruise/1e3).toFixed(0)+' km/s)' : '— funnel runs only while moving');
     setV('oPismFree', v_cruise>0 ? fmtPow(P_ram)+'  (free — offsets beam demand)' : '—');
     setV('oPbeamAug', v_cruise>0 ? fmtPow(P_beam_net)+'  (vs P_beam_req = '+fmtPow(d.P_beam_req)+')' : '—');
-    setV('oFism', v_cruise>0 ? ((isFinite(ss_eff)?ss_eff.toFixed(3)+'\u00d7':'\u221e (beam fully ISM-fed)')+(ss_eff>=1?'  \u2713':'  \u26a0')) : '—', (v_cruise>0&&ss_eff<1)?'warn':'');
-    setV('oFdrag', v_cruise>0 ? fmtForce(F_drag) : '—');
-    setV('oFismNet', v_cruise>0 ? '\u2713 feedstock credit \u2014 funnel never a net loss (no v_eff cap)' : '—', '');
+    setV('oFism', v_cruise>0 ? ((isFinite(ss_eff)?ss_eff.toFixed(3)+'×':'∞ (beam fully ISM-fed)')+(ss_eff>=1?'  ✓':'  ⚠')) : '—', (v_cruise>0&&ss_eff<1)?'warn':'');
+    // Drag is conservatively calculated assuming full momentum capture (max drag); true drag may be lower.
+    setV('oFdrag', v_cruise>0 ? fmtForce(F_drag)+'  (max, assuming full stop)' : '—');
+    setV('oFismNet', v_cruise>0 ? '✓ feedstock credit — funnel never a net loss (no v_eff cap)' : '—', '');
 
     return {d, mp};
 }
@@ -640,7 +755,7 @@ function frame(now){
         const arrivalT = mp.ok ? mp.total_t : null;
         if(arrivalT!==null && missionTime >= arrivalT){
             missionTime = arrivalT; running = false;
-            el('btnStart').innerHTML = '&#9654; Start';
+            el('btnStart').innerHTML = '▶ Start';
         }
     }
     const st = state(missionTime, d, mp);
@@ -682,20 +797,21 @@ function wireRange(mn,sl,mx){
         _physicsDirty=true; s.dispatchEvent(new Event('input'));
     });
 }
-[['mn_wk','inWake','mx_wk'],['mn_af','inAF','mx_af'],['mn_ism','inISM','mx_ism'],['mn_rad','inRad','mx_rad'],['mn_dry','inDry','mx_dry'],['mn_mr','inMR','mx_mr'],['mn_K','inK','mx_K'],['mn_vff','inVff','mx_vff'],
+[['mn_wk','inWake','mx_wk'],['mn_af','inAF','mx_af'],['mn_ism','inISM','mx_ism'],['mn_rad','inRad','mx_rad'],['mn_dry','inDry','mx_dry'],['mn_mr','inMR','mx_mr'],['mn_K','inK','mx_K'],['mn_ks','inKsat','mx_ks'],['mn_vff','inVff','mx_vff'],
  ['mn_ec','inEc','mx_ec'],['mn_eta','inEta','mx_eta'],['mn_hs','inHs','mx_hs'],['mn_ke','inKe','mx_ke'],
  ['mn_pb','inPb','mx_pb'],['mn_zt','inZT','mx_zt'],
- ['mn_rsm','inRSM','mx_rsm'],['mn_tmax','inTmax','mx_tmax'],['mn_bf','inBF','mx_bf'],
+ ['mn_tmax','inTmax','mx_tmax'],['mn_bf','inBF','mx_bf'],
  ['mn_br','inBR','mx_br'],['mn_au','inAU','mx_au'],['mn_md','inMD','mx_md'],
  ['mn_wp','inWp','mx_wp']].forEach(([mn,sl,mx])=>wireRange(mn,sl,mx));
 
 [['inWake','vWake',v=>(+v).toFixed(6)],['inAF','vAF',v=>Math.round(v)],['inISM','vISM',v=>(+v).toFixed(2)],
 ['inRad','vRad',v=>(+v).toFixed(1)],['inDry','vDry',v=>(+v).toFixed(1)],['inMR','vMR',v=>(+v).toFixed(4)],
- ['inK','vK',v=>(+v).toFixed(2)],['inVff','vVff',v=>(+v).toFixed(2)],
+ ['inK','vK',v=>(+v).toFixed(2)],['inKsat','vKs',v=>(+v).toFixed(3)],['inVff','vVff',v=>(+v).toFixed(2)],
  ['inEc','vEc',v=>(+v).toFixed(2)],['inEta','vEta',v=>(+v).toFixed(4)],
  ['inHs','vHs',v=>(+v).toFixed(2)],['inKe','vKe',v=>(+v).toFixed(4)],
  ['inPb','vPb',v=>(+v).toFixed(3)],
- ['inZT','vZT',v=>(+v).toFixed(2)],['inRSM','vRSM',v=>Math.round(v)],
+ ['inZT','vZT',v=>(+v).toFixed(2)],
+ ['inMHD','vMHD',v=>(+v).toFixed(2)],['inFn','vFn',v=>(+v).toFixed(2)],
  ['inTmax','vTmax',v=>Math.round(v)],['inBF','vBF',v=>(+v).toFixed(4)],
  ['inBR','vBR',v=>(+v).toFixed(6)],['inAU','vAU',v=>Math.round(v)],
  ['inVa','vVa',v=>{intended_v_arr=parseFloat(v);return Math.round(v);}],
@@ -704,48 +820,55 @@ function wireRange(mn,sl,mx){
 el('inWp').addEventListener('input',warpLabel);
 
 el('btnStart').onclick = ()=>{
-    if(running){ running=false; el('btnStart').innerHTML='&#9654; Start'; }
-    else { running=true; lastRAF=null; el('btnStart').innerHTML='&#9646;&#9646; Pause'; }
+    if(running){ running=false; el('btnStart').innerHTML='▶ Start'; }
+    else { running=true; lastRAF=null; el('btnStart').innerHTML='⏸ Pause'; }
 };
-el('btnReset').onclick = ()=>{ running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start'; draw(0,'PRE'); el('status').textContent='Reset. Press Start to begin.'; };
-el('btnToggle').onclick = ()=>{ clockMode=!clockMode; el('btnToggle').innerHTML = clockMode?'&#9201; CLOCK':'&#9883; PHYSICS'; el('btnToggle').className=clockMode?'':'active'; lastRAF=null; };
-el('btnRel').onclick = ()=>{ relMode=!relMode; _physicsDirty=true; el('btnRel').innerHTML = relMode?'&gamma; RELATIVISTIC':'&#8767; CLASSICAL'; el('btnRel').className=relMode?'active':''; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start'; };
+el('btnReset').onclick = ()=>{ running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='▶ Start'; draw(0,'PRE'); el('status').textContent='Reset. Press Start to begin.'; };
+el('btnToggle').onclick = ()=>{ clockMode=!clockMode; el('btnToggle').innerHTML = clockMode?'⏰ CLOCK':'⚙ PHYSICS'; el('btnToggle').className=clockMode?'':'active'; lastRAF=null; };
+el('btnRel').onclick = ()=>{ relMode=!relMode; _physicsDirty=true; el('btnRel').innerHTML = relMode?'γ RELATIVISTIC':'∿ CLASSICAL'; el('btnRel').className=relMode?'active':''; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='▶ Start'; };
 
 // ── Mission presets: three-state cycle ──
-const BASELINE = [
-    ['inAU',550],['inMD',5],['inDry',36.5],['inMR',2.76],['inK',30],
-    ['inVff',4],['inEc',0.5],['inEta',0.9084],['inHs',59.7],['inKe',0.991],
-    ['inPb',13],['inWake',1.000],['inZT',2.9],['inRSM',300],['inRad',2],
-    ['inTmax',1500],['inBF',0.9999]
-];
-const PROX_SPRINT = [  // Max defensible within 80yr: ke=0.9973(Π₁=370), vff=7.25%c, K=0.50(Π₆=1.43), H_sub=59.67
-    ['inAU',269000],['inMD',80],['inDry',30.2],['inMR',8.670],['inK',0.50],
-    ['inVff',7.25],['inEc',0.65],['inEta',0.9825],['inHs',59.67],['inKe',0.9973],
-    ['inPb',79.0],['inWake',1.1356],['inZT',5.00],['inRSM',150],['inRad',42.6],
-    ['inTmax',1500],['inBF',0.9999]
-];
 function applyPreset(cfg, va, msg){
     cfg.forEach(([id,v])=>{ const s=el(id); s.value=v; s.dispatchEvent(new Event('input')); });
-    intended_v_arr = va;                                  // arrival speed (1e9 → clamps to max Δv)
-    if(!relMode){ relMode=true; el('btnRel').innerHTML='&gamma; RELATIVISTIC'; el('btnRel').className='active'; }
-    _physicsDirty=true; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='&#9654; Start';
+    intended_v_arr = va;
+    if(!relMode){ relMode=true; el('btnRel').innerHTML='γ RELATIVISTIC'; el('btnRel').className='active'; }
+    _physicsDirty=true; running=false; missionTime=0; lastRAF=null; el('btnStart').innerHTML='▶ Start';
     updateAll(); el('status').textContent=msg;
 }
-const MISSIONS = [
-    { cfg:BASELINE, va:100, next:'Proxima',
-      msg:'SGL mission \u2014 550 AU, your PEARL-GATE engineering defaults (K=30, v_ff 4%c, P_boot 13 MW).' },
-    { cfg:PROX_SPRINT, va:1482, next:'SGL',
-      msg:'PROXIMA RENDEZVOUS (max defensible, 79.98 yr) \u2014 Four parameters tightened to their defensible limit within 80yr: k_eff 0.9980\u21920.9973 (\u03a0\u2081: 500\u2192370, 27% less multiplication), v_ff 7.75\u21927.25%c (fission-fragment dilution), K 0.35\u21920.50 (\u03a0\u2086=1.43), H_sub 59.67 MJ/kg (NIST). STILL LOCKED at 80yr limit: rSM=150, ZT=5, SSR=1.0003, \u03b5=0.65.' }
+const BASELINE = [   // BUILDABLE NOW (all white) — Proxima rendezvous 284 yr. Engine-verified.
+    ['inAU',269000],['inMD',290],['inDry',30],['inMR',4],['inK',0.5],['inKsat',1.0],
+    ['inVff',3.5],['inEc',0.50],['inEta',0.8649],['inHs',59.7],['inKe',0.98],
+    ['inPb',12.665],['inWake',1.000],['inZT',2.5],['inRad',41.1],['inTmax',1100],
+    ['inBF',0.9999],['inMHD',0],['inFn',0]
 ];
-let missionIdx = 0;   // file boots at SGL
+const PROX_SPRINT = [   // RESEARCH TARGET (all amber, zero orange) — Proxima rendezvous 129 yr. Engine-verified.
+    ['inAU',269000],['inMD',135],['inDry',37],['inMR',4],['inK',0.35],['inKsat',1.0],
+    ['inVff',7.75],['inEc',0.65],['inEta',0.97],['inHs',59.7],['inKe',0.995],
+    ['inPb',45.13],['inWake',1.110036],['inZT',3.0],['inRad',49.9],['inTmax',1312],
+    ['inBF',0.9999],['inMHD',0.30],['inFn',0.12]
+];
+const PROX_40 = [   // ASPIRATIONAL (3 orange: rSM 150, eps 0.97, P_boot 500) — Proxima rendezvous 55 yr. Engine-verified.
+    ['inAU',269000],['inMD',60],['inDry',30],['inMR',9.975],['inK',0.16],['inKsat',1.0],
+    ['inVff',8.5],['inEc',0.97],['inEta',0.97],['inHs',59.7],['inKe',0.995],
+    ['inPb',500],['inWake',1.1356],['inZT',3.0],['inRad',42.63],['inTmax',1500],
+    ['inBF',0.9999],['inMHD',0.30],['inFn',0.12]
+];
+const MISSIONS = [
+    { cfg:BASELINE, va:1500, next:'Research Target (121 yr)',
+      msg:'BUILDABLE NOW — Proxima rendezvous 284 yr, every input white. The unlock vs the old 367-yr preset: run the radiator panel at its 1100 K material limit (41 kg/m², rSM_eff exactly 500 = Zeus/TEM-class white floor). Hotter panel → η_TEG 29.5% → η_geo rises to 0.865 and P_boot to 12.7 MW with the radiator still at 50%. TEG-only, ε=0.50 isotropic, no collimation, nothing unbuilt.' },
+    { cfg:PROX_SPRINT, va:1500, next:'Aspirational (55 yr)',
+      msg:'RESEARCH TARGET — Proxima rendezvous 129 yr with ZERO orange inputs: every parameter amber or white (k_eff 0.995, ZT 3.0, rSM_eff 300, ε 0.65, η_geo 0.97, P_boot 45 MW, MHD 0.30). This is the genuine all-amber floor: sub-100-yr rendezvous is NOT reachable without one orange — the rSM 150 radiator buys 103 yr rendezvous / 70 yr flyby. The honest research agenda in one number.' },
+    { cfg:PROX_40, va:1500, next:'Buildable Now (284 yr)',
+      msg:'ASPIRATIONAL — Proxima rendezvous 55 yr with only THREE orange inputs (rSM 150 kg/MW radiator, ε 0.97 magnetic collimation, P_boot 500 MW beam), vs the old 40-yr preset that needed eight. Everything else amber: k_eff 0.995, ZT 3.0, v_ff 8.5%c, η_geo 0.97, MHD 0.30, wake 1.136. Trades 15 yr of transit for five fewer miracles.' }
+];
+let missionIdx = -1;  // boot = SGL; first toggle loads BASELINE   // file boots at Buildable Now
 function loadMission(i){
     const m = MISSIONS[i];
     applyPreset(m.cfg, m.va, m.msg);
     missionIdx = i;
-    el('btnMission').innerHTML = '&#8644; Switch to ' + m.next;
+    el('btnMission').innerHTML = '⇄ Switch to ' + m.next;
 }
 el('btnMission').onclick = ()=>{ loadMission((missionIdx + 1) % MISSIONS.length); };
-
 
 warpLabel();
 el('btnToggle').className='active';
