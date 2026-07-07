@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Stellar Colonization – Local Ccloud</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: black; color: white; font-family: Arial, sans-serif; }
+        #timer {
+            position: absolute; top: 20px; left: 20px; color: white; font-size: 18px;
+            background-color: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 8px;
+            border: 1px solid #444; z-index: 1000;
+        }
+        #info-panel {
+            position: absolute; top: 20px; right: 20px; color: white; font-size: 14px;
+            background-color: rgba(0,0,0,0.7); padding: 12px 20px; border-radius: 8px;
+            border: 1px solid #444; z-index: 1000; min-width: 200px;
+            pointer-events: none; backdrop-filter: blur(5px);
+            transition: opacity 0.2s;
+        }
+        #info-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #info-panel h3 {
+            margin: 0 0 8px 0; color: #ffaa66; font-size: 16px; border-bottom: 1px solid #555;
+        }
+        #info-panel p { margin: 4px 0; }
+        .info-value { color: #88ccff; font-weight: bold; }
+        #toggle-info {
+            position: absolute; top: 20px; right: 20px; z-index: 1001;
+            background-color: rgba(0,0,0,0.7); color: white; border: 1px solid #444;
+            border-radius: 30px; padding: 8px 16px; font-size: 14px; cursor: pointer;
+            backdrop-filter: blur(5px); transition: 0.2s;
+        }
+        #toggle-info:hover { background-color: rgba(50,50,50,0.9); }
+        #bottom-area {
+            position: absolute; bottom: 30px; left: 0; width: 100%;
+            display: flex; flex-direction: column; align-items: center; z-index: 1000;
+            pointer-events: none;
+        }
+        #controls {
+            display: flex; gap: 15px; align-items: center;
+            background-color: rgba(20,20,20,0.8); padding: 10px 20px; border-radius: 40px;
+            backdrop-filter: blur(5px); border: 1px solid #444;
+            pointer-events: auto;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 24px; font-size: 16px; font-weight: bold;
+            background-color: #2a2a2a; color: white; border: 1px solid #555;
+            border-radius: 30px; cursor: pointer; transition: 0.2s;
+            min-width: 120px;
+            pointer-events: auto;
+        }
+        button:hover { background-color: #3a3a3a; border-color: #888; }
+        #start-pause-btn { background-color: #1e4a2e; border-color: #2e8b57; }
+        #start-pause-btn:hover { background-color: #2e8b57; }
+        #journey-log {
+            width: 600px; max-width: 90vw; max-height: 150px;
+            background-color: rgba(0,0,0,0.6); border: 1px solid #444; border-radius: 8px;
+            padding: 8px; color: #ccc; font-size: 11px; z-index: 1000;
+            overflow-y: auto; backdrop-filter: blur(4px);
+            pointer-events: auto;
+            margin-top: 5px;
+        }
+        #journey-log h3 {
+            margin: 0 0 5px 0; color: #fff; font-size: 12px; text-align: center;
+            border-bottom: 1px solid #555; padding-bottom: 3px;
+        }
+        .log-entry {
+            margin-bottom: 3px; padding: 2px 4px; background-color: rgba(255,255,255,0.05);
+            border-left: 3px solid #2e8b57; border-radius: 2px;
+            font-family: monospace; font-size: 10px;
+        }
+        .log-entry .dist { color: #ffaa66; }
+        .log-entry .time { color: #66ccff; }
+    </style>
+</head>
+<body>
+    <div id="timer">Elapsed: 0 years</div>
+    <div id="toggle-info">Hide Info</div>
+    <div id="info-panel">
+        <h3>Star Info</h3>
+        <p>Tap a star to see details</p>
+    </div>
+    <div id="bottom-area">
+        <div id="controls">
+            <button id="start-pause-btn">Start</button>
+        </div>
+        <div id="journey-log">
+            <h3>Completed Journeys</h3>
+            <div id="log-entries"></div>
+        </div>
+    </div>
+
+    <!-- Import Three.js, OrbitControls, and CSS2DRenderer -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // ============================================================
+        // MERGED SYSTEM DATA – one entry per system (using primary component)
+        // ============================================================
+        const systems = [
+            { name: "Sun", habitable: true, x:0, y:0, z:0, vmag:-26.72 },
+            { name: "Proxima Centauri", habitable: true, x:2.945, y:-3.056, z:-0.143, vmag:11.05 },
+            { name: "Alpha Centauri A", habitable: false, x:3.126, y:-3.047, z:-0.052, vmag:0.01 },
+            { name: "Alpha Centauri B", habitable: false, x:3.125, y:-3.047, z:-0.052, vmag:1.34 },
+            { name: "Barnard's Star", habitable: false, x:4.958, y:2.980, z:1.449, vmag:9.57 },
+            { name: "Luhman 16 A", habitable: false, x:1.697, y:-6.249, z:0.600, vmag:23.25 },
+            { name: "Luhman 16 B", habitable: false, x:1.697, y:-6.249, z:0.600, vmag:24.07 },
+            { name: "WISE J0855-0714", habitable: false, x:-3.967, y:-5.664, z:2.985, vmag:25.00 },
+            { name: "Wolf 359", habitable: true, x:-1.916, y:-3.938, z:6.522, vmag:13.53 },
+            { name: "Lalande 21185", habitable: true, x:-3.439, y:-0.308, z:7.553, vmag:7.47 },
+            { name: "Sirius A", habitable: false, x:-5.809, y:-6.280, z:-1.338, vmag:-1.43 },
+            { name: "Sirius B", habitable: false, x:-5.843, y:-6.317, z:-1.346, vmag:8.44 },
+            { name: "Luyten 726-8 A", habitable: true, x:-2.171, y:0.171, z:-8.544, vmag:12.61 },
+            { name: "Luyten 726-8 B", habitable: false, x:-2.171, y:0.171, z:-8.544, vmag:13.06 },
+            { name: "Ross 154", habitable: false, x:9.365, y:1.873, z:-1.733, vmag:10.44 },
+            { name: "Ross 248", habitable: false, x:-3.370, y:9.265, z:-3.003, vmag:12.29 },
+            { name: "Epsilon Eridani", habitable: true, x:-6.753, y:-1.917, z:-7.811, vmag:3.73 },
+            { name: "Lacaille 9352", habitable: true, x:4.352, y:0.388, z:-9.794, vmag:7.34 },
+            { name: "Ross 128", habitable: true, x:0.014, y:-5.577, z:9.490, vmag:11.16 },
+            { name: "EZ Aquarii A", habitable: false, x:4.123, y:4.432, z:-9.315, vmag:13.03 },
+            { name: "EZ Aquarii B", habitable: false, x:4.123, y:4.432, z:-9.315, vmag:13.27 },
+            { name: "EZ Aquarii C", habitable: false, x:4.123, y:4.432, z:-9.315, vmag:15.07 },
+            { name: "61 Cygni A", habitable: false, x:1.516, y:11.244, z:-1.156, vmag:5.20 },
+            { name: "61 Cygni B", habitable: false, x:1.517, y:11.243, z:-1.158, vmag:6.03 },
+            { name: "Procyon A", habitable: false, x:-9.270, y:-6.183, z:2.577, vmag:0.37 },
+            { name: "Procyon B", habitable: false, x:-9.270, y:-6.183, z:2.577, vmag:10.82 },
+            { name: "HD 173739", habitable: true, x:0.130, y:10.478, z:4.716, vmag:8.90 },
+            { name: "HD 173740", habitable: false, x:0.131, y:10.478, z:4.716, vmag:9.69 },
+            { name: "Groombridge 34 A", habitable: true, x:-4.949, y:9.849, z:-3.677, vmag:8.08 },
+            { name: "Groombridge 34 B", habitable: false, x:-4.951, y:9.849, z:-3.676, vmag:11.06 },
+            { name: "DX Cancri", habitable: false, x:-9.428, y:-2.885, z:6.262, vmag:14.90 },
+            { name: "Epsilon Indi A", habitable: true, x:7.259, y:-3.203, z:-8.825, vmag:4.68 },
+            { name: "Epsilon Indi B", habitable: false, x:7.207, y:-3.191, z:-8.799, vmag:24.12 },
+            { name: "Epsilon Indi C", habitable: false, x:7.207, y:-3.191, z:-8.799, vmag:24.12 },
+            { name: "Tau Ceti", habitable: true, x:-3.369, y:0.408, z:-11.412, vmag:3.49 },
+            { name: "Luyten 372-58", habitable: true, x:-2.249, y:-6.869, z:-9.559, vmag:13.09 },
+            { name: "YZ Ceti", habitable: true, x:-2.040, y:1.192, z:-11.890, vmag:12.10 },
+            { name: "Luyten's star", habitable: true, x:-10.262, y:-6.499, z:2.224, vmag:9.85 },
+            { name: "Teegarden's star", habitable: true, x:-9.391, y:3.369, z:-7.526, vmag:15.14 },
+            { name: "Kapteyn's star", habitable: true, x:-3.460, y:-9.787, z:-7.542, vmag:8.85 },
+            { name: "Lacaille 8760", habitable: false, x:9.252, y:0.631, z:-9.036, vmag:6.67 },
+            { name: "DENIS J184504.9-635747 A", habitable: false, x:10.530, y:-5.713, z:-5.211, vmag:17.40 },
+            { name: "DENIS J184504.9-635747 B", habitable: false, x:10.519, y:-5.707, z:-5.205, vmag:13.29 },
+            { name: "Kruger 60 A", habitable: false, x:-3.316, y:12.651, z:-0.001, vmag:9.79 },
+            { name: "Kruger 60 B", habitable: false, x:-3.316, y:12.651, z:-0.001, vmag:11.41 },
+            { name: "DENIS J104814.7-395606", habitable: false, x:1.904, y:-12.468, z:3.872, vmag:17.39 },
+            { name: "Ross 614 A", habitable: false, x:-11.202, y:-7.255, z:-1.447, vmag:11.18 },
+            { name: "Ross 614 B", habitable: false, x:-11.202, y:-7.255, z:-1.447, vmag:14.26 },
+            { name: "WISEP J072227.27-054029.9", habitable: false, x:-10.027, y:-8.883, z:1.000, vmag:16.52 },
+            { name: "Wolf 1061", habitable: true, x:12.845, y:0.752, z:5.643, vmag:10.10 },
+            { name: "van Maanen's Star", habitable: false, x:-3.996, y:6.424, z:-11.865, vmag:12.40 },
+            { name: "Wolf 424 A", habitable: false, x:1.448, y:-4.264, z:13.375, vmag:13.25 },
+            { name: "Wolf 424 B", habitable: false, x:1.498, y:-4.410, z:13.832, vmag:13.24 },
+            { name: "HD 225213", habitable: false, x:3.311, y:-0.977, z:-13.748, vmag:8.54 },
+            { name: "2MASS J04292568+3806095", habitable: false, x:-13.630, y:4.128, z:-1.799, vmag:13.64 },
+            { name: "TZ Arietis", habitable: true, x:-8.480, y:5.369, z:-10.573, vmag:12.31 },
+            { name: "BD+68 946", habitable: true, x:-1.883, y:12.448, z:7.856, vmag:9.17 },
+            { name: "CD-46 11540", habitable: true, x:14.102, y:-4.310, z:-1.752, vmag:9.37 },
+            { name: "LHS 292", habitable: false, x:-1.749, y:-11.036, z:9.813, vmag:15.73 },
+            { name: "Luyten 145-141", habitable: false, x:6.625, y:-13.574, z:-0.753, vmag:11.50 },
+            { name: "V1581 Cygni A", habitable: false, x:2.905, y:14.752, z:2.250, vmag:13.46 },
+            { name: "V1581 Cygni B", habitable: false, x:2.905, y:14.752, z:2.250, vmag:16.75 },
+            { name: "V1581 Cygni C", habitable: false, x:2.905, y:14.750, z:2.249, vmag:14.01 },
+            { name: "Ross 780", habitable: true, x:4.743, y:6.071, z:-13.148, vmag:10.18 },
+            { name: "Luyten 143-23", habitable: false, x:4.928, y:-14.958, z:-0.555, vmag:13.92 },
+            { name: "LHS 2", habitable: false, x:-0.258, y:5.986, z:-14.627, vmag:13.77 },
+            { name: "DENIS J025503.3-470049", habitable: false, x:-1.350, y:-8.144, z:-13.563, vmag:22.92 },
+            { name: "Groombridge 1618", habitable: false, x:-9.453, y:2.380, z:12.543, vmag:6.59 },
+            { name: "Lalande 21258 A", habitable: false, x:-7.099, y:1.444, z:14.263, vmag:8.77 },
+            { name: "Lalande 21258 B", habitable: false, x:-7.099, y:1.444, z:14.268, vmag:14.44 },
+            { name: "AD Leonis", habitable: true, x:-7.549, y:-5.577, z:13.197, vmag:9.29 },
+            { name: "HD 204961", habitable: true, x:10.984, y:-2.101, z:-11.722, vmag:8.66 },
+            { name: "CD-44 11909", habitable: true, x:15.741, y:-3.929, z:-1.887, vmag:10.95 },
+            { name: "Omicron2 Eridani A", habitable: true, x:-12.033, y:-4.560, z:-10.071, vmag:4.43 },
+            { name: "Omicron2 Eridani B", habitable: false, x:-12.029, y:-4.563, z:-10.063, vmag:9.52 },
+            { name: "Omicron2 Eridani C", habitable: false, x:-12.044, y:-4.568, z:-10.075, vmag:11.24 },
+            { name: "EV Lacertae", habitable: false, x:-2.954, y:15.775, z:-3.726, vmag:10.22 },
+            { name: "70 Ophiuchi A", habitable: false, x:14.200, y:8.163, z:3.293, vmag:4.21 },
+            { name: "70 Ophiuchi B", habitable: false, x:14.200, y:8.163, z:3.292, vmag:6.01 },
+            { name: "Altair", habitable: false, x:11.115, y:12.234, z:-2.591, vmag:0.77 },
+            { name: "EI Cancri A", habitable: false, x:-11.979, y:-6.249, z:9.985, vmag:14.06 },
+            { name: "EI Cancri B", habitable: false, x:-11.943, y:-6.231, z:9.955, vmag:14.92 },
+            { name: "WISE J150649.97+702736.1", habitable: false, x:-3.879, y:11.755, z:11.385, vmag:14.33 },
+            { name: "G 99-49", habitable: false, x:-15.208, y:-6.951, z:-2.991, vmag:11.31 },
+            { name: "DENIS J081730.0-615520", habitable: false, x:1.737, y:-16.376, z:-4.228, vmag:13.61 },
+            { name: "LHS 2459", habitable: false, x:-8.104, y:10.814, z:10.538, vmag:10.79 },
+            { name: "WISEA J154045.67-510139.3", habitable: false, x:14.713, y:-9.182, z:1.032, vmag:8.96 },
+            { name: "LHS 1723", habitable: true, x:-13.929, y:-6.923, z:-8.087, vmag:12.22 },
+            { name: "Wolf 498", habitable: false, x:5.298, y:-0.785, z:16.898, vmag:8.46 },
+            { name: "Stein 2051 A", habitable: false, x:-15.151, y:9.430, z:2.290, vmag:11.04 },
+            { name: "Stein 2051 B", habitable: false, x:-15.152, y:9.430, z:2.291, vmag:12.43 },
+            { name: "Wolf 294", habitable: true, x:-17.560, y:-0.901, z:4.756, vmag:10.02 },
+            { name: "LP 816-60", habitable: false, x:13.106, y:7.617, z:-10.308, vmag:11.50 },
+            { name: "2MASS J04163296+3100022", habitable: false, x:-17.453, y:4.188, z:-4.483, vmag:13.09 },
+            { name: "WISE J174124.25+255319.6", habitable: false, x:10.672, y:12.769, z:8.154, vmag:16.53 },
+            { name: "WISEA J183537.82+325945.4", habitable: false, x:8.406, y:15.577, z:5.562, vmag:18.27 },
+            { name: "Wolf 1453", habitable: false, x:-15.640, y:-7.947, z:-6.194, vmag:7.95 },
+            { name: "HD 42581 A", habitable: true, x:-11.786, y:-13.374, z:-5.944, vmag:8.14 },
+            { name: "HD 42581 B", habitable: false, x:-11.777, y:-13.365, z:-5.939, vmag:14.01 },
+            { name: "Sigma Draconis", habitable: false, x:-3.419, y:17.107, z:7.005, vmag:4.67 },
+            { name: "Ross 47", habitable: false, x:-18.114, y:-4.418, z:-3.024, vmag:11.57 },
+            { name: "Lalande 27173 A", habitable: false, x:15.009, y:-5.990, z:10.366, vmag:5.64 },
+            { name: "Lalande 27173 B", habitable: false, x:14.996, y:-5.986, z:10.359, vmag:8.30 },
+            { name: "Luyten 205-128", habitable: false, x:16.899, y:-7.771, z:-4.794, vmag:10.76 },
+            { name: "Luyten 347-14", habitable: false, x:17.464, y:-2.343, z:-7.809, vmag:12.23 },
+            { name: "Lalande 46650", habitable: false, x:-0.655, y:10.511, z:-16.143, vmag:8.98 },
+            { name: "Wolf 1055 A", habitable: true, x:14.658, y:12.495, z:-1.105, vmag:9.10 },
+            { name: "Wolf 1055 B", habitable: false, x:14.669, y:12.500, z:-1.111, vmag:17.45 },
+            { name: "CD-40 9712", habitable: false, x:16.764, y:-8.662, z:4.055, vmag:9.31 },
+            { name: "Eta Cassiopeiae A", habitable: false, x:-10.379, y:16.216, z:-1.703, vmag:3.46 },
+            { name: "Eta Cassiopeiae B", habitable: false, x:-10.380, y:16.220, z:-1.703, vmag:7.21 },
+            { name: "Luyten 722-22 A", habitable: false, x:0.490, y:4.595, z:-18.815, vmag:11.60 },
+            { name: "Luyten 722-22 B", habitable: false, x:0.490, y:4.595, z:-18.815, vmag:14.02 },
+            { name: "36 Ophiuchi A", habitable: false, x:19.266, y:-0.579, z:2.325, vmag:5.07 },
+            { name: "36 Ophiuchi B", habitable: false, x:19.251, y:-0.578, z:2.323, vmag:5.08 },
+            { name: "36 Ophiuchi C", habitable: false, x:19.277, y:-0.526, z:2.283, vmag:6.32 },
+            { name: "Ross 882", habitable: false, x:-15.397, y:-11.128, z:4.546, vmag:11.19 },
+            { name: "HD 191408 A", habitable: false, x:16.752, y:1.534, z:-10.078, vmag:5.31 },
+            { name: "HD 191408 B", habitable: false, x:16.762, y:1.535, z:-10.083, vmag:11.50 },
+            { name: "82 Eridani", habitable: true, x:-3.626, y:-10.382, z:-16.351, vmag:4.26 },
+            { name: "Ross 986 A", habitable: false, x:-18.559, y:0.339, z:6.721, vmag:12.05 },
+            { name: "Ross 986 B", habitable: false, x:-18.559, y:0.339, z:6.721, vmag:12.45 },
+            { name: "Delta Pavonis", habitable: false, x:14.509, y:-8.456, z:-10.664, vmag:3.55 },
+            { name: "HD 191849", habitable: false, x:16.798, y:-1.527, z:-10.943, vmag:7.95 },
+            { name: "LHS 455", habitable: false, x:-3.453, y:17.077, z:10.339, vmag:14.22 },
+            { name: "Wolf 1481", habitable: false, x:13.836, y:-5.472, z:13.950, vmag:11.32 },
+            { name: "EQ Pegasi A", habitable: false, x:-2.363, y:15.667, z:-12.895, vmag:10.27 },
+            { name: "EQ Pegasi B", habitable: false, x:-2.359, y:15.642, z:-12.876, vmag:12.21 },
+            { name: "Wolf 562", habitable: true, x:15.654, y:-1.624, z:13.214, vmag:10.55 },
+            { name: "HD 79210 A", habitable: false, x:-14.668, y:3.948, z:14.001, vmag:7.64 },
+            { name: "HD 79210 B", habitable: true, x:-14.667, y:3.948, z:14.002, vmag:7.70 },
+            { name: "LHS 2090", habitable: false, x:-14.853, y:-7.021, z:12.657, vmag:16.10 },
+            { name: "HD 155876 A", habitable: false, x:5.404, y:15.999, z:12.254, vmag:9.93 },
+            { name: "HD 155876 B", habitable: false, x:5.404, y:15.999, z:12.254, vmag:10.35 },
+            { name: "LP 944-20", habitable: false, x:-6.865, y:-10.440, z:-16.831, vmag:18.69 },
+            { name: "LHS 32", habitable: false, x:-17.584, y:-10.242, z:-5.230, vmag:14.47 },
+            { name: "GL Virginis", habitable: false, x:0.658, y:-6.386, z:20.082, vmag:13.90 },
+            { name: "G 202-48", habitable: true, x:1.833, y:15.400, z:14.354, vmag:10.17 },
+            { name: "Wolf 630 A", habitable: false, x:19.392, y:3.785, z:7.640, vmag:10.69 },
+            { name: "Wolf 629", habitable: false, x:19.401, y:3.788, z:7.652, vmag:11.76 },
+            { name: "Wolf 630 C", habitable: false, x:19.402, y:3.774, z:7.622, vmag:16.92 },
+            { name: "Luyten 100-115", habitable: false, x:6.159, y:-19.816, z:-4.399, vmag:12.78 },
+            { name: "HD 219134", habitable: true, x:-7.251, y:20.032, z:-1.191, vmag:5.57 },
+            { name: "Luyten 471-42", habitable: false, x:9.959, y:-17.100, z:8.986, vmag:12.75 },
+            { name: "DENIS J072003.2-084650 A", habitable: false, x:-15.752, y:-15.217, z:0.875, vmag:19.40 },
+            { name: "Ksi Bootis A", habitable: false, x:9.704, y:4.136, z:19.313, vmag:4.59 },
+            { name: "Ksi Bootis B", habitable: false, x:9.703, y:4.136, z:19.313, vmag:6.82 },
+            { name: "Ross 104", habitable: false, x:-7.637, y:-5.635, z:19.857, vmag:10.02 },
+            { name: "Ross 619", habitable: false, x:-16.964, y:-11.497, z:8.219, vmag:12.83 },
+            { name: "Ross 775 A", habitable: false, x:7.070, y:18.976, z:-8.885, vmag:10.30 },
+            { name: "LHS 6158 A", habitable: false, x:-14.354, y:-12.127, z:11.807, vmag:10.98 },
+            { name: "WISEP J192841.35+235604.9", habitable: false, x:11.675, y:18.936, z:1.188, vmag:14.34 },
+            { name: "BD-17 588 A", habitable: true, x:-11.090, y:-4.143, z:-19.001, vmag:10.53 },
+            { name: "BD-17 588 B", habitable: false, x:-11.101, y:-4.147, z:-19.019, vmag:11.78 },
+            { name: "Ross 671", habitable: false, x:0.902, y:17.581, z:-13.848, vmag:8.64 },
+            { name: "Wolf 358", habitable: false, x:-5.976, y:-11.615, z:18.594, vmag:11.68 },
+            { name: "Ross 446", habitable: true, x:-6.760, y:-14.156, z:16.757, vmag:9.65 },
+            { name: "HD 199305", habitable: false, x:-3.413, y:22.272, z:4.417, vmag:8.60 },
+            { name: "2MASS J21462206+3813047", habitable: false, x:0.977, y:22.495, z:-4.627, vmag:12.21 },
+            { name: "LHS 3003", habitable: false, x:18.392, y:-9.014, z:10.471, vmag:17.14 },
+            { name: "Luyten 230-188", habitable: false, x:-1.988, y:-16.246, z:-16.418, vmag:13.58 },
+            { name: "LHS 546", habitable: false, x:1.405, y:11.884, z:-20.118, vmag:14.69 },
+            { name: "HD 16160 A", habitable: false, x:-15.223, y:4.538, z:-17.392, vmag:5.83 },
+            { name: "HD 16160 C", habitable: false, x:-15.236, y:4.523, z:-17.393, vmag:11.66 },
+            { name: "Luyten 788-34", habitable: false, x:10.387, y:8.907, z:-19.224, vmag:13.30 },
+            { name: "HD 156384 A", habitable: false, x:23.386, y:-3.352, z:0.587, vmag:5.89 },
+            { name: "HD 156384 B", habitable: false, x:23.386, y:-3.352, z:0.587, vmag:7.20 },
+            { name: "HD 156384 C", habitable: true, x:23.377, y:-3.352, z:0.583, vmag:10.22 },
+            { name: "Wolf 25", habitable: false, x:-6.795, y:11.083, z:-20.472, vmag:5.74 },
+            { name: "Wolf 922", habitable: false, x:13.604, y:12.791, z:-15.590, vmag:12.01 },
+            { name: "Beta Hydri", habitable: false, x:10.662, y:-15.357, z:-15.567, vmag:2.79 },
+            { name: "G 203-47 A", habitable: false, x:7.210, y:18.632, z:14.667, vmag:13.67 },
+            { name: "Fomalhaut A", habitable: false, x:9.981, y:3.729, z:-22.755, vmag:1.16 },
+            { name: "Fomalhaut B", habitable: false, x:10.220, y:2.918, z:-22.400, vmag:6.48 },
+            { name: "Fomalhaut C", habitable: false, x:9.957, y:6.134, z:-22.138, vmag:12.22 },
+            { name: "G 141-36", habitable: false, x:19.139, y:15.738, z:1.817, vmag:14.25 },
+            { name: "Ross 490", habitable: true, x:7.252, y:-3.658, z:23.516, vmag:9.03 },
+            { name: "LHS 3376", habitable: false, x:-2.321, y:21.906, z:11.664, vmag:13.41 },
+            { name: "107 Piscium", habitable: false, x:-14.170, y:12.372, z:-16.362, vmag:5.24 },
+            { name: "Luyten 499-56", habitable: false, x:14.891, y:1.681, z:-20.022, vmag:11.80 },
+            { name: "Mu Cassiopeiae A", habitable: false, x:-14.355, y:20.221, z:-3.429, vmag:5.17 },
+            { name: "Vega", habitable: false, x:9.069, y:21.839, z:8.252, vmag:0.03 },
+            { name: "Ross 556", habitable: false, x:-19.129, y:9.879, z:-12.809, vmag:10.56 },
+            { name: "AN Sextantis", habitable: false, x:-7.899, y:-17.330, z:16.406, vmag:9.26 },
+            { name: "HD 157881", habitable: false, x:21.471, y:9.902, z:8.594, vmag:7.56 },
+            { name: "SIPS J1259-4336", habitable: false, x:13.441, y:-19.632, z:8.305, vmag:10.53 },
+            { name: "G 192-13", habitable: false, x:-21.673, y:10.540, z:7.449, vmag:7.46 },
+            { name: "HD 165222", habitable: false, x:22.625, y:10.491, z:3.894, vmag:9.36 },
+            { name: "G 109-35", habitable: false, x:-23.858, y:-7.025, z:4.565, vmag:9.16 },
+            { name: "G 227-22", habitable: false, x:-1.444, y:22.069, z:12.533, vmag:8.54 },
+            { name: "CD-68 47 A", habitable: false, x:8.366, y:-14.413, z:-19.568, vmag:9.82 },
+            { name: "G 154-44", habitable: false, x:25.236, y:6.179, z:0.974, vmag:13.48 }
+        ];
+
+        // ============================================================
+        // VMAG to color function
+        // ============================================================
+        function vmagToColor(vmag) {
+            if (vmag === undefined || vmag === null) return 0xffffff;
+            if (vmag < 2) {
+                const t = Math.max(0, Math.min(1, (vmag + 1) / 3));
+                return new THREE.Color().lerpColors(
+                    new THREE.Color(0xaaccff),
+                    new THREE.Color(0xffffee),
+                    t
+                ).getHex();
+            } else if (vmag < 6) {
+                const t = (vmag - 2) / 4;
+                return new THREE.Color().lerpColors(
+                    new THREE.Color(0xffdd88),
+                    new THREE.Color(0xffaa66),
+                    t
+                ).getHex();
+            } else if (vmag < 10) {
+                const t = (vmag - 6) / 4;
+                return new THREE.Color().lerpColors(
+                    new THREE.Color(0xffaa66),
+                    new THREE.Color(0xff8866),
+                    t
+                ).getHex();
+            } else if (vmag < 16) {
+                const t = (vmag - 10) / 6;
+                return new THREE.Color().lerpColors(
+                    new THREE.Color(0xff8866),
+                    new THREE.Color(0xcc5555),
+                    t
+                ).getHex();
+            } else {
+                return 0xaa8866;
+            }
+        }
+
+        // ============================================================
+        // Three.js setup
+        // ============================================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 10, 20);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // ----- LIGHTING (straight down the Y axis) -----
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 0, 0);   // light from above (positive Y)
+        scene.add(dirLight);
+
+
+// ============================================================
+// CORRECT MILKYWAY BACKGROUND ORIENTATION (fixed mirroring)
+// ============================================================
+const bgRotY = 0.0;      // adjust rotation if needed (0, 1.57, 3.14)
+const bgRotX = 1.57;      // tilt
+
+const bgGeometry = new THREE.SphereGeometry(400, 64, 40);
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load('https://cdn.eso.org/images/screen/eso0932a.jpg', (texture) => {
+    // Flip the texture horizontally to correct mirroring
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.repeat.x = -1;
+    texture.offset.x = 1;
+    
+    const bgMaterial = new THREE.MeshBasicMaterial({
+        side: THREE.BackSide,
+        map: texture
+    });
+    const backgroundSphere = new THREE.Mesh(bgGeometry, bgMaterial);
+    backgroundSphere.rotation.y = bgRotY;
+    backgroundSphere.rotation.x = bgRotX;
+    scene.add(backgroundSphere);
+    console.log('Background loaded and flipped');
+}, undefined, (err) => {
+    console.error('Background failed to load, using fallback color', err);
+    scene.background = new THREE.Color(0x050510);
+
+});
+
+
+
+        // ============================================================
+        // Local cloud image – centered at the Sun (0,0,0) in galactic plane
+        // --- ADJUST THESE TWO VALUES TO YOUR PREFERENCE ---
+        const cloudSize = 55;          // diameter in light‑years (try 40–60)
+        const cloudOpacity = 0.3;      // 0 = invisible, 1 = fully opaque
+        // ============================================================
+        const imageUrl = 'https://i.ibb.co/677QPyj6/localcloud.jpg';
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = imageUrl;
+        img.onload = function() {
+            console.log(`✅ Image loaded: ${img.width} x ${img.height}`);
+            let planeWidth, planeHeight;
+            if (img.width >= img.height) {
+                planeWidth = cloudSize;
+                planeHeight = cloudSize * (img.height / img.width);
+            } else {
+                planeHeight = cloudSize;
+                planeWidth = cloudSize * (img.width / img.height);
+            }
+            const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.crossOrigin = '';
+            textureLoader.load(imageUrl, (texture) => {
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: cloudOpacity
+                });
+                const plane = new THREE.Mesh(geometry, material);
+                // Position at origin, default orientation faces +Z, which lies in XY plane (galactic plane)
+                plane.position.set(0, 0, 0);
+                scene.add(plane);
+                console.log(`✅ Local cloud plane added (size ${cloudSize} ly, opacity ${cloudOpacity})`);
+            });
+        };
+        img.onerror = () => {
+            console.error('❌ Failed to load image');
+        };
+
+        // ============================================================
+        // Create stars and bright green orbit rings for habitable stars
+        // Store meshes and labels for interaction
+        // ============================================================
+        const STAR_RADIUS = 0.07;
+        const systemPositions = []; // store position for each system
+        const starMeshes = []; // for raycasting
+        const starLabels = []; // CSS2D objects for each system
+
+        systems.forEach((sys, idx) => {
+            const colorHex = vmagToColor(sys.vmag);
+
+            // Star sphere
+            const geo = new THREE.SphereGeometry(STAR_RADIUS, 24, 12);
+            const mat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                emissive: 0x222222
+            });
+            const sphere = new THREE.Mesh(geo, mat);
+            sphere.position.set(sys.x, sys.y, sys.z);
+            sphere.userData = { systemIndex: idx };
+            scene.add(sphere);
+            starMeshes.push(sphere);
+
+            systemPositions[idx] = new THREE.Vector3(sys.x, sys.y, sys.z);
+
+            // If habitable, add two bright green rings
+            if (sys.habitable) {
+                const ringRadius1 = 0.15;
+                const ringRadius2 = 0.25;
+                const tubeRadius = 0.003;
+                const ringGeo1 = new THREE.TorusGeometry(ringRadius1, tubeRadius, 8, 48);
+                const ringGeo2 = new THREE.TorusGeometry(ringRadius2, tubeRadius, 8, 48);
+                const ringMat = new THREE.MeshStandardMaterial({
+                    color: 0x00ff00,
+                    emissive: 0x004400,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const ring1 = new THREE.Mesh(ringGeo1, ringMat);
+                const ring2 = new THREE.Mesh(ringGeo2, ringMat);
+                ring1.rotation.x = Math.PI / 2;
+                ring2.rotation.x = Math.PI / 2;
+                ring1.position.set(sys.x, sys.y, sys.z);
+                ring2.position.set(sys.x, sys.y, sys.z);
+                scene.add(ring1);
+                scene.add(ring2);
+            }
+
+            // Label – initially invisible
+            const div = document.createElement('div');
+            div.textContent = sys.name;
+            div.style.color = 'rgba(255,255,255,0.9)';
+            div.style.fontSize = '10px';
+            div.style.fontWeight = '300';
+            div.style.textShadow = '1px 1px 2px black';
+            div.style.background = 'none';
+            div.style.padding = '0';
+            div.style.pointerEvents = 'none';
+            div.style.whiteSpace = 'nowrap';
+            div.style.opacity = '0';
+            div.style.transition = 'opacity 0.2s';
+            const label = new CSS2DObject(div);
+            label.position.set(sys.x, sys.y + 0.35, sys.z);
+            scene.add(label);
+            starLabels[idx] = label;
+        });
+
+        // ============================================================
+        // Interaction: tap/click and double-tap/double-click
+        // ============================================================
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let lastTapTime = 0;
+        const doubleTapDelay = 300;
+
+        function handleInteraction(event) {
+            event.preventDefault();
+
+            const currentTime = performance.now();
+            const isDouble = (currentTime - lastTapTime) < doubleTapDelay;
+            lastTapTime = currentTime;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            let clientX, clientY;
+            if (event.touches) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+            mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(starMeshes);
+
+            if (intersects.length > 0) {
+                const hit = intersects[0].object;
+                const sysIdx = hit.userData.systemIndex;
+                const sys = systems[sysIdx];
+                const pos = systemPositions[sysIdx];
+                const distFromSun = pos.length().toFixed(2);
+
+                if (isDouble) {
+                    // Double-tap: center camera on star
+                    controls.target.copy(pos);
+                    controls.update();
+                } else {
+                    // Single tap: show info and label
+                    const panel = document.getElementById('info-panel');
+                    panel.innerHTML = `
+                        <h3>${sys.name}</h3>
+                        <p>Distance from Sun: <span class="info-value">${distFromSun} ly</span></p>
+                        <p>Coordinates: <span class="info-value">(${sys.x.toFixed(2)}, ${sys.y.toFixed(2)}, ${sys.z.toFixed(2)})</span></p>
+                        <p>Habitable: <span class="info-value">${sys.habitable ? 'Yes' : 'No'}</span></p>
+                        <p>VMAG: <span class="info-value">${sys.vmag}</span></p>
+                    `;
+
+                    // Hide all labels
+                    starLabels.forEach(label => { label.element.style.opacity = '0'; });
+                    // Show this star's label
+                    starLabels[sysIdx].element.style.opacity = '1';
+                }
+            }
+        }
+
+        renderer.domElement.addEventListener('click', handleInteraction);
+        renderer.domElement.addEventListener('touchstart', handleInteraction, { passive: false });
+
+        // Toggle info panel
+        document.getElementById('toggle-info').addEventListener('click', () => {
+            const panel = document.getElementById('info-panel');
+            const btn = document.getElementById('toggle-info');
+            panel.classList.toggle('hidden');
+            btn.textContent = panel.classList.contains('hidden') ? 'Show Info' : 'Hide Info';
+        });
+
+        // ============================================================
+        // Simulation constants and ship logic
+        // ============================================================
+        const SHIP_SPEED = 0.2;
+        const MAX_JUMP_DIST = 7.0;
+        const TIME_PER_FRAME = 0.1;
+
+        let simTime = 0;
+        let reachedSystemIndices = new Set([0]); // Sun is system 0
+        let lines = [];
+
+        function distanceBetweenSystems(idx1, idx2) {
+            const p1 = systemPositions[idx1];
+            const p2 = systemPositions[idx2];
+            if (!p1 || !p2) return Infinity;
+            return p1.distanceTo(p2);
+        }
+
+        function createShip(srcIdx, destIdx, launchTime) {
+            const srcPos = systemPositions[srcIdx];
+            const destPos = systemPositions[destIdx];
+            if (!srcPos || !destPos) return;
+
+            const points = [
+                new THREE.Vector3(srcPos.x, srcPos.y, srcPos.z),
+                new THREE.Vector3(srcPos.x, srcPos.y, srcPos.z)
+            ];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: 0xffff00 });
+            const lineObj = new THREE.Line(geometry, material);
+            scene.add(lineObj);
+
+            const ship = {
+                line: lineObj,
+                srcIdx,
+                destIdx,
+                startTime: launchTime,
+                travelTime: distanceBetweenSystems(srcIdx, destIdx) / SHIP_SPEED,
+                progress: 0,
+                isComplete: false,
+                isFirstConnection: false
+            };
+            lines.push(ship);
+            return ship;
+        }
+
+        function addLogEntry(srcName, destName, distance, travelYears) {
+            const logDiv = document.getElementById('log-entries');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span style="color:#fff;">${srcName} → ${destName}</span> <span class="dist">${distance.toFixed(2)} ly</span> <span class="time">${travelYears.toFixed(1)} yr</span>`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateShips() {
+            for (let i = lines.length - 1; i >= 0; i--) {
+                const ship = lines[i];
+                if (ship.isComplete) continue;
+
+                const elapsed = simTime - ship.startTime;
+                let progress = elapsed / ship.travelTime;
+                if (progress >= 1) {
+                    progress = 1;
+                    ship.isComplete = true;
+                    ship.progress = 1;
+
+                    const destIdx = ship.destIdx;
+                    const isFirst = !reachedSystemIndices.has(destIdx);
+                    ship.isFirstConnection = isFirst;
+
+                    const srcName = systems[ship.srcIdx].name;
+                    const destName = systems[destIdx].name;
+                    const distance = distanceBetweenSystems(ship.srcIdx, destIdx);
+                    addLogEntry(srcName, destName, distance, ship.travelTime);
+
+                    if (isFirst) {
+                        ship.line.material.color.setHex(0x00ff00);
+                        reachedSystemIndices.add(destIdx);
+                        launchFrom(destIdx, simTime);
+                    } else {
+                        ship.line.material.color.setHex(0xc0c0c0);
+                    }
+
+                    const srcPos = systemPositions[ship.srcIdx];
+                    const destPos = systemPositions[ship.destIdx];
+                    if (srcPos && destPos) {
+                        const points = [
+                            new THREE.Vector3(srcPos.x, srcPos.y, srcPos.z),
+                            new THREE.Vector3(destPos.x, destPos.y, destPos.z)
+                        ];
+                        ship.line.geometry.dispose();
+                        ship.line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    }
+                } else {
+                    ship.progress = progress;
+                    const srcPos = systemPositions[ship.srcIdx];
+                    const destPos = systemPositions[ship.destIdx];
+                    if (srcPos && destPos) {
+                        const currentEnd = new THREE.Vector3().lerpVectors(
+                            srcPos.clone(),
+                            destPos.clone(),
+                            progress
+                        );
+                        const points = [
+                            new THREE.Vector3(srcPos.x, srcPos.y, srcPos.z),
+                            currentEnd
+                        ];
+                        ship.line.geometry.dispose();
+                        ship.line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    }
+                }
+            }
+        }
+
+        function launchFrom(srcIdx, launchTime) {
+            for (let destIdx = 0; destIdx < systems.length; destIdx++) {
+                if (destIdx === srcIdx) continue;
+                if (reachedSystemIndices.has(destIdx)) continue;
+                const d = distanceBetweenSystems(srcIdx, destIdx);
+                if (d > MAX_JUMP_DIST) continue;
+                if (lines.some(s => s.srcIdx === srcIdx && s.destIdx === destIdx)) continue;
+                createShip(srcIdx, destIdx, launchTime);
+            }
+        }
+
+        launchFrom(0, 0);
+
+        // ============================================================
+        // Animation loop
+        // ============================================================
+        let isPaused = true;
+        let isComplete = false;
+        let animationId;
+
+        function animate() {
+            if (!isPaused) {
+                simTime += TIME_PER_FRAME;
+                updateShips();
+                document.getElementById('timer').innerText = `Elapsed: ${Math.round(simTime)} years @0.2c`;
+
+                if (lines.length > 0 && lines.every(s => s.isComplete)) {
+                    isPaused = true;
+                    isComplete = true;
+                    document.getElementById('start-pause-btn').innerText = 'Restart';
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+            animationId = requestAnimationFrame(animate);
+        }
+        animate();
+
+        // ============================================================
+        // Event handlers
+        // ============================================================
+        document.getElementById('start-pause-btn').addEventListener('click', () => {
+            if (isComplete) {
+                simTime = 0;
+                reachedSystemIndices.clear();
+                reachedSystemIndices.add(0);
+                lines.forEach(s => scene.remove(s.line));
+                lines = [];
+                launchFrom(0, 0);
+                document.getElementById('timer').innerText = 'Elapsed: 0 years';
+                document.getElementById('log-entries').innerHTML = '';
+                isComplete = false;
+                isPaused = true;
+                document.getElementById('start-pause-btn').innerText = 'Start';
+            } else if (isPaused) {
+                isPaused = false;
+                document.getElementById('start-pause-btn').innerText = 'Pause';
+            } else {
+                isPaused = true;
+                document.getElementById('start-pause-btn').innerText = 'Resume';
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
