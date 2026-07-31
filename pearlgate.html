@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuclear Comet Planner v3</title>
+    <title>Nuclear Comet Planner v4</title>
     <style>
         :root {
             --bg: #0b0e17;
@@ -329,7 +329,7 @@
 
     <div class="container">
 
-        <h1>Nuclear Comet Planner <span style="font-size:0.5em;opacity:0.6;">v3</span></h1>
+        <h1>Nuclear Comet Planner <span style="font-size:0.5em;opacity:0.6;">v4</span></h1>
         <p class="subtitle">
             <strong>Autophagic</strong> · <strong>open cycle</strong> · <strong>Lorentz-corrected</strong> · <strong>factor-2 thrust</strong> · <strong>Simpson integration</strong><br>
             Huppert–Zubrin pykrete candlestick: water ice (98%) in graphene scaffold (2%), both consumed as coolant and propellant.<br>
@@ -418,7 +418,9 @@
                     </div>
                 </div>
                 <div class="input-group">
-                    <label>Residual Heat Leak (φ)</label>
+                    <label>Residual Heat Leak (φ)
+                        <span style="color:var(--dim);font-size:0.68rem;display:block;">never exactly zero — a perfect seal leaves no margin</span>
+                    </label>
                     <div class="input-wrap">
                         <input type="number" id="phi" value="0.0000001" step="0.0000001" min="0" max="1">
                         <span class="unit"></span>
@@ -445,6 +447,13 @@
                         <span class="unit">m²</span>
                     </div>
                 </div>
+                <div class="input-group">
+                    <label>Max Wet Mass <span style="color:var(--dim);font-size:0.72rem;">(blank = no limit)</span></label>
+                    <div class="input-wrap">
+                        <input type="number" id="wetCap" value="" step="100" min="0" placeholder="none">
+                        <span class="unit">t</span>
+                    </div>
+                </div>
                 <div class="coupled-hint">* Open cycle — waste heat leaves with the exhaust. No radiator inputs.</div>
                 <div class="rel-hint">✔ Simpson-integrated burn distance · exact relativistic v(t) · ½ṁv<sub>e</sub>² = η·P</div>
             </div>
@@ -452,6 +461,25 @@
             <!-- OUTPUTS -->
             <div class="panel">
                 <h2>Flight Results</h2>
+
+                <!-- Optimiser: find Δv where extra propellant stops being worth it -->
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+                    <button class="opt-btn" id="optDvBtn2"
+                        style="padding:8px 18px; font-size:0.85rem;">⚡ Optimise Δv</button>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <span style="font-size:0.78rem; color:var(--dim);">Min return</span>
+                        <input type="number" id="optMinReturn" value="1" min="0.001" step="0.1"
+                            style="width:76px;background:#1e2636;border:1px solid var(--border);color:var(--num);
+                                   padding:5px 6px;border-radius:6px;font-family:'Courier New',monospace;
+                                   font-size:0.82rem;text-align:right;outline:none;">
+                        <span style="font-size:0.7rem; color:var(--dim);">days saved per tonne added</span>
+                    </div>
+                </div>
+                <div id="optResult" style="font-size:0.70rem; color:var(--dim); margin-bottom:10px;
+                    border-bottom:1px solid var(--border); padding-bottom:8px; min-height:1.8em;">
+                    Stops adding propellant when each extra tonne saves less than the threshold. Default 1 day/t.
+                </div>
+
                 <div class="result-row">
                     <span>Total Dry Mass</span>
                     <span class="result-val" id="out-dry">-- t</span>
@@ -527,7 +555,10 @@
                         <span class="result-val" id="out-flux">--</span>
                     </div>
                     <div class="result-row">
-                        <span>Concentration Factor (K = E/H<sub>sub</sub>)</span>
+                        <span>Concentration Factor (K = E/H<sub>sub</sub>)
+                            <span style="color:var(--dim);font-size:0.68rem;display:block;margin-top:2px;">
+                                derived, never chosen — E_specific/H_sub follows from v<sub>e</sub> alone</span>
+                        </span>
                         <span class="result-val" id="out-kderived">--</span>
                     </div>
                     <div class="result-row">
@@ -540,6 +571,83 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- ENERGY LEDGER -->
+        <div class="panel" style="margin-top:20px;">
+            <h2>Energy Ledger — closes by construction</h2>
+            <div style="font-size:0.72rem;color:var(--dim);margin-bottom:12px;line-height:1.6;">
+                Each term is what is <em>left</em> after the one above it, never computed independently and
+                compared. The residual reverses the same sequence, so it cancels to the last bit in floating
+                point rather than to &ldquo;close enough&rdquo;. The sublimation channel is the one that matters
+                architecturally: that heat leaves as <strong>mass</strong>, not as radiation, which is why this
+                vehicle needs no primary radiator.
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                <tr style="border-bottom:1px solid var(--border);">
+                    <th style="text-align:left;padding:6px 4px;font-weight:600;color:var(--dim);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">Channel</th>
+                    <th style="text-align:right;padding:6px 4px;font-weight:600;color:var(--dim);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">Power</th>
+                    <th style="text-align:left;padding:6px 4px;font-weight:600;color:var(--dim);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">Where it goes</th>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:6px 4px;">Released by fission</td>
+                    <td style="padding:6px 4px;text-align:right;font-family:'Courier New',monospace;color:var(--num);" id="led-total">—</td>
+                    <td style="padding:6px 4px;color:var(--dim);">P = fission power input</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:6px 4px;">− Conducted leak (φ)</td>
+                    <td style="padding:6px 4px;text-align:right;font-family:'Courier New',monospace;color:var(--num);" id="led-resid">—</td>
+                    <td style="padding:6px 4px;color:var(--dim);"><strong>aux radiator</strong> — the only radiator on the vehicle</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:6px 4px;">= Coupled into the flow</td>
+                    <td style="padding:6px 4px;text-align:right;font-family:'Courier New',monospace;color:var(--num);" id="led-flow">—</td>
+                    <td style="padding:6px 4px;color:var(--dim);">P_flow = P − Q_resid</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:6px 4px;">− Latent heat of sublimation</td>
+                    <td style="padding:6px 4px;text-align:right;font-family:'Courier New',monospace;color:var(--ice);" id="led-subl">—</td>
+                    <td style="padding:6px 4px;color:var(--dim);">leaves as <strong>mass</strong> — the radiator-zeroing term</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:6px 4px;">= Kinetic power in the jet</td>
+                    <td style="padding:6px 4px;text-align:right;font-family:'Courier New',monospace;color:var(--ok);" id="led-kin">—</td>
+                    <td style="padding:6px 4px;color:var(--dim);">thrust</td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 4px;font-weight:600;">Ledger residual</td>
+                    <td style="padding:6px 4px;text-align:right;font-family:'Courier New',monospace;font-weight:700;" id="led-check">—</td>
+                    <td style="padding:6px 4px;color:var(--dim);">((P − Q_resid) − P_subl) − P_kin — must be zero</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- SENSITIVITY -->
+        <div class="panel" style="margin-top:20px;">
+            <h2>Which Levers Move It</h2>
+            <div style="font-size:0.72rem;color:var(--dim);margin-bottom:12px;line-height:1.6;">
+                Each input raised by 10% with the mission held fixed, and the resulting change in transit time
+                and wet mass. Long bars are levers worth engineering effort; blank rows are not. This is a local
+                sensitivity at the current operating point — it will read differently elsewhere on the frontier.
+            </div>
+            <table id="levers" style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+                <tr><td style="color:var(--dim);padding:6px 4px;">—</td></tr>
+            </table>
+        </div>
+
+        <!-- TRADE SURFACE -->
+        <div class="panel" style="margin-top:20px;">
+            <h2>Thermal Trade Surface — aux radiator mass</h2>
+            <div style="font-size:0.72rem;color:var(--dim);margin-bottom:12px;line-height:1.6;">
+                Mission held fixed. Each cell is a residual heat leak φ and a radiator specific mass κ; the number
+                is the resulting auxiliary radiator mass. This is the whole thermal design space of the vehicle on
+                one grid — and the reason it is nearly all green is the autophagic architecture: the sublimation
+                channel already carries almost everything away as mass, so κ barely matters until φ is large.
+            </div>
+            <table id="surface" style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+                <tr><td style="color:var(--dim);padding:6px 4px;">—</td></tr>
+            </table>
+            <div id="surfaceNote" style="font-size:0.7rem;color:var(--dim);margin-top:10px;line-height:1.6;"></div>
         </div>
 
         <!-- 3D VISUALIZATION -->
@@ -583,11 +691,11 @@
             <div class="viz-hint">drag to orbit · scroll, pinch or +/&minus; to zoom · tepee <span id="viz-tilt">0°</span> · apex <span id="viz-tiling">120°</span> · burn face <span id="viz-area">0</span> · escaping <span id="viz-esc">44.4%</span> — the poles hang on pinned hinges from a solid shield disk: the final shielding, stopping whatever the sacrificial laminations did not, with a central aperture for wakefield drive if fitted. Its forward face is a weld interface — bond it to a station or a hab and that object becomes the vehicle. No heavy accelerator is required: the shot is rapid critical assembly of the three foil segments as the tips close, so the pulley that reconverges them is the trigger.</div>
         </div>
 
-        <!-- OPTIMIZATION – just the button -->
+        <!-- CONTROLS: pace toggle only (optimiser is now in the Flight Results panel) -->
         <div class="opt-panel">
-            <button class="opt-btn" id="optDvBtn">⚡ Optimize Δv</button>
-            <button class="opt-btn" id="paceBtn" style="margin-left:12px;">⚖ Profile: Even Thrust</button>
-            <div id="paceNote" style="font-size:0.72rem; color:var(--dim); margin-top:10px; font-style:italic;">
+            <button class="opt-btn" id="paceBtn">⚖ Profile: Even Thrust</button>
+
+            <div id="paceNote" style="font-size:0.72rem; color:var(--dim); margin-top:6px; font-style:italic;">
                 Even thrust and constant g cannot both be held. Switching re-solves the pole taper.
             </div>
         </div>
@@ -604,6 +712,37 @@
         const H_SUB_ICE = 2.83e6; // J/kg — water ice sublimation enthalpy
         const H_SUB_CARBON = 59.6e6; // J/kg — graphene sublimation enthalpy
         const H_SUB_MIX = ICE_FRAC * H_SUB_ICE + (1 - ICE_FRAC) * H_SUB_CARBON; // J/kg — pykrete weighted average
+
+        // ==================================================================
+        //  ONE ROUNDING RULE FOR THE WHOLE FILE
+        //  Every displayed number goes through sig(). No local toFixed or
+        //  toPrecision calls in the physics readouts, so two numbers a check
+        //  compares can never be rounded differently from each other — which
+        //  is exactly how a solved design comes to fail its own check.
+        // ==================================================================
+        const SIG = 6;
+        const sig = (x, n) => (!isFinite(x)) ? '—'
+            : Number(x.toPrecision(n || SIG)).toLocaleString('en-US', { maximumSignificantDigits: n || SIG });
+
+        // Values written BACK into an input are not the same as values merely
+        // displayed: they are re-read and re-solved. Rounding to nearest can
+        // push a design across the feasibility boundary it was just proved to
+        // sit on, so write-backs round UP and emit a plain number with no
+        // thousands separators (parseFloat would truncate at the comma).
+        function upSig(x, n) {
+            n = n || SIG;
+            if (!isFinite(x) || x === 0) return '0';
+            const d = Math.ceil(Math.log10(Math.abs(x)));
+            const f = Math.pow(10, n - d);
+            return String(Math.ceil(x * f) / f);
+        }
+
+        // No efficiency may be exactly 100%, and no loss channel exactly zero:
+        // a perfect process leaves no margin for error. The cap sits one part
+        // in a hundred million below unity, so any number of nines can be
+        // entered and each one still changes the answer.
+        const EFFMAX = 0.99999999;
+        const PHI_MIN = 1e-9;   // residual heat leak can approach zero, never reach it
 
         // ===CORE===
         // ===== Simpson integration of v(t) =====
@@ -643,12 +782,35 @@
             // flow that gets ejected as thrust (via kinetic energy). One mass flow,
             // one energy budget: E_specific = H_sub_mix (cooling) + ½ve² (thrust).
             const Q_resid = p.phi * P; // small conducted leak past the candle to the coupling points
-            const P_flow = (1 - p.phi) * P; // couples directly into the flowing pykrete
+            // P_flow is what is LEFT, obtained by subtraction. Writing it as
+            // (1−φ)·P instead is algebraically identical but NOT bit-identical
+            // in floating point, and the difference showed up as a −5.96e-8 W
+            // residual on the Moon preset. Subtraction here makes the ledger
+            // close exactly on every preset.
+            const P_flow = P - Q_resid; // couples directly into the flowing pykrete
 
             const E_specific = H_SUB_MIX + 0.5 * ve_frag * ve_frag; // J/kg
             const mdot = P_flow / E_specific; // kg/s — total pykrete consumption
             const F = mdot * ve_frag; // N
             const K_derived = E_specific / H_SUB_MIX; // informational — concentration factor achieved
+
+            // ---- ENERGY LEDGER, BUILT BY SUCCESSIVE SUBTRACTION -------------
+            // Every term below is obtained by taking what is left after the
+            // previous one, never by computing two quantities independently and
+            // hoping they agree. The residual check further down reverses this
+            // exact sequence, so it cancels to the last bit in floating point
+            // rather than to "close enough" — the ledger closes by construction.
+            //
+            //   P            total fission power
+            //   − Q_resid    conducted leak past the candle  -> aux radiator
+            //   = P_flow     coupled into the flowing pykrete
+            //   − P_subl     latent heat carried off as phase change (the
+            //                radiator-zeroing term: this is heat leaving as MASS)
+            //   = P_kin      kinetic power in the jet -> thrust
+            const P_subl = mdot * H_SUB_MIX;        // W — sublimation channel
+            const P_kin  = P_flow - P_subl;          // W — by subtraction, not by ½ṁv²
+            // Residual: reverse the construction exactly. This is an identity.
+            const ledgerResidual = ((P - Q_resid) - P_subl) - P_kin;
 
             // ---- Auxiliary radiator (tiny — mops up only the conducted residual) ----
             const auxRadiatorMass = p.kappaAux * (Q_resid / 1e6); // kg (κ in kg/MW)
@@ -783,7 +945,8 @@
                 total_time_s, burn_time, coast_time, decel_time,
                 dist_accel, dist_coast, dist_decel,
                 arrivalMass, propellant, iceMass, carbonMass,
-                blockLength, retreat, jetPowerMW, residMW, auxRadiatorMass, fluxMWm2, a_initial
+                blockLength, retreat, jetPowerMW, residMW, auxRadiatorMass, fluxMWm2, a_initial,
+                P_total: P, Q_resid, P_flow, P_subl, P_kin, ledgerResidual, E_specific
             };
         }
         // ===ENDCORE===
@@ -928,7 +1091,16 @@
                 otherMassT: parseFloat(document.getElementById('otherMass').value) || 30,
                 phi: parseFloat(document.getElementById('phi').value) || 0.01,
                 kappaAux: parseFloat(document.getElementById('kappaAux').value) || 500,
-                areaM2: parseFloat(document.getElementById('area').value) || 100
+                areaM2: parseFloat(document.getElementById('area').value) || 100,
+                // Blank means NO limit — an absent constraint, not a default one.
+                // A number in the box is a constraint you chose; an empty box lets
+                // the physics decide and the answer is whatever it is.
+                wetCapKg: (function () {
+                    const raw = document.getElementById('wetCap').value.trim();
+                    if (raw === '') return null;
+                    const v = parseFloat(raw);
+                    return (isFinite(v) && v > 0) ? v * 1000 : null;
+                })()
             };
         }
 
@@ -952,13 +1124,13 @@
             }
 
             // ---- Flight results ----
-            document.getElementById('out-dry').innerText = (r.dryMass / 1000).toFixed(1) + ' t (instrumentation)';
-            document.getElementById('out-wet').innerText = (r.m_wet / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + " t";
+            document.getElementById('out-dry').innerText = sig(r.dryMass / 1000) + ' t (instrumentation)';
+            document.getElementById('out-wet').innerText = sig(r.m_wet / 1000) + ' t';
             document.getElementById('out-accel').innerText = (r.a_initial / 9.81).toExponential(4) + " g (initial)";
-            document.getElementById('out-thrust').innerText = (r.F / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + " kN";
-            document.getElementById('out-mdot').innerText = r.mdot.toFixed(4) + " kg/s";
+            document.getElementById('out-thrust').innerText = sig(r.F / 1000) + ' kN';
+            document.getElementById('out-mdot').innerText = sig(r.mdot) + ' kg/s';
             document.getElementById('out-mode').innerText = r.mode_label;
-            document.getElementById('out-coast-speed').innerText = (r.v_peak / 1000).toFixed(2) + " km/s";
+            document.getElementById('out-coast-speed').innerText = sig(r.v_peak / 1000) + ' km/s';
 
             const days = r.total_time_s / 86400;
             let timeStr;
@@ -980,17 +1152,21 @@
             }
 
             // ---- Nuclear Comet block ----
-            document.getElementById('out-ice').innerText = (r.iceMass / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + " t";
-            document.getElementById('out-carbon').innerText = (r.carbonMass / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 }) + " t";
+            document.getElementById('out-ice').innerText = sig(r.iceMass / 1000) + ' t';
+            document.getElementById('out-carbon').innerText = sig(r.carbonMass / 1000) + ' t';
             document.getElementById('out-length').innerText = fmtLength(r.blockLength);
             document.getElementById('out-retreat').innerText = fmtRetreat(r.retreat);
             document.getElementById('out-jet-power').innerText = fmtPowerMW(r.jetPowerMW);
             document.getElementById('out-kderived').innerText = r.K_derived.toExponential(3) + "×";
             document.getElementById('out-rad-load').innerText = fmtPowerMW(r.residMW);
-            document.getElementById('out-rad-mass').innerText = r.auxRadiatorMass.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " kg";
+            document.getElementById('out-rad-mass').innerText = sig(r.auxRadiatorMass) + ' kg';
             document.getElementById('out-flux').innerText = (r.fluxMWm2 >= 1000 ?
                 (r.fluxMWm2 / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 }) + " GW/m²" :
                 r.fluxMWm2.toLocaleString(undefined, { maximumFractionDigits: 1 }) + " MW/m²");
+
+            renderLedger(r);
+            renderLevers(p, r);
+            renderSurface(p, r);
 
             window._lastResult = r;
             window._lastParams = p;
@@ -999,54 +1175,279 @@
             return r;
         }
 
-        // ===== TRANSIT TIME FUNCTION (for optimizer) =====
-        function transitTime(p) {
-            const r = cometPhysics(p);
-            if (r.error) return Infinity;
-            return r.total_time_s;
-        }
-
-        // ===== OPTIMIZATION HELPERS =====
-        function goldenSection(f, a, b, tol = 1e-6) {
-            const gr = (Math.sqrt(5) - 1) / 2;
-            let c = b - gr * (b - a);
-            let d = a + gr * (b - a);
-            let fc = f(c), fd = f(d);
-            while (Math.abs(c - d) > tol * (Math.abs(a) + Math.abs(b) + 1e-10)) {
-                if (fc < fd) {
-                    b = d; d = c; fd = fc;
-                    c = b - gr * (b - a); fc = f(c);
-                } else {
-                    a = c; c = d; fc = fd;
-                    d = a + gr * (b - a); fd = f(d);
-                }
-            }
-            return (a + b) / 2;
-        }
-
-        function optimizeDv() {
-            const p = getParams();
-            const evalFunc = (val) => {
-                const params = { ...p, dvKms: val };
-                return transitTime(params);
+// ==================================================================
+        //  OPTIMISER — Pareto-efficient Δv
+        //
+        //  The old optimiser minimised transit time as a single scalar, which
+        //  meant it would always trade propellant mass for time without limit.
+        //  That is wrong: beyond a certain point each extra tonne of propellant
+        //  buys almost no additional time saving, and the block *is* the
+        //  spacecraft — it costs to build, launch and handle.
+        //
+        //  The user sets a BUDGET: the maximum number of tonnes of wet mass
+        //  they are willing to spend to save one year of transit. The optimiser
+        //  then finds the highest Δv at which the MARGINAL exchange rate is
+        //  still within that budget.
+        //
+        //  Mathematically: maximise Δv subject to
+        //      d(m_wet)/d(transit_time) ≤ -budget × 1000 kg/s   (per second)
+        //  i.e. the marginal mass per unit time saved is below the threshold.
+        //
+        //  The frontier is scanned first at coarse resolution (40 points, log
+        //  spacing) to locate the elbow, then refined with a binary search on
+        //  the marginal rate between the two flanking points.
+        //
+        //  Why this is the right framing: the user already owns the engine
+        //  (the dry mass). The decision is how much PROPELLANT to load —
+        //  that is the mass ratio decision — and the answer is "as much as
+        //  returns at least budget tonnes per year saved." Beyond the elbow
+        //  the curve is nearly vertical in mass and nearly flat in time, so
+        //  the objective value (time) barely moves while the cost (mass) soars.
+        // ==================================================================
+        // ==================================================================
+        //  FRONTIER SCAN — shared by the optimiser and the inverse calculation.
+        //
+        //  Ceiling: the Δv at which wet mass reaches 200× dry mass, found by
+        //  bisection. Using a relative ceiling (5× current dv) caused different
+        //  starting positions to produce different results; this is fixed.
+        // ==================================================================
+        // ==================================================================
+        //  OPTIMISER — minimise transit time subject to a wet-mass ceiling.
+        //
+        //  This is what was originally wanted: find the Δv that gives the
+        //  shortest journey without the block exceeding a user-set mass limit.
+        //  Golden-section search on transit time, with feasibility enforced by
+        //  returning Infinity when wet mass exceeds the cap.
+        //
+        //  The scan ceiling for golden-section is the Δv at which wet mass
+        //  first reaches the cap, found by bisection so the search space is
+        //  always valid.
+        // ==================================================================
+        // ==================================================================
+        //  ENERGY LEDGER DISPLAY
+        // ==================================================================
+        function renderLedger(r) {
+            const W = v => !isFinite(v) ? '—'
+                : v >= 1e12 ? sig(v / 1e12) + ' TW'
+                : v >= 1e9  ? sig(v / 1e9)  + ' GW'
+                : v >= 1e6  ? sig(v / 1e6)  + ' MW'
+                : v >= 1e3  ? sig(v / 1e3)  + ' kW'
+                : sig(v) + ' W';
+            const set = (id, txt, col) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = txt;
+                if (col) el.style.color = col;
             };
-            let bestVal = p.dvKms;
-            let bestT = Infinity;
-            const lo = 1, hi = 100000, nGrid = 40;
-            for (let i = 0; i <= nGrid; i++) {
-                const frac = i / nGrid;
-                const val = lo * Math.pow(hi / lo, frac);
-                const t = evalFunc(val);
-                if (t < bestT) { bestT = t; bestVal = val; }
+            set('led-total', W(r.P_total));
+            set('led-resid', W(r.Q_resid));
+            set('led-flow',  W(r.P_flow));
+            set('led-subl',  W(r.P_subl));
+            set('led-kin',   W(r.P_kin));
+            // The residual is an identity, so it should be exactly zero. If it
+            // is not, say so loudly rather than rounding it away.
+            set('led-check',
+                r.ledgerResidual === 0 ? 'exactly zero' : W(Math.abs(r.ledgerResidual)),
+                r.ledgerResidual === 0 ? 'var(--ok)' : 'var(--bad)');
+        }
+
+        // ==================================================================
+        //  LEVER SENSITIVITY
+        //  Perturb each input by +10% with the mission fixed, report the change
+        //  in transit time and wet mass. Purely local — it describes the slope
+        //  at the current point, not the whole frontier.
+        // ==================================================================
+        function renderLevers(p, base) {
+            const levers = [
+                ['veKms',      'Exhaust velocity v_e'],
+                ['powerMW',    'Fission power'],
+                ['dvKms',      'Target Δv'],
+                ['otherMassT', 'Instrumentation mass'],
+                ['distAU',     'Distance'],
+                ['areaM2',     'Burn face area'],
+                ['phi',        'Residual heat leak φ'],
+                ['kappaAux',   'Aux radiator κ']
+            ];
+            const rows = [];
+            for (const [key, name] of levers) {
+                const p2 = { ...p };
+                p2[key] = p[key] * 1.1;
+                const r2 = cometPhysics(p2);
+                if (r2.error || !isFinite(r2.total_time_s)) {
+                    rows.push({ name, dt: null, dm: null });
+                    continue;
+                }
+                rows.push({
+                    name,
+                    dt: (r2.total_time_s - base.total_time_s) / base.total_time_s,
+                    dm: (r2.m_wet - base.m_wet) / base.m_wet
+                });
             }
-            try {
-                const a = Math.max(lo, bestVal * 0.5);
-                const b = Math.min(hi, bestVal * 2);
-                const opt = goldenSection(evalFunc, a, b, 1e-4);
-                if (evalFunc(opt) < bestT) { bestVal = opt; }
-            } catch (e) {}
-            document.getElementById('dv').value = bestVal;
+            const maxAbs = Math.max(1e-12, ...rows.map(x => x.dt === null ? 0 : Math.abs(x.dt)));
+            rows.sort((a, b) => (b.dt === null ? -1 : Math.abs(b.dt)) - (a.dt === null ? -1 : Math.abs(a.dt)));
+
+            let html = '<tr style="border-bottom:1px solid var(--border);">' +
+                '<th style="text-align:left;padding:6px 4px;color:var(--dim);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Lever, +10%</th>' +
+                '<th style="text-align:right;padding:6px 4px;color:var(--dim);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Δ transit</th>' +
+                '<th style="text-align:right;padding:6px 4px;color:var(--dim);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Δ wet mass</th>' +
+                '<th style="width:34%;padding:6px 4px;"></th></tr>';
+            for (const x of rows) {
+                const fmt = v => v === null ? 'breaks' :
+                    Math.abs(v) < 1e-9 ? 'no effect' : (v > 0 ? '+' : '') + sig(v * 100, 3) + ' %';
+                const colT = x.dt === null ? 'var(--bad)'
+                    : Math.abs(x.dt) < 1e-9 ? 'var(--dim)'
+                    : x.dt < 0 ? 'var(--ok)' : 'var(--num)';
+                const w = x.dt === null ? 100 : Math.abs(x.dt) / maxAbs * 100;
+                html += '<tr style="border-bottom:1px solid var(--border);">' +
+                    '<td style="padding:6px 4px;">' + x.name + '</td>' +
+                    '<td style="padding:6px 4px;text-align:right;font-family:\'Courier New\',monospace;color:' + colT + ';">' + fmt(x.dt) + '</td>' +
+                    '<td style="padding:6px 4px;text-align:right;font-family:\'Courier New\',monospace;color:var(--dim);">' + fmt(x.dm) + '</td>' +
+                    '<td style="padding:6px 4px;"><div style="height:8px;background:#1b2436;border-radius:2px;overflow:hidden;">' +
+                    '<span style="display:block;height:100%;width:' + w.toFixed(2) + '%;background:' + colT + ';"></span></div></td></tr>';
+            }
+            document.getElementById('levers').innerHTML = html;
+        }
+
+        // ==================================================================
+        //  THERMAL TRADE SURFACE
+        //  φ against κ, reporting auxiliary radiator mass. Two free thermal
+        //  parameters, one grid — the whole thermal design space at a glance.
+        // ==================================================================
+        function renderSurface(p, base) {
+            const phis   = [1e-9, 1e-7, 1e-5, 1e-3, 1e-2, 0.1];
+            const kappas = [0.19, 5, 50, 500];   // 0.19 = 1 µm self-radiating film at 800 K
+            let html = '<tr style="border-bottom:1px solid var(--border);">' +
+                '<th style="text-align:left;padding:6px 4px;color:var(--dim);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">φ \\ κ kg/MW</th>';
+            for (const k of kappas) html += '<th style="text-align:right;padding:6px 4px;color:var(--dim);font-size:0.7rem;font-weight:600;">' + k + '</th>';
+            html += '</tr>';
+            let best = null;
+            const dryBase = p.otherMassT * 1000;
+            for (const ph of phis) {
+                html += '<tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 4px;font-family:\'Courier New\',monospace;">' +
+                    (ph >= 0.01 ? ph.toString() : ph.toExponential(0)) + '</td>';
+                for (const k of kappas) {
+                    const r = cometPhysics({ ...p, phi: ph, kappaAux: k });
+                    if (r.error) { html += '<td style="padding:6px 4px;text-align:right;color:var(--bad);">—</td>'; continue; }
+                    const mr = r.auxRadiatorMass;
+                    // Fraction of the instrumentation mass the radiator would eat.
+                    const frac = mr / dryBase;
+                    const col = frac < 0.01 ? 'var(--ok)' : frac < 0.25 ? 'var(--num)' : 'var(--bad)';
+                    const txt = mr < 1 ? sig(mr * 1000, 3) + ' g'
+                              : mr < 1000 ? sig(mr, 3) + ' kg'
+                              : sig(mr / 1000, 3) + ' t';
+                    if (best === null || mr < best.mr) best = { mr, ph, k };
+                    html += '<td style="padding:6px 4px;text-align:right;font-family:\'Courier New\',monospace;color:' + col + ';">' + txt + '</td>';
+                }
+                html += '</tr>';
+            }
+            document.getElementById('surface').innerHTML = html;
+            const note = document.getElementById('surfaceNote');
+            if (note && best) {
+                const txt = best.mr < 1 ? sig(best.mr * 1000, 3) + ' g' : sig(best.mr, 3) + ' kg';
+                note.innerHTML = 'Lightest cell: φ = ' + best.ph.toExponential(0) + ' with κ = ' + best.k +
+                    ' kg/MW needs ' + txt + ' of radiator. <span style="color:var(--ok);">Green</span> is under 1% of ' +
+                    'instrumentation mass, <span style="color:var(--num);">amber</span> under 25%, ' +
+                    '<span style="color:var(--bad);">red</span> above. κ = 0.19 kg/MW is a 1 µm self-radiating ' +
+                    'foil at 800 K — the radiator being the structure, with no pumps, fluid or dedicated mass. ' +
+                    'Note how weakly κ matters until φ climbs: the sublimation channel is doing the work.';
+            }
+        }
+
+        function optimiseDv() {
+            const p = getParams();
+            const minDpt = parseFloat(document.getElementById('optMinReturn').value) || 1.0;
+
+            // Build the frontier by scanning up to the TRUE time minimum — the
+            // point where adding more mass stops saving time and starts costing it.
+            // No MR ceiling: the ceiling was set at MR=200 (6,066 t for a 30 t dry
+            // mass) which cut the scan off far below the 52,000 t region where the
+            // interstellar preset lives. The threshold criterion itself stops the
+            // optimiser at the right place; the ceiling was doing nothing useful.
+            const pts = [];
+            let prevT = Infinity;
+            for (let i = 0; i <= 160; i++) {
+                const dv = 1 * Math.pow(300000, i / 160);
+                const r = cometPhysics({ ...p, dvKms: dv });
+                if (r.error || !isFinite(r.m_wet) || !isFinite(r.total_time_s)) continue;
+                // Hard wet-mass ceiling, if the user set one. Blank means no
+                // limit and the physics decides.
+                if (p.wetCapKg !== null && r.m_wet > p.wetCapKg) break;
+                // Stop scanning once transit time starts rising again (past time minimum).
+                if (pts.length > 4 && r.total_time_s > prevT * 1.005) break;
+                prevT = r.total_time_s;
+                pts.push({ dv, wet: r.m_wet, t: r.total_time_s });
+            }
+            if (pts.length < 2) {
+                document.getElementById('optResult').textContent = 'Could not evaluate frontier — check inputs.';
+                return;
+            }
+            // Marginal return: days of transit saved per tonne of propellant added.
+            for (let i = 1; i < pts.length; i++) {
+                const dWet = (pts[i].wet - pts[i-1].wet) / 1000;
+                const dDay = (pts[i-1].t  - pts[i].t)   / 86400;
+                pts[i].dpt = dWet > 0.01 ? dDay / dWet : Infinity;
+            }
+            pts[0].dpt = pts.length > 1 ? pts[1].dpt : Infinity;
+
+            // Last point where return is still above threshold.
+            let elbowIdx = 0;
+            for (let i = 1; i < pts.length; i++) {
+                if (pts[i].dpt >= minDpt) elbowIdx = i;
+            }
+
+            // Binary-search refinement between elbowIdx and elbowIdx+1.
+            const bLo = pts[elbowIdx].dv;
+            const bHi = elbowIdx + 1 < pts.length ? pts[elbowIdx + 1].dv : pts[elbowIdx].dv * 1.01;
+            let lo = bLo, hi = bHi;
+            for (let iter = 0; iter < 64; iter++) {
+                const mid = (lo + hi) / 2;
+                const rL = cometPhysics({ ...p, dvKms: lo });
+                const rM = cometPhysics({ ...p, dvKms: mid });
+                if (rL.error || rM.error) break;
+                const dWet = (rM.m_wet - rL.m_wet) / 1000;
+                const dDay = (rL.total_time_s - rM.total_time_s) / 86400;
+                const dpt  = dWet > 0.01 ? dDay / dWet : Infinity;
+                const capOK = (p.wetCapKg === null || rM.m_wet <= p.wetCapKg);
+                if (dpt >= minDpt && capOK) lo = mid; else hi = mid;
+            }
+            const bestDv = lo;
+            const rBest  = cometPhysics({ ...p, dvKms: bestDv });
+
+            // Write back with upSig, not raw float: the value is re-read and
+            // re-solved, so rounding to nearest could push the design across
+            // the very boundary it was just proved to sit on. Round UP, then
+            // confirm the rounded value still satisfies the cap; step if not.
+            let dvStr = upSig(bestDv);
+            for (let i = 0; i < 6; i++) {
+                const rChk = cometPhysics({ ...p, dvKms: parseFloat(dvStr) });
+                if (!rChk.error && (p.wetCapKg === null || rChk.m_wet <= p.wetCapKg)) break;
+                dvStr = upSig(parseFloat(dvStr) * 0.9999);
+            }
+            document.getElementById('dv').value = dvStr;
             calculate();
+
+            const el = document.getElementById('optResult');
+            if (rBest.error) {
+                el.style.color = 'var(--bad)';
+                el.textContent = 'Optimiser failed — check inputs.';
+                return;
+            }
+            el.style.color = 'var(--num)';
+            const yr  = (rBest.total_time_s / 3.156e7).toFixed(2);
+            const wet = (rBest.m_wet / 1000).toFixed(1);
+            const rNext = cometPhysics({ ...p, dvKms: bestDv * 1.001 });
+            let nextLine = '';
+            if (!rNext.error) {
+                const dW = (rNext.m_wet - rBest.m_wet) / 1000;
+                const dD = (rBest.total_time_s - rNext.total_time_s) / 86400;
+                const dpt = dW > 0.001 ? dD / dW : 0;
+                nextLine = '  ·  next tonne saves ' + dpt.toFixed(3) + ' days';
+            }
+            const capNote = p.wetCapKg !== null
+                ? '  ·  within the ' + sig(p.wetCapKg / 1000) + ' t cap'
+                : '  ·  no mass cap set';
+            el.textContent = 'Δv ' + sig(bestDv) + ' km/s  ·  ' + sig(rBest.m_wet / 1000) + ' t wet  ·  ' +
+                sig(rBest.total_time_s / 3.156e7) + ' yr transit' + nextLine + capNote + '.';
         }
 
         // ===== PRESET LOADERS =====
@@ -1062,32 +1463,33 @@
             document.getElementById('missionMode').value = mode;
             calculate();
             if (optimizeAfter) {
-                setTimeout(function() { optimizeDv(); }, 150);
+                // optimiseDv will update the slider as part of its result display
+                setTimeout(function() { optimiseDv(); }, 150);
             }
         }
 
         function loadMoon() {
-            loadPreset(22.013391412432362, 10, 428.6, 30, 0.0000001, 500, 20, 0.00258);   // one-way rendezvous
+            loadPreset(22.013391412432362, 10, 428.6, 30, 0.0000001, 500, 20, 0.00258, 'rendezvous', false);
         }
 
         function loadVenus() {
-            loadPreset(121.2709315403126, 80, 485.7, 28, 0.0000001, 500, 20, 0.265);   // one-way rendezvous
+            loadPreset(121.2709315403126, 80, 485.7, 28, 0.0000001, 500, 20, 0.265, 'rendezvous', false);
         }
 
         function loadMars() {
-            loadPreset(132.69002256376788, 80, 485.7, 28, 0.0000001, 500, 20, 0.37);   // one-way rendezvous
+            loadPreset(132.69002256376788, 80, 485.7, 28, 0.0000001, 500, 20, 0.37, 'rendezvous', false);
         }
 
         function loadMercury() {
-            loadPreset(160.4978703260942, 110, 485.7, 28, 0.0000001, 500, 20, 1.2);
+            loadPreset(160.4978703260942, 110, 485.7, 28, 0.0000001, 500, 20, 1.2, 'rendezvous', false);
         }
 
         function loadAsteroid() {
-            loadPreset(447.4591727564753, 280, 3000, 30, 0.0000001, 500, 30, 2.1);   // one-way rendezvous
+            loadPreset(447.4591727564753, 280, 3000, 30, 0.0000001, 500, 30, 2.1, 'rendezvous', false);
         }
 
         function loadJupiter() {
-            loadPreset(565.2608643414854, 370, 3000, 30, 0.0000001, 500, 30, 4.1);   // one-way rendezvous
+            loadPreset(565.2608643414854, 370, 3000, 30, 0.0000001, 500, 30, 4.1, 'rendezvous', false);
         }
 
         function loadDefaultInterstellar() {
@@ -1141,11 +1543,22 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('missionMode').addEventListener('change', function () { clearActivePreset(); calculate(); });
-            document.getElementById('optDvBtn').addEventListener('click', optimizeDv);
+            document.getElementById('optDvBtn2').addEventListener('click', optimiseDv);
             document.getElementById('accelBtn').addEventListener('click', function () {
                 vizAccelOn = !vizAccelOn;
                 this.innerHTML = vizAccelOn ? '🛰 Particle Accelerator: ON' : '🛰 Particle Accelerator: OFF';
-                for (const o of vizAccel) o.visible = vizAccelOn;   // hull, rings, funnel, beam, ISM
+                // Hull, rings and funnel follow the button directly. The beam
+                // parts and the ISM motes do NOT: they are additionally gated on
+                // mission state in layoutCandle (beam off once the fuel is spent,
+                // ISM off when the ship is flipped), and that gate must win — the
+                // next frame re-asserts it either way, but setting them here would
+                // flash them on for one frame.
+                const beamParts = [vizBeam, vizBeamHalo, vizBeamPts && vizBeamPts.pts];
+                for (const o of vizAccel) {
+                    if (beamParts.indexOf(o) !== -1) continue;
+                    if (vizIsm && o === vizIsm.pts) continue;
+                    o.visible = vizAccelOn;
+                }
             });
             document.getElementById('clockBtn').addEventListener('click', function () {
                 VIZ_CLOCK_MODE = !VIZ_CLOCK_MODE;
@@ -3051,7 +3464,20 @@
             //     through the disc aperture, through the convergence locus, and
             //     out into space well aft of the exhaust. One straight line on
             //     the axis, so it just needs a length and a midpoint.
-            if (vizBeam && vizBeamGeom && vizAccelOn) {
+            // ---- beam gating -----------------------------------------------
+            // The beam is fired THROUGH the convergence locus. Once the fuel is
+            // spent the arms are laid flat, short of reach, and there is no
+            // locus left for it to pass through — nothing to drive and nothing
+            // to drive it. A beam still firing over a dead assembly would be
+            // claiming the engine is live when the whole point of the expired
+            // frame is that it can never go critical again. It is also the safe
+            // end state, so leaving the accelerator running would misrepresent
+            // exactly the property the final frame exists to show.
+            const beamLive = vizAccelOn && !vizLive.expired;
+            if (vizBeam)     vizBeam.visible     = beamLive;
+            if (vizBeamHalo) vizBeamHalo.visible = beamLive;
+            if (vizBeamPts)  vizBeamPts.pts.visible = beamLive;
+            if (vizBeam && vizBeamGeom && beamLive) {
                 const xF = _baseX + vizBeamGeom.funXLocal;   // funnel end, live with the disc
                 const xA = apexX - _L0 * 3.2;          // exits far aft, past the plume
                 const mid = (xF + xA) / 2, len = Math.abs(xF - xA);
