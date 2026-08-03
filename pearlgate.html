@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mission Parameter Constraints Derived Design Calculator with 3D Viz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #08141f;
+            --panel: #0e2436;
+            --panel2: #122c42;
+            --line: #1e4560;
+            --ink: #dbe8f2;
+            --muted: #7f9bb2;
+            --cyan: #54d4e6;
+            --amber: #f5a94b;
+            --good: #6fd98d;
+            --warn: #ef7a5c;
+            --display: 'Space Grotesk', system-ui, sans-serif;
+            --data: 'IBM Plex Mono', ui-monospace, monospace;
+        }
+        * { box-sizing: border-box }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--data);
+            font-size: 14px;
+            line-height: 1.5;
+            background-image: linear-gradient(rgba(30, 69, 96, .20) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 69, 96, .20) 1px, transparent 1px);
+            background-size: 34px 34px;
+        }
+        .wrap { max-width: 1220px; margin: 0 auto; padding: 28px 18px 70px }
+        header { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 22px }
+        h1 { font-family: var(--display); font-weight: 700; font-size: 26px; letter-spacing: -.02em; margin: 0 0 8px; line-height: 1.22 }
+        .sub { color: var(--muted); font-size: 13px; max-width: 78ch; margin-bottom: 20px; }
+        h2 { font-family: var(--display); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--cyan); margin: 0 0 12px; font-weight: 500 }
+        .grid { display: grid; gap: 16px }
+        .cols3 { grid-template-columns: repeat(3, 1fr) }
+        .cols2 { grid-template-columns: repeat(2, 1fr) }
+        .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 16px }
+        label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px }
+        input, select {
+            background: var(--bg); border: 1px solid var(--line); color: var(--ink);
+            font-family: var(--data); font-size: 15px; padding: 8px 10px; border-radius: 3px;
+        }
+        input { width: 100%; max-width: 220px }
+        select { width: 100%; max-width: 320px }
+        input:focus, select:focus { outline: 2px solid var(--cyan); outline-offset: 1px; border-color: var(--cyan) }
+        .field { margin-bottom: 14px }
+        .field:last-child { margin-bottom: 0 }
+        .hint { font-size: 11px; color: var(--muted); margin-top: 4px }
+        .eq { font-size: 11px; color: var(--cyan); margin-top: 3px; opacity: .85 }
+        .eqval { font-family: var(--display); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; word-break: break-word; color: var(--amber) }
+        .inline-check { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px }
+        .inline-check input[type=checkbox] { width: auto; margin: 0 }
+        .inline-check span { font-size: 10px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase }
+        .section-check { display: flex; align-items: center; gap: 8px; margin-bottom: 12px }
+        .section-check input[type=checkbox] { width: auto; margin: 0 }
+        .section-check h2 { margin: 0 }
+        .out { border-bottom: 1px solid rgba(30, 69, 96, .5); padding: 9px 0 }
+        .out:last-child { border-bottom: none }
+        .outname { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted) }
+        .outval { font-family: var(--display); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; word-break: break-word }
+        .outeq { font-size: 11px; color: var(--cyan); opacity: .85; margin-top: 2px }
+        table { width: 100%; border-collapse: collapse }
+        td, th { padding: 6px 4px; border-bottom: 1px solid rgba(30, 69, 96, .5); vertical-align: top; text-align: left }
+        th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 400 }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap }
+        tr:last-child td { border-bottom: none }
+        .verdict { border-radius: 4px; padding: 16px; margin: 0 0 16px 0; border: 1px solid var(--line); background: var(--panel2) }
+        .verdict.ok { border-color: var(--good) }
+        .verdict.no { border-color: var(--warn) }
+        .vhead { font-family: var(--display); font-size: 20px; font-weight: 700; margin-bottom: 6px }
+        .vhead.ok { color: var(--good) } .vhead.no { color: var(--warn) }
+        .bar { height: 9px; background: #123049; border-radius: 2px; overflow: hidden }
+        .bar>span { display: block; height: 100%; background: var(--amber) }
+        .note { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.6 }
+        footer { margin-top: 30px; border-top: 1px solid var(--line); padding-top: 16px; color: var(--muted); font-size: 11px; line-height: 1.7 }
+        .sep { border-top: 1px solid var(--line); margin: 14px 0 12px; padding-top: 12px }
+        #viz3d { height: 520px; background: #05070f; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; cursor: grab; margin: 8px 0; touch-action: none; }
+        #viz3d:active { cursor: grabbing; }
+        .viz-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.7rem; color: var(--muted); margin-top: 8px; }
+        .viz-legend span { display: flex; align-items: center; gap: 6px; }
+        .viz-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .viz-hint { font-size: 0.66rem; color: var(--muted); font-style: italic; margin-top: 6px; text-align: right; }
+        @media(max-width:900px) { .cols3, .cols2 { grid-template-columns: 1fr } #viz3d { height: 60vh; min-height: 380px; } }
+        .intro-box {
+            background: var(--panel2); border: 1px solid var(--cyan); border-radius: 6px;
+            padding: 18px 20px; margin-bottom: 22px; font-size: 13px; line-height: 1.7;
+            color: var(--ink);
+        }
+        .intro-box strong { color: var(--cyan); }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <h1>Mission Parameter Constraints Derived Design Calculator</h1>
+        <div class="sub">Set a destination, a transit time and a dry mass. Everything else is derived. Every reference number is editable; nothing is hidden. <span style="color:var(--cyan)">Now with 3D ablation visualization.</span></div>
+    </header>
+
+    <div class="intro-box">
+        <strong>Rapid deep‑space transit is a heat management problem.</strong><br><br>
+        In an open‑cycle nuclear rocket every joule that becomes waste heat is a joule that did not become thrust — managing the heat and making the thrust are the same act, not competing ones. Switch the ideas below on and off in any order: across all 32 combinations, the energy that ends up inside the ship predicts the wet mass with a correlation of r = 0.97 over eleven orders of magnitude. The bare fission‑fragment rocket needs 3.4×10¹⁰ t for 7.5 light‑years in 97 years; the same mission with the heat routed into the exhaust instead of the hull needs 6.5×10³ t.<br><br>
+        There is no exception on this page. The trajectory is a thermal lever: burning impulsively rather than continuously halves the rapidity budget, which cuts the propellant, which cuts the fission, which cuts the heat — 244 PW into the hull becomes 80 TW, a factor of three thousand. And the fragment speed is the first and largest thermal decision of all. A thermal rocket must convert all of its energy into heat before any of it becomes thrust, which caps the exhaust at what materials survive: hydrogen at 5,000 K gives 6.4 km/s. Fission fragments leave at 8,994 km/s because the reaction products are the exhaust and were never thermalised — a factor of 1,395 obtained by refusing to make heat in the first place. Fusion needs a fission trigger and fission backing to sustain it; antimatter costs more to make than it returns and delivers its energy as isotropic gammas that cannot be collimated. Direct fission, or fission‑driven fusion, is the only route to a relativistic exhaust — and without a relativistic exhaust the question of human interstellar transit does not arise at all.<br><br>
+        <strong>How the five levers work together:</strong> Coasting optimisation and MHD collimation are the primary drivers of propellant mass reduction. Ablator coupling (η) further lowers propellant mass, while thin‑film radiators remove the residual heat that remains after these mechanisms have done their work.<br><br>
+        <em>Set a destination, a transit time and a dry mass. Everything else is derived and shown with the equation that produced it. Every reference number is an editable default, never a hidden constant. The lever table at the bottom shows which of them actually move the answer.</em>
+    </div>
+
+    <div class="grid cols3">
+        <div class="panel">
+            <h2>Mission</h2>
+            <div class="field"><label for="md">Dry mass (tonnes)</label><input id="md" type="number" step="any" value="37"><div class="eq">everything except propellant</div></div>
+            <div class="field"><label for="dist">Destination distance (AU)</label><input id="dist" type="number" step="any" value="474308.078"></div>
+            <div class="field"><label for="time">Transit time (years)</label><input id="time" type="number" step="any" value="97"></div>
+            <div class="field"><label>Mean speed v̄</label><div class="eqval" id="oVbar">—</div><div class="eq">v̄ = d / t</div></div>
+            <div class="field"><label for="mpMode">Propellant mass</label><select id="mpMode"><option value="auto" selected>Minimum that flies</option><option value="manual">Set by hand</option></select></div>
+            <div class="field"><div class="eqval" id="missionMp">—</div><div class="eq">current propellant mass</div></div>
+            <div class="field" id="mpwrap" style="display:none"><label for="mpSet">Propellant mass (tonnes)</label><input id="mpSet" type="number" step="any" value="6500"></div>
+            <div class="field"><label for="wetCap">Maximum wet mass (tonnes)</label><input id="wetCap" type="number" step="any" value=""><div class="eq">blank = unbounded</div></div>
+            <div class="field"><label for="decayCap">Decay heat absorbed by matrix (%)</label><input id="decayCap" type="number" step="any" max="99.999999" value="95"><div class="eq">from fission products at rest</div></div>
+            <div class="field"><label for="decayShip">Decay heat intercepted by hull (%)</label><input id="decayShip" type="number" step="any" value="0.01"><div class="eq">fraction reaching the structure</div></div>
+            <div class="sep"></div>
+            <div class="section-check"><input type="checkbox" id="sRad" checked><h2 style="margin:0">Radiator</h2></div>
+            <div class="field"><label for="radShare">Radiator share of dry mass (%)</label><input id="radShare" type="number" step="any" value="1"><div class="eq">hard limit for the solver</div></div>
+            <div class="field"><label>Radiator sheet area</label><div class="eqval" id="missionRadiatorArea">—</div></div>
+            <div class="field"><label for="kmode">Radiator specific mass κ</label><select id="kmode"><option value="film" selected>Self-radiating film</option><option value="derive">Pumped loop</option><option value="fix">Set directly</option></select></div>
+            <div class="field" id="kfix"><label for="kappa">κ (kg/MW)</label><input id="kappa" type="number" step="any" value="500"></div>
+            <div id="kfilm"><div class="field"><label for="filmTh">Film thickness (µm)</label><input id="filmTh" type="number" step="any" value="1"></div><div class="field"><label for="filmRho">Film density (kg/m³)</label><input id="filmRho" type="number" step="any" value="8000"></div><div class="field"><label for="filmT">Film temperature (K)</label><input id="filmT" type="number" step="any" value="800"></div><div class="field"><label for="filmE">Emissivity</label><input id="filmE" type="number" step="any" value="0.9"></div><div class="field"><label>Derived κ</label><div class="outval" id="kFilmShown">—</div><div class="eq">σ_a = ρ·τ, κ = σ_a / (2·ε·σ_SB·T⁴)</div></div></div>
+            <div id="kder" style="display:none"><div class="field"><label for="tRad">Radiator temperature (K)</label><input id="tRad" type="number" step="any" value="1500"></div><div class="field"><label for="arealD">Areal density (kg/m²)</label><input id="arealD" type="number" step="any" value="1"></div><div class="field"><label for="emiss">Emissivity</label><input id="emiss" type="number" step="any" value="0.9"></div><div class="field"><label for="sysMult">System overhead multiplier</label><input id="sysMult" type="number" step="any" value="3"></div><div class="field"><label>Derived κ</label><div class="outval" id="kShown">—</div><div class="eq">κ = mult · σ_a / (2·ε·σ_SB·T⁴)</div></div></div>
+            <div class="field"><label>g‑force during burns</label><div class="eqval" id="missionGRange">—</div><div class="eq">start → end of burn (constant thrust)</div></div>
+            <div class="sep"></div>
+            <div class="field"><label>Velocity profile <span class="inline-check"><input type="checkbox" id="sImp" checked><span>optimise for coasting (recommended)</span></span></label><select id="profile"><option value="flyby">Flyby — accelerate, pass through (k=1 per burn)</option><option value="rendezvous" selected>Rendezvous — accelerate, coast, brake to rest (k=2 per burn)</option></select><div class="eq">w = k · c · atanh(v̄/c)</div></div>
+            <div class="field"><label for="gMax">Peak acceleration must not exceed (g)</label><input id="gMax" type="number" step="any" value="1" disabled><div class="eq">only active when coasting is on</div></div>
+            <div class="field"><label>Burn fraction — solved</label><div class="eqval" id="dutyShown">—</div><div class="eq" id="burnExplain">least burn respecting g‑limit and radiator</div></div>
+            <div class="field" id="burnBreakdown" style="display:none"><table style="margin-bottom:8px"><tr><td>Accel burn</td><td class="num" id="bdAccelTime">—</td><td class="num" id="bdAccelDist">—</td></tr><tr><td>Coast</td><td class="num" id="bdCoastTime">—</td><td class="num" id="bdCoastDist">—</td></tr><tr><td>Decel burn</td><td class="num" id="bdDecelTime">—</td><td class="num" id="bdDecelDist">—</td></tr><tr><td><strong>Total</strong></td><td class="num" id="bdTotalTime">—</td><td class="num" id="bdTotalDist">—</td></tr></table></div>
+            <div class="field"><label>Thrust</label><div class="eqval" id="missionThrust">—</div></div>
+            <div class="field"><label>Mass flow</label><div class="eqval" id="missionMdot">—</div></div>
+            <div class="sep"></div>
+            <div class="field"><label>MHD redirection ε (%) <span class="inline-check"><input type="checkbox" id="sMhd" checked><span>active</span></span></label><input id="mhd" type="number" step="any" value="100"><div class="eq">aft = 0.5·f_N + 0.5·f_C·(1+ε)</div></div>
+        </div>
+
+        <div class="panel">
+            <div class="section-check"><input type="checkbox" id="sAbl" checked><h2 style="margin:0">Ablation Settings</h2></div>
+            <div class="field"><label>Ablator ratio K</label><div class="outval" id="kMinShown">—</div><div class="eq">K = max[ η·f_dep − ½(1−ε) , (σ_abl/σ_fuel)·(1−ε) ]</div></div>
+            <div class="field"><label for="hion">Ablator enthalpy to full ionisation (GJ/kg)</label><input id="hion" type="number" step="any" value="8.34"></div>
+            <div class="field"><label for="rngAbl">Fragment stopping range in ablator (mg/cm²)</label><input id="rngAbl" type="number" step="any" value="1.5"></div>
+            <div class="field"><label for="rngFuel">Fragment stopping range in fuel (mg/cm²)</label><input id="rngFuel" type="number" step="any" value="3"></div>
+            <div class="sep"></div>
+            <div class="field"><label>Marshak coupling <span class="inline-check"><input type="checkbox" id="sEta" checked><span>active</span></span></label></div>
+            <div class="field"><label for="solveEta">How η is chosen</label><select id="solveEta"><option value="solve" selected>Solve for radiator allowance</option><option value="pin">Pin to value below</option></select></div>
+            <div class="field"><label for="etaTol">Propellant tolerance for solved η (%)</label><input id="etaTol" type="number" step="any" value="1"></div>
+            <div class="field"><label for="eta">Marshak coupling η (%)</label><input id="eta" type="number" step="any" max="99" value="99"><div class="eq">P_abl = η · P_dep</div></div>
+            <div class="field"><label>Solved η</label><div class="outval" id="solvedEta">—</div></div>
+            <div class="sep"></div>
+            <div class="field"><label for="vizArea">Burn face area (m²) — for 3D viz</label><input id="vizArea" type="number" step="any" value="100" min="0.1"><div class="eq">candle geometry in the 3D view</div></div>
+        </div>
+
+        <div class="panel">
+            <h2>Reference constants</h2>
+            <div class="field"><label for="vff">Fission fragment speed (% c)</label><input id="vff" type="number" step="any" value="3"></div>
+            <div class="field"><label for="qfis">Full fission burnup yield (J/kg)</label><input id="qfis" type="number" step="any" value="7.9e13"></div>
+            <div class="field"><label>Fragment share of yield</label><div class="outval" id="fragShare">—</div><div class="eq">q_FF / Q_fis — ~84% is consistent</div></div>
+            <div class="field"><label for="ngFrac">Neutral share of released energy (%)</label><input id="ngFrac" type="number" step="any" value="7"></div>
+            <div class="field"><label for="decay">Delayed decay heat (% of charged fragment power)</label><input id="decay" type="number" step="any" value="8.33"></div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;border-color:var(--cyan)">
+        <h2>Live output</h2>
+        <div class="verdict" id="verdictBox" style="margin-bottom:16px"><div class="vhead" id="verdictHead">—</div><div id="verdictText" style="font-size:13px"></div></div>
+        <table id="liveOut"><tr><td>—</td></tr></table>
+        <div class="hint" id="stageNote" style="margin-top:10px"></div>
+    </div>
+
+    <div class="grid cols3">
+        <div class="panel"><h2>Trajectory</h2><div class="out"><div class="outname">Rapidity budget w</div><div class="outval" id="oW">—</div><div class="outeq" id="oWeq">w = k · c · atanh(v̄/c)</div></div><div class="out"><div class="outname">Δv (coordinate)</div><div class="outval" id="oDv">—</div><div class="outeq">Δv = c · tanh(w/c)</div></div><div class="out"><div class="outname">Proper acceleration</div><div class="outval" id="oAcc">—</div><div class="outeq">a = w / t_burn</div></div><div class="out"><div class="outname">Accel : decel burn</div><div class="outval" id="oSplit">—</div></div><div class="out"><div class="outname">Burn schedule</div><div class="outval" id="oSched" style="font-size:14px">—</div></div></div>
+        <div class="panel"><h2>Propulsion</h2><div class="out"><div class="outname">Propellant mass</div><div class="outval" id="oMp">—</div></div><div class="out"><div class="outname">Wet mass M₀</div><div class="outval" id="oM0">—</div></div><div class="out"><div class="outname">Mass ratio R</div><div class="outval" id="oR">—</div></div><div class="out"><div class="outname">Exhaust velocity v_e</div><div class="outval" id="oVe">—</div></div><div class="out"><div class="outname">Specific impulse</div><div class="outval" id="oIsp">—</div></div><div class="out"><div class="outname">Thrust</div><div class="outval" id="oF">—</div></div><div class="out"><div class="outname">Fraction of burn going aft</div><div class="outval" id="oAft">—</div></div><div class="out"><div class="outname">Ablator jet speed</div><div class="outval" id="oVp">—</div></div></div>
+        <div class="panel"><h2>Power &amp; fuel</h2><div class="out"><div class="outname">Jet power</div><div class="outval" id="oP">—</div></div><div class="out"><div class="outname">Mass flow</div><div class="outval" id="oMdot">—</div></div><div class="out"><div class="outname">Fuel : ablator K</div><div class="outval" id="oK">—</div></div><div class="out"><div class="outname">Fission burnup</div><div class="outval" id="oBurn">—</div></div><div class="out"><div class="outname">Fuel loaded</div><div class="outval" id="oFuel">—</div></div></div>
+    </div>
+
+    <div class="grid cols2" style="margin-top:16px">
+        <div class="panel"><h2>Waste heat</h2><table><tr><th>Channel</th><th class="num">Power</th><th>Where it goes</th></tr><tr><td>Released by fission</td><td class="num" id="hRaw">—</td><td></td></tr><tr><td>Escaping fragments</td><td class="num" id="hEsc">—</td><td>thrust</td></tr><tr><td>Neutral yield aft</td><td class="num" id="hNGout">—</td><td>in thrust</td></tr><tr><td>Decay heat to space</td><td class="num" id="hVoid">—</td><td>radiated</td></tr><tr><td>Deposited on shielding</td><td class="num" id="hDep">—</td><td>ablates</td></tr><tr><td>Uncoupled (1−η)</td><td class="num" id="hRes">—</td><td><strong>radiator</strong></td></tr><tr><td>Decay heat to hull</td><td class="num" id="hShip">—</td><td><strong>radiator</strong></td></tr><tr><td><strong>Radiator load</strong></td><td class="num" id="hRad">—</td><td></td></tr><tr><td>— carried by ablator</td><td class="num" id="hMgAbl">—</td><td>jet motion</td></tr><tr><td>— managed by radiator</td><td class="num" id="hMg">—</td><td></td></tr><tr><td><strong>Heat handled, cumulative</strong></td><td class="num" id="hCum">—</td><td></td></tr><tr><td>— <strong>UNMANAGED</strong></td><td class="num" id="hUnmg">—</td><td>⚠</td></tr><tr><td><strong>Radiator mass</strong></td><td class="num" id="hRadM">—</td><td></td></tr><tr><td>Radiator allowance</td><td class="num" id="hBudget">—</td><td></td></tr><tr><td>Spare in allowance</td><td class="num" id="hLeft">—</td><td></td></tr><tr><td>Reserved</td><td class="num" id="hRes2">—</td><td></td></tr><tr><td>Radiator sheet area</td><td class="num" id="hArea">—</td><td></td></tr><tr><td>Mass ledger residual</td><td class="num" id="hMResid">—</td><td></td></tr><tr><td>Energy ledger residual</td><td class="num" id="hResid">—</td><td></td></tr></table></div>
+        <div class="panel" style="grid-column:1/-1"><h2>Heat management trade surface</h2><div class="hint" style="margin-bottom:10px">η needed for each κ and ε. Lower is easier. Dash = no η works.</div><table id="surface"><tr><td>—</td></tr></table><div class="note" id="surfaceNote"></div></div>
+        <div class="panel"><h2>Levers — each +10%</h2><table id="levers"><tr><td>—</td></tr></table></div>
+    </div>
+
+    <div class="panel" style="margin-top:20px;">
+        <h2>Ablation Visualization — Nuclear Comet Candle &amp; Exhaust Plume</h2>
+        <div id="viz3d"></div>
+        <div class="viz-legend">
+            <span><i style="background:#bfe6ff;box-shadow:0 0 7px #bfe6ff;"></i>pykrete poles</span>
+            <span><i style="background:#fff6d8;box-shadow:0 0 7px #fff6d8;"></i>burn faces</span>
+            <span><i style="background:#ffe07a;box-shadow:0 0 7px #ffe07a;"></i>fissile foil</span>
+            <span><i style="background:#ff9a4a;box-shadow:0 0 7px #ff9a4a;"></i>shield (loaded)</span>
+            <span><i style="background:#9fb0c4;box-shadow:0 0 7px #9fb0c4;"></i>docking / tethers</span>
+            <span><i style="background:#8e9cab;box-shadow:0 0 7px #8e9cab;"></i>shield disk</span>
+            <span><i style="background:#d2e6ff;box-shadow:0 0 7px #d2e6ff;"></i>neutrons</span>
+            <span><i style="background:#48e6ff;box-shadow:0 0 7px #48e6ff;"></i>charged jet + vapour</span>
+        </div>
+        <div class="viz-hint" style="text-align:left;color:var(--cyan);border-top:1px solid var(--line);padding-top:6px;font-style:normal;">
+            candle aspect <span id="viz-aspect">—</span> · mass ratio <span id="viz-mr">—</span> · v<sub>e</sub> <span id="viz-ve">—</span> km/s · thrust <span id="viz-thrust">—</span> · burn <span id="viz-burn">—</span><br>
+            tepee tilt <span id="viz-tilt">—</span> · apex <span id="viz-tiling">—</span> · escaping <span id="viz-esc">—</span><br>
+            drag to orbit · scroll to zoom · particles coast at constant speed (vacuum physics)
+        </div>
+    </div>
+
+    <footer>Relativistic throughout. Rocket equation Δv = c·tanh(v_e·lnR/c). All escaping charged fragments collimated axially at full v_ff. AU = 1.495978707×10¹¹ m, year = 3.15576×10⁷ s, c = 299,792,458 m/s, g₀ = 9.80665 m/s². Fission yields: Th‑232 7.9×10¹³ J/kg.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const C=299792458, AU=1.495978707e11, YR=3.15576e7, G0=9.80665;
+const SIG=6, EFFMAX=99.999999, ETA_SOLVER_MAX=0.99;
+const $=id=>document.getElementById(id);
+const num=id=>{const v=parseFloat($(id).value); return isFinite(v)?v:0;};
+const AFT=(fN,eps)=>0.5*fN+0.5*(1-fN)*(1+eps);
+const FDEP=(o,eps)=>0.5*o.ngFrac+0.5*(1-o.ngFrac)*(1-eps)+o.decay*(1-o.ngFrac)*0.5*(1-eps)*(1-o.decayShip)*o.decayCap;
+function effpct(x){const v=Math.min(x*100,EFFMAX); if(v>=99.9999)return v.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')+' %'; if(v>=99.99)return v.toFixed(4)+' %'; if(v>=99)return v.toFixed(3)+' %'; return sig(v)+' %';}
+const sig=(x,n)=>Number(x.toPrecision(n||SIG)).toLocaleString('en-US',{maximumSignificantDigits:n||SIG});
+function upSig(x,n){n=n||SIG; if(!isFinite(x)||x===0)return'0'; const d=Math.ceil(Math.log10(Math.abs(x))), f=Math.pow(10,n-d); return String(Math.ceil(x*f)/f);}
+function si(x,unit,dp){dp=dp||SIG; if(!isFinite(x))return'—'; if(x===0)return'0 '+unit; const s=x<0?'-':''; x=Math.abs(x); const p=[[1e24,'Y'],[1e21,'Z'],[1e18,'E'],[1e15,'P'],[1e12,'T'],[1e9,'G'],[1e6,'M'],[1e3,'k'],[1,''],[1e-3,'m'],[1e-6,'µ'],[1e-9,'n'],[1e-12,'p']]; for(const[v,pre]of p){if(x>=v)return s+sig(x/v,dp)+' '+pre+unit;} return s+x.toExponential(SIG-1)+' '+unit;}
+const kms=v=>!isFinite(v)?'—':sig(v/1e3)+' km/s';
+const t_=kg=>sig(kg/1000)+' t';
+const pct=x=>sig(x*100)+' %';
+function dur(s){if(!isFinite(s)||s<=0)return'—'; if(s>=YR)return sig(s/YR)+' yr'; if(s>=86400)return sig(s/86400)+' days'; return si(s,'s');}
+const flow=k=>!isFinite(k)||k<=0?'0 g/s':k>=1?sig(k)+' kg/s':k>=1e-3?sig(k*1e3)+' g/s':k>=1e-6?sig(k*1e6)+' mg/s':sig(k*1e9)+' µg/s';
+const distAU=x=>!isFinite(x)||x<=0?'—':sig(x/AU)+' AU';
+const PROF={flyby:{kBase:1,brake:false,name:'flyby'},rendezvous:{kBase:2,brake:true,name:'rendezvous'}};
+const on=id=>$(id).checked;
+
+function readInputs(){
+    const stImp=on('sImp'),stAbl=on('sAbl'),stMhd=on('sMhd'),stEta=on('sEta'),stRad=on('sRad');
+    const kSel=$('profile').value, profBase=PROF[kSel]||PROF.rendezvous;
+    const kBase=stImp?profBase.kBase:profBase.kBase*2;
+    const brake=stImp?profBase.brake:true;
+    const d=num('dist')*AU, t=num('time')*YR;
+    const vbar=(d>0&&t>0)?d/t:0;
+    const gMaxIn=stImp?Math.max(num('gMax'),0):0;
+    const wOf=f=>(kBase*2/(2-f))*C*Math.atanh(Math.min(vbar/C,0.999999));
+    const dutyInit=0.05;
+    const eps=stMhd?Math.min(Math.max(num('mhd'),0),100)/100:0;
+    const eta=(stEta&&stAbl)?Math.min(Math.max(num('eta'),0),99)/100:0;
+    const SBc=5.670374419e-8;
+    let kappa;
+    if($('kmode').value==='film'){
+        const T=Math.max(num('filmT'),1), e=Math.min(Math.max(num('filmE'),0.01),1);
+        const sa=Math.max(num('filmRho'),1)*Math.max(num('filmTh'),1e-6)*1e-6;
+        kappa=sa/(2*e*SBc*Math.pow(T,4))*1e6;
+    }else if($('kmode').value==='derive'){
+        const T=Math.max(num('tRad'),1), e=Math.min(Math.max(num('emiss'),0.01),1);
+        const flux=2*e*SBc*Math.pow(T,4);
+        kappa=Math.max(num('sysMult'),1)*Math.max(num('arealD'),1e-6)/flux*1e6;
+    }else{kappa=Math.max(num('kappa'),1e-9);}
+    return {d,t,vbar,w:wOf(dutyInit),kSel,k:kBase*2/(2-dutyInit),duty:dutyInit,kBase,wOf,vbarC:Math.min(vbar/C,0.999999),brake,md:num('md')*1000,gMax:gMaxIn,wetCap:($('wetCap').value.trim()===''?null:Math.max(num('wetCap'),0)*1000),radShare:Math.min(Math.max(num('radShare'),0.01),99)/100,stImp,stAbl,stMhd,stEta,stRad,vff:Math.min(Math.max(num('vff'),0),99.9)/100*C,qfis:Math.max(num('qfis'),1),ngFrac:Math.max(num('ngFrac'),0)/100,decay:Math.max(num('decay'),0)/100,hion:Math.max(num('hion'),0)*1e9,kStop:(Math.max(num('rngFuel'),1e-9)>0?Math.max(num('rngAbl'),0)/Math.max(num('rngFuel'),1e-9):0),kappa,decayCap:Math.min(Math.max(num('decayCap'),0),EFFMAX)/100,decayShip:Math.min(Math.max(num('decayShip'),0),100)/100,eps,eta,ablOn:stAbl,radOn:stRad,vizArea:Math.max(num('vizArea'),0.1)};
+}
+
+function state(o,mp,eps,eta){
+    const md=o.md, m0=md+mp, R=m0/md, lnR=Math.log(R);
+    const tb=o.t*o.duty, mt=tb>0?mp/tb:0;
+    const gFF=1/Math.sqrt(1-Math.pow(o.vff/C,2)), qFF=(gFF-1)*C*C;
+    function S(mff,mAbl){
+        const pTot=mff*qFF, fN=o.ngFrac, fC=1-fN;
+        const pFF=fC*pTot, pNG=fN*pTot;
+        const retained=0.5*(1-eps);
+        const pDecay=o.decay*pFF*retained;
+        const pDecShip=o.decayShip*pDecay;
+        const pDecCap=o.decayCap*(pDecay-pDecShip);
+        const pDecVoid=pDecay-pDecShip-pDecCap;
+        const aftFrac=AFT(fN,eps);
+        const aftMass=0.5*(1+eps);
+        const mEsc=aftMass*mff, pEsc=aftFrac*pTot, pNGout=0;
+        const pRaw=pFF+pNG+pDecay;
+        const pDep=((((pRaw-pEsc)-pNGout)-pDecShip)-pDecVoid);
+        const mEmbed=(1-aftMass)*mff;
+        const mJet=Math.max(mAbl+mEmbed,1e-30);
+        const pAbl=o.ablOn?eta*pDep:0, pRes=pDep-pAbl;
+        const spec=pAbl/mJet;
+        const gP=spec>o.hion?1+(spec-o.hion)/(C*C):1;
+        const vp=gP>1?C*Math.sqrt(1-1/(gP*gP)):0;
+        const momEsc=mEsc*gFF*o.vff;
+        const subl=o.ablOn?mJet*o.hion:0;
+        const jetKE=o.ablOn?pAbl-subl:0;
+        return {mEsc,mJet,mEmbed,aftFrac,pFF,pNG,pRaw,pEsc,pNGout,pDep,pRes,pAbl,subl,pDecay,pDecShip,pDecCap,pDecVoid,spec,vp,gP,jetKE,momEsc,ve:mt>0?(momEsc+mJet*gP*vp)/mt:0,pJet:pEsc+jetKE};
+    }
+    const fDep=FDEP(o,eps);
+    const Kcons=Math.max(0,eta*fDep-0.5*(1-eps));
+    const Kout=o.ablOn?Math.max(Kcons,o.kStop*(1-eps)):0;
+    const mff=mt/(1+Kout), mAbl=mt-mff;
+    const st=S(mff,mAbl), wA=st.ve*lnR;
+    const radLoad=st.pRes+st.pDecShip;
+    const radMass=o.radOn?o.kappa*(radLoad/1e6):0;
+    const radBudget=o.md*o.radShare;
+    const reserved=o.md*(1-o.radShare);
+    const burnup=mff>0?st.pRaw/(mff*o.qfis):Infinity;
+    const thrust=mt*st.ve;
+    return {m0,R,lnR,tb,mt,mff,mAbl,st,gFF,ve:st.ve,wA,closes:wA>=o.w*(1-1e-12),dv:C*Math.tanh(wA/C),F:thrust,P:st.pJet,aStart:thrust/m0,aEnd:thrust/md,gLimited:o.gMax>0,tBurnGLim:o.gMax>0?o.w/(o.gMax*G0):null,gPeak:thrust/md/G0,fAccel:(R>1?(R-Math.sqrt(R))/(R-1):0.5),fDecel:(R>1?(Math.sqrt(R)-1)/(R-1):0.5),radLoad,radMass,radBudget,reserved,radSpare:radBudget-radMass,burnup,managedHeat:o.radOn?Math.min(radLoad,(radBudget/o.kappa)*1e6):0,unmanagedHeat:o.radOn?Math.max(0,radLoad-(radBudget/o.kappa)*1e6):radLoad,heatOK:(o.radOn?radMass<=radBudget:radLoad<=0)&&burnup<=1,kMinEff:Kout,kAblRatio:mff>0?mAbl/mff:Infinity,massOK:o.wetCap===null||m0<=o.wetCap,ok:wA>=o.w*(1-1e-12)&&st.spec>o.hion&&burnup<=1};
+}
+
+function minProp(o,eps,eta){
+    const lo=1e2, hi=1e11;
+    if(!state(o,hi,eps,eta).ok)return null;
+    if(state(o,lo,eps,eta).ok)return lo;
+    let a=lo,b=hi;
+    for(let i=0;i<40;i++){const m=Math.sqrt(a*b); if(state(o,m,eps,eta).ok)b=m;else a=m;}
+    return b;
+}
+
+function solveEtaOnly(o,eps){
+    const tol=Math.max(num('etaTol'),0)/100;
+    const hiE=ETA_SOLVER_MAX;
+    const mpHi=minProp(o,eps,hiE);
+    if(mpHi===null)return null;
+    if(!state(o,mpHi,eps,hiE).heatOK)return null;
+    const target=mpHi*(1+tol);
+    const okAt=(h)=>{const m=minProp(o,eps,h); return m!==null&&m<=target&&state(o,m,eps,h).heatOK;};
+    if(okAt(0))return {eps,eta:0,mp:minProp(o,eps,0)};
+    let lo=0,hi=hiE;
+    for(let i=0;i<30;i++){const mid=0.5*(lo+hi); if(okAt(mid))hi=mid;else lo=mid;}
+    return {eps,eta:hi,mp:minProp(o,eps,hi)};
+}
+
+function findBestDuty(baseO,eps,eta){
+    const scan={...baseO,duty:baseO.duty,k:baseO.k,w:baseO.w};
+    let bestDuty=scan.duty;
+    let bestMp=null,bestHeatOK=false;
+    let bestAnyMp=null,bestAnyDuty=scan.duty;
+    (()=>{const m=minProp(scan,eps,eta); if(m!==null&&isFinite(m)){const st=state(scan,m,eps,eta); if(st&&isFinite(st.ve)){const gPeak=st.gPeak; if(scan.gMax<=0||gPeak<=scan.gMax){bestAnyMp=m;bestAnyDuty=scan.duty; if(st.heatOK){bestMp=m;bestDuty=scan.duty;bestHeatOK=true;}else{bestMp=m;bestDuty=scan.duty;}}}}})();
+    for(let i=0;i<=90;i++){const f=0.002*Math.pow(0.995/0.002,i/90); scan.duty=f; scan.k=scan.kBase*2/(2-f); scan.w=scan.wOf(f); const m=minProp(scan,eps,eta); if(m===null||!isFinite(m))continue; const st=state(scan,m,eps,eta); if(!st||!isFinite(st.ve))continue; const gPeak=st.gPeak; if(scan.gMax>0&&gPeak>scan.gMax)continue; if(bestAnyMp===null||m<bestAnyMp){bestAnyMp=m;bestAnyDuty=f;} if(st.heatOK&&(bestMp===null||m<bestMp)){bestMp=m;bestDuty=f;bestHeatOK=true;}else if(!bestHeatOK&&(bestMp===null||m<bestMp)){bestMp=m;bestDuty=f;}}
+    if(bestHeatOK)return bestDuty;
+    if(bestAnyMp!==null)return bestAnyDuty;
+    return baseO.duty;
+}
+
+function relDist(a,t){if(!isFinite(a)||a<=0||t<=0)return 0; return (C*C/a)*(Math.cosh(a*t/C)-1);}
+function relSpeed(a,t){if(!isFinite(a)||a<=0||t<=0)return 0; return C*Math.tanh(a*t/C);}
+
+let _vizParams=null;
+
+function compute(){
+    const o=readInputs();
+    $('sEta').disabled=!$('sAbl').checked;
+    if(!$('sAbl').checked)$('sEta').checked=false;
+    const km=$('kmode').value;
+    $('kfilm').style.display=km==='film'?'block':'none';
+    $('kder').style.display=km==='derive'?'block':'none';
+    $('kfix').style.display=km==='fix'?'block':'none';
+    if(km==='film'){const SBc=5.670374419e-8,T=Math.max(num('filmT'),1),e=Math.min(Math.max(num('filmE'),0.01),1); const sa=Math.max(num('filmRho'),1)*Math.max(num('filmTh'),1e-6)*1e-6; const flux=2*e*SBc*Math.pow(T,4); $('kFilmShown').textContent=sig(o.kappa)+' kg/MW  —  '+sig(sa)+' kg/m² radiating '+sig(flux)+' W/m²';}
+    if(km==='derive'){const SB=5.670374419e-8,T=Math.max(num('tRad'),1),e=Math.min(Math.max(num('emiss'),0.01),1); const flux=2*e*SB*Math.pow(T,4); $('kShown').textContent=sig(o.kappa)+' kg/MW   ('+sig(flux/1e6)+' MW/m² radiated)';}
+    let eps=o.eps, eta=o.eta;
+    const tempO={...o,duty:o.duty,k:o.k,w:o.w};
+    const bestDuty=findBestDuty(tempO,eps,eta);
+    o.duty=bestDuty; o.k=o.kBase*2/(2-bestDuty); o.w=o.wOf(bestDuty);
+    let solved=null, mp=null;
+    if($('solveEta').value==='solve'&&o.stMhd&&o.stEta){solved=solveEtaOnly(o,eps); if(solved){eta=solved.eta; mp=solved.mp; let etaS=upSig(eta*100); for(let i=0;i<6;i++){const h2=Math.min(parseFloat(etaS),99)/100; const m2=minProp(o,eps,h2); if(m2!==null&&state(o,m2,eps,h2).heatOK)break; etaS=upSig(parseFloat(etaS)+Math.pow(10,-(SIG-Math.ceil(Math.log10(parseFloat(etaS)))))); if(parseFloat(etaS)>99){etaS='99';break;}} $('eta').value=etaS; eta=Math.min(parseFloat(etaS),99)/100; mp=minProp(o,eps,eta);}}
+    const manualMp=$('mpMode').value==='manual';
+    $('mpwrap').style.display=manualMp?'block':'none';
+    if(manualMp){mp=Math.max(num('mpSet'),0)*1000;}else if(mp===null){mp=minProp(o,eps,eta);}
+    if(mp!==null&&mp<=0){$('verdictBox').className='verdict no';$('verdictHead').className='vhead no';$('verdictHead').textContent='Enter a positive propellant mass';$('verdictText').textContent='The propellant field is zero or empty.';return;}
+    if(mp===null){const probe=state(o,o.md,eps,eta); if(probe&&isFinite(probe.ve)&&probe.ve>0){const lnR=o.w/probe.ve; if(isFinite(lnR)&&lnR<700)mp=o.md*(Math.exp(lnR)-1);}}
+    const solveEtaMode=$('solveEta').value, noSolve=solveEtaMode==='solve'&&!solved;
+    $('solvedEta').textContent=solved?effpct(solved.eta):(noSolve?'no η manages the heat':'pinned');
+    const gFF0=1/Math.sqrt(1-Math.pow(o.vff/C,2)), qFF0=(gFF0-1)*C*C, share0=qFF0/o.qfis;
+    $('fragShare').textContent=pct(share0)+(share0>1?'  — IMPOSSIBLE':share0>0.95||share0<0.6?'  — inconsistent':'  — consistent');
+    if(mp===null&&$('mpMode').value!=='manual'){$('verdictBox').className='verdict no';$('verdictHead').className='vhead no';$('verdictHead').textContent='No design flies this mission';$('verdictText').textContent=(share0>1?'Fragment speed and fission yield are inconsistent. ':'')+'Even at maximum fragment production the exhaust cannot deliver '+kms(o.w)+' of rapidity. Lengthen the transit, shorten the distance, or choose a lower k.';return;}
+    const S=state(o,mp,eps,eta);
+    const st=S.st, tb=S.tb, aReq=tb>0?o.w/tb:0;
+    $('oVbar').textContent=kms(o.vbar)+'  ('+pct(o.vbar/C)+' c)';
+    $('missionMp').textContent=t_(mp);
+    $('missionGRange').textContent=sig(S.aStart/G0)+' → '+sig(S.aEnd/G0)+' g';
+    $('oW').textContent=kms(o.w);
+    $('oWeq').textContent='k = '+sig(o.k)+' = 2·'+(o.brake?2:1)+'/(2−'+sig(o.duty)+')';
+    $('oDv').textContent=kms(S.dv)+'  ('+pct(S.dv/C)+' c)';
+    $('oAcc').textContent=sig(aReq)+' m/s²  ('+sig(aReq/G0)+' g)';
+    $('dutyShown').textContent=pct(o.duty)+'   ('+dur(o.t*o.duty)+' burning, '+dur(o.t*(1-o.duty))+' coasting)';
+    $('oSplit').textContent=o.brake?sig(S.fAccel*100)+' : '+sig(S.fDecel*100)+' %   ('+dur(tb*S.fAccel)+' vs '+dur(tb*S.fDecel)+', √R = '+sig(Math.sqrt(S.R))+')':'flyby — single burn';
+    $('oSched').textContent=pct(o.duty)+' thrust — '+dur(tb)+' burn, '+dur(o.t-tb)+' coast';
+    $('burnBreakdown').style.display=o.stImp?'block':'none';
+    $('burnExplain').textContent=o.stImp?'optimised: k='+sig(o.k)+' — shorter burn = lower k = less propellant, but higher g':'continuous thrust (k='+sig(o.k)+') — uncheck "optimise for coasting" to halve the Δv budget';
+    if(o.stImp&&S.tb>0&&aReq>0){const tAccel=S.fAccel*S.tb; const tDecel=S.fDecel*S.tb; const tCoast=o.t-S.tb; const dAccel=relDist(aReq,tAccel); const vCoast=relSpeed(aReq,tAccel); const dCoast=vCoast*tCoast; const dDecel=relDist(aReq,tDecel); $('bdAccelTime').textContent=dur(tAccel); $('bdAccelDist').textContent=distAU(dAccel); $('bdCoastTime').textContent=dur(tCoast); $('bdCoastDist').textContent=distAU(dCoast); $('bdDecelTime').textContent=dur(tDecel); $('bdDecelDist').textContent=distAU(dDecel); $('bdTotalTime').textContent=dur(tAccel+tCoast+tDecel); $('bdTotalDist').textContent=distAU(dAccel+dCoast+dDecel);}
+    $('missionThrust').textContent=si(S.F,'N');
+    $('missionMdot').textContent=flow(S.mt);
+    $('oMp').textContent=t_(mp);
+    $('oM0').textContent=t_(S.m0);
+    $('oR').textContent=sig(S.R)+' : 1   (ln R = '+sig(S.lnR)+')';
+    $('oVe').textContent=kms(S.ve)+'  ('+pct(S.ve/C)+' c)';
+    $('oIsp').textContent=si(S.ve/G0,'s');
+    $('oF').textContent=si(S.F,'N');
+    const aftF=AFT(o.ngFrac,eps);
+    $('oAft').textContent=pct(aftF)+'   (contributes '+kms(aftF*o.vff)+' of v_e)';
+    $('oVp').textContent=kms(st.vp);
+    $('oP').textContent=si(S.P,'W');
+    $('oMdot').textContent=flow(S.mt)+'  ('+flow(S.mff)+' fuel + '+flow(S.mAbl)+' ablator)';
+    $('oK').textContent=(S.mff>0?sig(S.mAbl/S.mff):'—')+' : 1';
+    const fDepD=FDEP(o,eps), KconsD=Math.max(0,eta*fDepD-0.5*(1-eps));
+    $('kMinShown').textContent=sig(Math.max(KconsD,o.kStop*(1-eps)))+' : 1';
+    $('oBurn').textContent=pct(S.burnup)+' of the fuel fissioned';
+    $('oFuel').textContent=t_(S.mff*tb)+' fuel, '+t_(S.mAbl*tb)+' ablator';
+    const jetKE=st.jetKE, subl=st.subl;
+    const released=st.pFF+st.pNG+st.pDecay;
+    const accounted=st.pEsc+subl+jetKE+st.pRes+st.pDecVoid+st.pDecShip;
+    const resid=released-accounted;
+    $('hRaw').textContent=si(st.pRaw,'W');
+    $('hEsc').textContent=si(st.pEsc,'W');
+    $('hNGout').textContent=si(0.5*st.pNG,'W');
+    $('hVoid').textContent=si(st.pDecVoid,'W');
+    $('hDep').textContent=si(st.pDep,'W');
+    $('hRes').textContent=si(st.pRes,'W');
+    $('hShip').textContent=si(st.pDecShip,'W');
+    $('hRad').textContent=si(S.radLoad,'W');
+    $('hMgAbl').textContent=si(st.pAbl,'W');
+    $('hMg').textContent=si(S.managedHeat,'W');
+    $('hCum').textContent=pct((st.pEsc+st.pAbl+S.managedHeat)/st.pRaw);
+    $('hUnmg').textContent=si(S.unmanagedHeat,'W')+(S.unmanagedHeat>0?'   ⚠':'');
+    $('hRadM').textContent=t_(S.radMass);
+    $('hBudget').textContent=t_(S.radBudget);
+    $('hLeft').textContent=t_(S.radSpare);
+    $('hRes2').textContent=t_(S.reserved);
+    let areaStr='—';
+    (function(){const SBc=5.670374419e-8; let flux=null; if($('kmode').value==='film'){const T=Math.max(num('filmT'),1),e=Math.min(Math.max(num('filmE'),0.01),1); flux=2*e*SBc*Math.pow(T,4);}else if($('kmode').value==='derive'){const T=Math.max(num('tRad'),1),e=Math.min(Math.max(num('emiss'),0.01),1); flux=2*e*SBc*Math.pow(T,4);} areaStr=flux?sig(S.radLoad/flux)+' m²  (a square '+sig(Math.sqrt(S.radLoad/flux))+' m on a side)':'—'; $('hArea').textContent=areaStr;})();
+    $('missionRadiatorArea').textContent=areaStr;
+    const mLeft=S.mt-(st.mEsc+st.mJet);
+    const mEpsU=S.mt>0?Math.abs(mLeft)/S.mt/2.220446049250313e-16:0;
+    $('hMResid').textContent=(mLeft===0?'0':sig(mEpsU)+' ε')+(mEpsU>100?' ⚠':'');
+    const epsU=released>0?Math.abs(resid)/released/2.220446049250313e-16:0;
+    $('hResid').textContent=(resid===0?'0':sig(epsU)+' ε')+(epsU>100?' ⚠':'');
+    const fliesDv=S.wA>=o.w*(1-1e-5);
+    const gOK=o.gMax<=0||(S.tBurnGLim!==null&&S.tBurnGLim<=o.t*0.999999);
+    const flies=fliesDv&&S.st.spec>o.hion&&S.burnup<=1&&gOK;
+    const ok=flies&&S.heatOK&&S.massOK;
+    $('verdictBox').className='verdict '+(ok?'ok':'no');
+    $('verdictHead').className='vhead '+(ok?'ok':'no');
+    $('verdictHead').textContent=!flies?'Does not fly':!S.massOK?'Flies, exceeds wet mass cap':ok?'Flies, heat managed':'Flies, heat NOT managed';
+    const dvNeed=C*Math.tanh(o.w/C);
+    const shortfall=S.wA<o.w*(1-1e-5)?'Short by '+kms(dvNeed-S.dv)+'. ':'';
+    $('verdictText').innerHTML=!flies?shortfall+(!gOK?'g-limit needs '+dur(S.tBurnGLim)+' burn but trip is '+dur(o.t)+'. ':'')+(S.burnup>1?'Burnup '+pct(S.burnup)+' > 100%. ':'')+(S.st.spec<=o.hion?'Below ionisation enthalpy. ':''):ok?'Wet mass '+t_(S.m0)+'. Radiator '+t_(S.radMass)+' inside '+t_(S.radBudget)+' allowance. ε = '+pct(eps)+', η = '+effpct(eta)+'.':'Radiator needs '+t_(S.radMass)+' vs '+t_(S.radBudget)+' allowance.';
+    let noteText='';
+    if(!o.stImp)noteText='Continuous burn: k='+sig(o.k)+'. Tick "optimise for coasting" to halve the Δv budget.';
+    else if(!o.stAbl)noteText='Pure fission fuel — inbound half stops in structure, no jet.';
+    else if(!o.stMhd)noteText='Ablator aboard but coils off — dead weight. Switch on MHD collimation.';
+    else if(!o.stEta)noteText='Coupling off — limiting case. Switch it on.';
+    else if(!o.stRad)noteText='Coupling works but uncoupled heat has nowhere to go. Add the radiator.';
+    else noteText='All on. Solver finds lowest η that fits radiator allowance.';
+    $('stageNote').textContent=noteText;
+    const liveRows=[
+        ['Δv required',kms(C*Math.tanh(o.w/C))],
+        ['Exhaust velocity',kms(S.ve)],
+        ['Mass ratio',sig(S.R)+' : 1'],
+        ['Propellant',t_(mp)],
+        ['Escapes aft',pct(S.st.pEsc/S.st.pRaw)+' of burn'],
+        ['Handled by ablator',pct(S.st.pAbl/S.st.pRaw)+' of burn'],
+        ['Heat handled',pct((S.st.pEsc+S.st.pAbl+S.managedHeat)/S.st.pRaw)],
+        ['Ablator carries',si(S.st.pAbl,'W')],
+        ['Needs radiator',si(S.radLoad,'W')],
+        ['— MANAGED',si(S.managedHeat,'W')],
+        ['— UNMANAGED',si(S.unmanagedHeat,'W')+(S.unmanagedHeat>0?' ⚠':'')],
+        ['Radiator share',pct(S.radMass/o.md)],
+        ['Thrust',si(S.F,'N')],
+        ['Acceleration',o.gMax>0?sig(o.gMax)+' g':sig(S.aStart/G0)+' → '+sig(S.aEnd/G0)+' g'],
+        ['Burn time',dur(o.t*o.duty)+'  ('+pct(o.duty)+' of trip)'],
+        ['Accel burn',o.brake?dur(tb*S.fAccel):'—'],
+        ['Decel burn',o.brake?dur(tb*S.fDecel):'—']
+    ];
+    let lr='<tr><th>Live output</th><th class="num">value</th></tr>';
+    for(const [n,v] of liveRows) lr+='<tr><td>'+n+'</td><td class="num">'+v+'</td></tr>';
+    $('liveOut').innerHTML=lr;
+    const base=mp;
+    const levers=[
+        ['qfis','Fission yield'],
+        ['ngFrac','n+γ yield'],
+        ['decay','Decay heat'],
+        ['hion','Ionisation enthalpy'],
+        ['kappa','Radiator κ'],
+        ['decayCap','Matrix absorption'],
+        ['decayShip','Hull interception']
+    ];
+    let rows='<tr><th>Lever, +10%</th><th class="num">Δ propellant</th><th style="width:38%"></th></tr>';
+    const results=[];
+    for(const [id,name] of levers){const old=$(id).value; $(id).value=(parseFloat(old)*1.1); const o2=readInputs(); const m2=minProp(o2,eps,eta); $(id).value=old; const rel=(m2===null)?null:(m2-base)/base; results.push([name,rel]);}
+    const maxAbs=Math.max(...results.map(r=>r[1]===null?1:Math.abs(r[1])),1e-9);
+    results.sort((a,b)=>(b[1]===null?1e9:Math.abs(b[1]))-(a[1]===null?1e9:Math.abs(a[1])));
+    for(const [name,rel] of results){const txt=rel===null?'breaks':(Math.abs(rel)<1e-9?'—':(rel>0?'+':'')+sig(rel*100)+' %'); const wpc=rel===null?100:Math.abs(rel)/maxAbs*100; rows+='<tr><td>'+name+'</td><td class="num">'+txt+'</td><td><div class="bar"><span style="width:'+wpc.toFixed(2)+'%"></span></div></td></tr>';}
+    $('levers').innerHTML=rows;
+    const kappas=[500,100,50,20,10,5];
+    const epsList=[0,90,99,99.9,99.99];
+    let srows='<tr><th>κ</th>'+epsList.map(e=>'<th class="num">ε='+e+'%</th>').join('')+'</tr>';
+    let best=null;
+    for(const kp of kappas){srows+='<tr><td>'+kp+'</td>'; for(const ep of epsList){const e=Math.min(ep,100)/100; const oK=Object.assign({},o,{kappa:kp}); const budget=((oK.md*oK.radShare)/kp)*1e6; const mpK=minProp(oK,e,EFFMAX/100); if(mpK===null){srows+='<td class="num">—</td>';continue;} const tolS=Math.max(num('etaTol'),0)/100,targetS=mpK*(1+tolS); const okS=h=>{const m=minProp(oK,e,h); return m!==null&&m<=targetS&&state(oK,m,e,h).heatOK;}; if(!state(oK,mpK,e,EFFMAX/100).heatOK){srows+='<td class="num">—</td>';continue;} let loS=0,hiS=ETA_SOLVER_MAX; if(!okS(0)){for(let q=0;q<20;q++){const md=0.5*(loS+hiS); if(okS(md))hiS=md;else loS=md;}}else hiS=0; const need=hiS; const nines=need<=0?0:-Math.log10(Math.max(1-need,1e-16)); const txt=need<=0?'any η':sig(need*100)+' %'; if(best===null||nines<best.nines)best={kp,ep,nines,need}; srows+='<td class="num" style="color:'+(nines<=3?'var(--good)':nines<=4.5?'var(--amber)':'var(--warn)')+'">'+txt+'</td>';} srows+='</tr>';}
+    $('surface').innerHTML=srows;
+    $('surfaceNote').textContent=best?'Easiest: κ='+best.kp+' kg/MW, ε='+best.ep+'% → η='+sig(best.need*100)+'% ('+sig(best.nines)+' nines)':'No combination meets the allowance.';
+    _vizParams={blockLength:mp/(935*o.vizArea),ve:S.ve,F:S.F,R:S.R,burnTime:S.tb,mdot:S.mt,area:o.vizArea,mode:o.kSel,flies:ok};
+    if(typeof updateVizFromParams==='function')updateVizFromParams(_vizParams);
+}
+
+const allInputs=['dist','time','md','profile','vff','qfis','ngFrac','decay','hion','kappa','decayCap','decayShip','mhd','eta','solveEta','radShare','sImp','sAbl','sMhd','sEta','sRad','etaTol','mpMode','mpSet','kmode','tRad','arealD','emiss','sysMult','filmTh','filmRho','filmT','filmE','wetCap','rngAbl','rngFuel','vizArea'];
+allInputs.forEach(id=>{$(id).addEventListener('change',compute); $(id).addEventListener('input',compute);});
+['mhd','eta'].forEach(id=>$(id).addEventListener('input',()=>{$('solveEta').value='pin';}));
+$('sAbl').addEventListener('change',()=>{if($('sAbl').checked)$('sEta').checked=true; $('sEta').disabled=!$('sAbl').checked; compute();});
+$('sImp').addEventListener('change',()=>{$('gMax').disabled=!$('sImp').checked; compute();});
+$('gMax').disabled=!$('sImp').checked;
+compute();
+})();
+
+// ==================== 3D VISUALIZATION ENGINE ====================
+(function(){
+const vPI=Math.PI,vSi=Math.sin,vCo=Math.cos;
+let vizScene,vizCam,vizRen,vizReady=false;
+let vizApexLight,vizDisk=null,vizSetCamDist=null,_geoSig='';
+const vizTethers=[],vizHinges=[],vizHooks=[];
+let _rTipCG=1.34,_rEndCG=0.45,_cCT=1,_Lreach=1.47;
+const _Lsec=1.5*1.05;
+let _dCent=0.28;
+let vizJetGeo,vizJetMat;
+let vizKeyLight,vizAnimTime=0,_vLTs=performance.now();
+let vizArms=[];
+let _candL0=11,_frontX=_candL0/2;
+const _armAng=[0,2*vPI/3,4*vPI/3];
+const _baseR=1.50;
+let _baseX=_frontX;
+const _SQ3=Math.sqrt(3);
+let _L0=Math.hypot(_candL0,_baseR);
+const LOWPWR=(function(){try{const ua=navigator.userAgent||''; return /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(ua)||(navigator.hardwareConcurrency||8)<=4||Math.min(screen.width,screen.height)<=480;}catch(e){return false;}})();
+const _NARC=LOWPWR?12:22;
+const ARM_REACH_FRAC=0.72;
+const HOLD_SEC=4.5,START_DWELL=1.1,SLAB_FILL=0.995,FOIL_FRAC=0.075;
+let BURN_FRAC_MIN=0.08;
+let _Lmin=Math.hypot(_candL0*BURN_FRAC_MIN,_baseR);
+const _phiAt=l=>2*Math.atan(_SQ3*Math.sqrt(Math.max(0,l*l-_baseR*_baseR))/l);
+let _MR=4.0;
+const _rTip=1.34;
+const _etaAt=th=>{const c=Math.cos(th)*Math.cos(th)-0.5*Math.sin(th)*Math.sin(th); return 0.5-(3/(4*vPI))*Math.acos(Math.max(-1,Math.min(1,c)));};
+const _etaL=l=>_etaAt(Math.asin(Math.min(1,_baseR/Math.max(l,_Lsec))));
+const _alphaAt=th=>Math.acos(Math.max(-1,Math.min(1,1-2*_etaAt(th))));
+const _colAt=th=>0.5*(1+Math.cos(_alphaAt(th)));
+const _colL=l=>_colAt(Math.asin(Math.min(1,_baseR/Math.max(l,_Lsec))));
+let _kCG=Math.log(_MR)/(_L0-_Lmin);
+let _cCG=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_kCG*Math.exp(_kCG*_L0));
+const _NL=LOWPWR?22:36;
+const _isFoil=k=>(k%2)===1;
+const N_FRAG=LOWPWR?16000:60000;
+const FRAG_PER_LAYER=LOWPWR?130:400;
+const N_PER_LAYER=LOWPWR?16:40;
+const VAPOUR_PER_LAYER=LOWPWR?100:290;
+const SPEC_CHARGED=0,SPEC_NEUTRON=1,SPEC_VAPOUR=2;
+const TURN_TAU=0.05;
+const CONE_CAP=88*Math.PI/180;
+const VAP_CAP=74*Math.PI/180;
+function coneMap(d,ang){const u=Math.max(-1,Math.min(1,-d[0])); const cA=Math.cos(ang); const f=Math.pow((1-u)/2,1.15); const bt=Math.acos(Math.max(-1,Math.min(1,1-(1-cA)*f))); const tr=Math.hypot(d[1],d[2]); const ny=tr>1e-9?d[1]/tr:1,nz=tr>1e-9?d[2]/tr:0; return [-Math.cos(bt),Math.sin(bt)*ny,Math.sin(bt)*nz];}
+const vizLive={burnFrac:1,poleL:1,expired:false,opening:1,intensity:1,speedScale:1,layers:0,aperDeg:83.6,colEff:0.556,cycleSec:11,trueMR:4,aspect:7.3,slender:7.3,clamped:false,gap:0,converging:false,rtMs:0,clMs:0,shotHz:0,mDock:0,mDisk:0,mArms:0,mHard:0,mScale:1,poleL0m:1,shotIntv:1,thrustRip:0,accelRip:0,tiltDeg:0,apexDeg:120,burnArea:0};
+function vClamp(v,lo,hi,fallback){return isFinite(v)?Math.max(lo,Math.min(hi,v)):fallback;}
+const frag={pos:new Float32Array(N_FRAG*3),col:new Float32Array(N_FRAG*3),vel:new Float32Array(N_FRAG*3),life:new Float32Array(N_FRAG),span:new Float32Array(N_FRAG),tgt:new Float32Array(N_FRAG*3),spec:new Uint8Array(N_FRAG)};
+let _fragCursor=0;
+const _cGold=new THREE.Color(0xffe9b0),_cCyan=new THREE.Color(0x48e6ff),_cViolet=new THREE.Color(0x9b6bff),_cFade=new THREE.Color(0x121c3e),_cScratch=new THREE.Color();
+function plumeColor(t){t=(isFinite(t)?Math.max(0,Math.min(1,t)):0); if(t<0.12)return _cScratch.copy(_cGold).lerp(_cCyan,t/0.12); if(t<0.45)return _cScratch.copy(_cCyan).lerp(_cViolet,(t-0.12)/0.33); return _cScratch.copy(_cViolet).lerp(_cFade,(t-0.45)/0.55);}
+function throwParticles(P,spec,speedScale,alpha,axIn){const j=_fragCursor; _fragCursor=(_fragCursor+1)%N_FRAG; const u=2*Math.random()-1,ph=Math.random()*2*vPI; const sr=Math.sqrt(Math.max(0,1-u*u)); let d=[sr*vCo(ph),sr*vSi(ph),u]; let sp,b,t; if(spec===SPEC_NEUTRON){if(d[0]*axIn[0]+d[1]*axIn[1]+d[2]*axIn[2]<0)d=[-d[0],-d[1],-d[2]]; sp=3.4+Math.random()*1.4; b=d; t=d;}else{const wide=spec===SPEC_VAPOUR; const vMax=(wide?34:84)*speedScale; sp=vMax*Math.max(0.06,Math.pow(Math.random(),1/3)); const aTgt=wide?Math.min(alpha*1.35,VAP_CAP):alpha; const aBirth=Math.min(aTgt*1.40,CONE_CAP); b=coneMap(d,aBirth); t=coneMap(d,aTgt);} frag.pos[j*3]=P[0]; frag.pos[j*3+1]=P[1]; frag.pos[j*3+2]=P[2]; frag.vel[j*3]=b[0]*sp; frag.vel[j*3+1]=b[1]*sp; frag.vel[j*3+2]=b[2]*sp; frag.tgt[j*3]=t[0]*sp; frag.tgt[j*3+1]=t[1]*sp; frag.tgt[j*3+2]=t[2]*sp; frag.span[j]=spec===SPEC_NEUTRON?4+Math.random()*2:spec===SPEC_VAPOUR?40+Math.random()*35:50+Math.random()*30; const lead=spec===SPEC_NEUTRON?0:Math.random()*0.16; frag.pos[j*3]+=frag.vel[j*3]*lead; frag.pos[j*3+1]+=frag.vel[j*3+1]*lead; frag.pos[j*3+2]+=frag.vel[j*3+2]*lead; frag.life[j]=Math.max(0.05,frag.span[j]-lead); frag.spec[j]=spec;}
+function initViz(){const container=document.getElementById('viz3d'); if(!container||typeof THREE==='undefined')return; const w=container.clientWidth,h=container.clientHeight; if(w===0||h===0)return; vizScene=new THREE.Scene(); vizScene.background=new THREE.Color(0x05070f); vizScene.fog=new THREE.FogExp2(0x05070f,0.008); vizCam=new THREE.PerspectiveCamera(38,w/h,0.2,400); vizRen=new THREE.WebGLRenderer({antialias:!LOWPWR,precision:LOWPWR?'mediump':'highp'}); vizRen.setSize(w,h); vizRen.setPixelRatio(Math.min(devicePixelRatio||1,LOWPWR?2:2.5)); container.appendChild(vizRen.domElement); vizScene.add(new THREE.AmbientLight(0x2a3760,0.7)); vizKeyLight=new THREE.DirectionalLight(0xcfe8ff,0.95); vizKeyLight.position.set(8,14,10); vizScene.add(vizKeyLight); vizScene.add(new THREE.DirectionalLight(0x9b6bff,0.4).position.set(-10,-4,-8)); vizApexLight=new THREE.PointLight(0xffe9b0,3,24,2); vizScene.add(vizApexLight); (function(){const N=900,pos=new Float32Array(N*3),col=new Float32Array(N*3); for(let i=0;i<N;i++){const r=110+Math.random()*150,th=Math.random()*vPI*2,ph=Math.acos(2*Math.random()-1); pos[i*3]=r*vSi(ph)*vCo(th); pos[i*3+1]=r*vCo(ph); pos[i*3+2]=r*vSi(ph)*vSi(th); const c=Math.random()<0.7?new THREE.Color(0xbcd6ff):(Math.random()<0.5?new THREE.Color(0xffffff):new THREE.Color(0xd8bfff)); col[i*3]=c.r*(0.5+Math.random()*0.5); col[i*3+1]=c.g*(0.5+Math.random()*0.5); col[i*3+2]=c.b*(0.5+Math.random()*0.5);} const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3)); const stars=new THREE.Points(g,new THREE.PointsMaterial({size:0.45,vertexColors:true,transparent:true,opacity:0.55,depthWrite:false})); stars.frustumCulled=false; vizScene.add(stars);})(); const _M=_NARC+3; for(let i=0;i<3;i++){const stack=makeLayerStack(_NL,_M); const mesh=new THREE.Mesh(stack.geo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide})); mesh.frustumCulled=false; vizScene.add(mesh); vizArms.push({stack});} (function buildShield(){const rh=_baseR*0.18,ro=_baseR*1.44,hh=_baseR*0.11; const pts=[new THREE.Vector2(rh,-hh),new THREE.Vector2(ro,-hh),new THREE.Vector2(ro,hh),new THREE.Vector2(rh,hh),new THREE.Vector2(rh,-hh)]; const g=new THREE.LatheGeometry(pts,96); g.computeVertexNormals(); const col=new Float32Array(g.attributes.normal.count*3); const bc=new THREE.Color(0x8e9cab); const LDIR=[0.42,0.78,0.46]; const L=Math.hypot(LDIR[0],LDIR[1],LDIR[2]); const lu=[LDIR[0]/L,LDIR[1]/L,LDIR[2]/L]; for(let i=0;i<g.attributes.normal.count;i++){const wx=-g.attributes.normal.getY(i),wy=g.attributes.normal.getX(i),wz=g.attributes.normal.getZ(i); const lam=Math.abs(wx*lu[0]+wy*lu[1]+wz*lu[2]); col[i*3]=bc.r*(0.5+0.5*lam); col[i*3+1]=bc.g*(0.5+0.5*lam); col[i*3+2]=bc.b*(0.5+0.5*lam);} g.setAttribute('color',new THREE.BufferAttribute(col,3)); vizDisk=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide})); vizDisk.rotation.z=vPI/2; vizDisk.frustumCulled=false; vizScene.add(vizDisk);})(); for(let i=0;i<3;i++){const grp=new THREE.Group(); const mat=new THREE.MeshBasicMaterial({color:0x7f8d9c}); grp.add(new THREE.Mesh(new THREE.CylinderGeometry(_baseR*0.088,_baseR*0.088,_baseR*0.52,18),mat)); for(const sgn of[-1,1]){const ck=new THREE.Mesh(new THREE.BoxGeometry(_baseR*0.40,_baseR*0.075,_baseR*0.30),mat); ck.position.set(_baseR*0.20,sgn*_baseR*0.21,0); grp.add(ck);} grp.frustumCulled=false; vizScene.add(grp); vizHinges.push({grp,a:_armAng[i]});} for(let i=0;i<3;i++){const hk=new THREE.Mesh(new THREE.TorusGeometry(_baseR*0.165,_baseR*0.072,10,30,vPI*1.55),new THREE.MeshBasicMaterial({color:0x8b99a8})); hk.frustumCulled=false; vizScene.add(hk); vizHooks.push(hk);} const strutMat=new THREE.MeshBasicMaterial({color:0xb9cee6}); const strutGeo=new THREE.CylinderGeometry(1,1,1,8); for(let i=0;i<3;i++){const t=new THREE.Mesh(strutGeo,strutMat); t.frustumCulled=false; vizScene.add(t); vizTethers.push(t);} vizJetGeo=new THREE.BufferGeometry(); vizJetGeo.setAttribute('position',new THREE.BufferAttribute(frag.pos,3)); vizJetGeo.setAttribute('color',new THREE.BufferAttribute(frag.col,3)); vizJetMat=new THREE.PointsMaterial({size:0.32,vertexColors:true,transparent:true,opacity:1.0,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}); vizScene.add(new THREE.Points(vizJetGeo,vizJetMat)); let drag=false,mpx=0,mpy=0,theta=1.02,phi=1.42,camDist=30; vizSetCamDist=d=>{camDist=Math.max(9,Math.min(140,d)); uCam();}; function uCam(){const tx=_baseX; vizCam.position.set(tx+camDist*vSi(phi)*vCo(theta),camDist*vCo(phi),camDist*vSi(phi)*vSi(theta)); vizCam.lookAt(tx,0,0); vizKeyLight.position.copy(vizCam.position).multiplyScalar(0.35).add(new THREE.Vector3(6,12,6));} vizRen.domElement.addEventListener('pointerdown',e=>{drag=true; mpx=e.clientX; mpy=e.clientY; vizRen.domElement.setPointerCapture(e.pointerId);}); vizRen.domElement.addEventListener('pointermove',e=>{if(!drag)return; theta-=(e.clientX-mpx)*0.005; phi=Math.max(0.2,Math.min(vPI-0.2,phi-(e.clientY-mpy)*0.005)); mpx=e.clientX; mpy=e.clientY; uCam();}); vizRen.domElement.addEventListener('pointerup',()=>drag=false); vizRen.domElement.addEventListener('pointercancel',()=>drag=false); vizRen.domElement.addEventListener('wheel',e=>{e.preventDefault(); camDist=Math.max(9,Math.min(95,camDist+e.deltaY*0.03)); uCam();},{passive:false}); function fitViz(){const nw=container.clientWidth,nh=container.clientHeight; if(nw===0||nh===0)return; vizCam.aspect=nw/nh; vizCam.updateProjectionMatrix(); vizRen.setPixelRatio(Math.min(devicePixelRatio||1,LOWPWR?2:2.5)); vizRen.setSize(nw,nh);} window.addEventListener('resize',fitViz); window.addEventListener('orientationchange',fitViz); vizReady=true; uCam(); requestAnimationFrame(vizLoop);}
+function makeLayerStack(NL,M){const vpl=6*M; const pos=new Float32Array(NL*vpl*3),col=new Float32Array(NL*vpl*3); const ix=[]; for(let L=0;L<NL;L++){const b=L*vpl; for(let rI=0;rI<6;rI+=2){const r0=b+rI*M,r1=b+(rI+1)*M; for(let j=0;j<M-1;j++){const a0=r0+j,b0=a0+1,c0=r1+j,d0=c0+1; ix.push(a0,c0,b0,b0,c0,d0);}}} const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3)); geo.setIndex(ix); return {geo,pos,col,M,NL};}
+const _sA=new THREE.Vector3(),_sB=new THREE.Vector3(),_sM=new THREE.Vector3(),_sD=new THREE.Vector3(),_sUp=new THREE.Vector3(0,1,0);
+const _hx=new THREE.Vector3(),_hy=new THREE.Vector3(),_hz=new THREE.Vector3(),_hm=new THREE.Matrix4();
+function placeStrut(m,a,b,rad){_sA.fromArray(a); _sB.fromArray(b); _sD.subVectors(_sB,_sA); const len=_sD.length()||1e-6; _sM.addVectors(_sA,_sB).multiplyScalar(0.5); m.position.copy(_sM); m.quaternion.setFromUnitVectors(_sUp,_sD.divideScalar(len)); m.scale.set(rad,len,rad);}
+function pushGeo(g){g.geo.attributes.position.needsUpdate=true; if(g.geo.attributes.color)g.geo.attributes.color.needsUpdate=true;}
+function vX(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function apexAngle(l){return _phiAt(Math.max(l,_Lsec));}
+let PACE_CONST_G=false;
+const _NT=192; const _PHIT=new Float64Array(_NT+1); let _kG=1,_W0=1;
+function buildPhiTable(){const h=(_L0-_Lmin)/_NT; _PHIT[0]=0; for(let i=1;i<=_NT;i++){const la=_Lmin+(i-1)*h,lb=_Lmin+i*h,lm=0.5*(la+lb); const f=x=>x/Math.max(1e-6,_colL(x)); _PHIT[i]=_PHIT[i-1]+(h/6)*(f(la)+4*f(lm)+f(lb));}}
+function phiInt(L){const t=vClamp((L-_Lmin)/Math.max(1e-9,_L0-_Lmin),0,1,0)*_NT; const i=Math.min(_NT-1,Math.floor(t)),f=t-i; return _PHIT[i]+(_PHIT[i+1]-_PHIT[i])*f;}
+function radiusCG(l){const le=Math.max(l,_Lsec); const A=_kG*(le/_colL(le))*_W0*Math.exp(_kG*phiInt(le)); return Math.sqrt(2*A/(3*_phiAt(le)));}
+function radiusCT(l){const le=Math.max(l,_Lsec); return Math.sqrt(2*_cCT*le/(3*_phiAt(le)*_colL(le)));}
+function sectionRadius(l){return PACE_CONST_G?radiusCG(l):radiusCT(l);}
+function areaAt(l){const r=sectionRadius(l); return 1.5*_phiAt(Math.max(l,_Lmin))*r*r;}
+function profileRipples(){const NV=96,NS=32; const cum=new Float64Array(NV+1); const h=(_L0-_Lmin)/NV; for(let i=1;i<=NV;i++)cum[i]=cum[i-1]+areaAt(_Lmin+(i-0.5)*h)*h; const prop=cum[NV]; const dry=prop/Math.max(1e-6,_MR-1); let fl=1e30,fh=-1e30,al=1e30,ah=-1e30; for(let i=0;i<=NS;i++){const u=i/NS,L=_Lmin+(_L0-_Lmin)*u; const F=_colL(L)*areaAt(L)/L; const a=F/(dry+cum[Math.round(u*NV)]); fl=Math.min(fl,F); fh=Math.max(fh,F); al=Math.min(al,a); ah=Math.max(ah,a);} vizLive.thrustRip=100*(fh-fl)/Math.max(1e-12,(fh+fl)/2); vizLive.accelRip=100*(ah-al)/Math.max(1e-12,(ah+al)/2);}
+function poleFrame(armAng,L,theta){const ca=vCo(armAng),sa=vSi(armAng),ct=vCo(theta),st=vSi(theta); const ax=[-ct,-st*ca,-st*sa],p=[-st,ct*ca,ct*sa]; const pin=[_baseX,_baseR*ca,_baseR*sa]; const B=[pin[0]-_dCent*p[0],pin[1]-_dCent*p[1],pin[2]-_dCent*p[2]]; return {B,pin,ax,p,q:vX(ax,p),L,tip:[B[0]+ax[0]*L,B[1]+ax[1]*L,B[2]+ax[2]*L]};}
+function sectionLoop(F,l,scale){const C=[F.B[0]+F.ax[0]*l,F.B[1]+F.ax[1]*l,F.B[2]+F.ax[2]*l]; const half=apexAngle(l)/2,r=sectionRadius(l)*(scale===undefined?1:scale); const out=[C.slice()]; for(let k=0;k<=_NARC;k++){const a=-half+(k/_NARC)*2*half; out.push([C[0]+vCo(a)*r*F.p[0]+vSi(a)*r*F.q[0],C[1]+vCo(a)*r*F.p[1]+vSi(a)*r*F.q[1],C[2]+vCo(a)*r*F.p[2]+vSi(a)*r*F.q[2]]);} out.push(out[0].slice()); return {loop:out,C};}
+const _lTop=new Float32Array(_NL),_lBot=new Float32Array(_NL),_lc=new Float32Array(_NL),_isDock=new Uint8Array(_NL);
+let _dockTop=1;
+function buildLaminations(){_lBot[0]=0; _lTop[0]=_Lmin*0.60; _lBot[1]=_Lmin*0.60; _lTop[1]=_Lmin; _isDock[0]=_isDock[1]=1; const nPair=Math.max(1,Math.floor((_NL-2)/2)); const T=(_L0-_Lmin)/nPair,tf=T*FOIL_FRAC,ts=T-tf; for(let q=0;q<nPair;q++){const b=_Lmin+q*T,ks=2+2*q,kf=3+2*q; _lBot[ks]=b; _lTop[ks]=b+ts; _lBot[kf]=b+ts; _lTop[kf]=b+T; _isDock[ks]=_isDock[kf]=0;} for(let k=0;k<_NL;k++)_lc[k]=0.5*(_lBot[k]+_lTop[k]);}
+buildLaminations();
+const _trans=new Float32Array(_NL);
+let _lastTop=-1,_wavePhase=-1,_thetaHold=0;
+const CONV_TIME=0.26,V_BAR=3190,LAM_PITCH=0.01;
+const S_SPEC=9.59e-4,M_ASSEM_KG=0.8,D_DANGER=0.005,P_FIZZLE=1e-3,SIGMA_POLE=20e6,RHO_POLE=935;
+const S_BG=M_ASSEM_KG*1000*S_SPEC,V_MIN=D_DANGER*S_BG/P_FIZZLE,V_MAX=SIGMA_POLE/(RHO_POLE*V_BAR),V_OK=V_MIN<V_MAX,V_CLOSE=V_OK?Math.sqrt(V_MIN*V_MAX):V_MAX,P_ACT=1-Math.exp(-S_BG*D_DANGER/V_CLOSE);
+const _cIce=new THREE.Color(0xa9dcff),_cHot=new THREE.Color(0xfff6e6),_cFoil=new THREE.Color(0xffd166),_cWave=new THREE.Color(0xd8f0ff),_cDock=new THREE.Color(0x9fb0c4);
+const _LDIR=[0.42,0.78,0.46]; const _LDIRL=Math.hypot(_LDIR[0],_LDIR[1],_LDIR[2]); const _LDIRU=[_LDIR[0]/_LDIRL,_LDIR[1]/_LDIRL,_LDIR[2]/_LDIRL];
+function layoutCandle(dt){const Lcur=vClamp(vizLive.poleL,_Lmin,_L0,_L0); const _den=Math.hypot(Lcur,_dCent); let thTarget=_den>=_baseR?Math.asin(vClamp(_baseR/_den,-1,1,0))-Math.atan2(_dCent,Lcur):Math.atan2(Lcur,_dCent); if(_wavePhase>=0){_wavePhase+=dt/(CONV_TIME*Math.max(0.15,Lcur/_L0)); if(_wavePhase>=1){_wavePhase=-1; _thetaHold=thTarget;}} let theta; if(vizLive.opening<1){const u=vizLive.opening,sm=u*u*(3-2*u); const num=_baseR-_baseR*0.22*(1-sm); theta=_den>=num?Math.asin(vClamp(num/_den,-1,1,0))-Math.atan2(_dCent,Lcur):Math.atan2(Lcur,_dCent); _thetaHold=theta; _wavePhase=-1;}else if(_wavePhase<0){theta=thTarget; _thetaHold=thTarget;}else if(_wavePhase<0.5){theta=_thetaHold;}else{const u=(_wavePhase-0.5)/0.5; theta=_thetaHold+(thTarget-_thetaHold)*(u*u*(3-2*u));} const apexX=_baseX-Lcur*vCo(theta); vizLive.gap=Math.max(0,_baseR-Lcur*vSi(theta)); const frames=_armAng.map(a=>poleFrame(a,Lcur,theta)); let top=-1; for(let k=0;k<_NL;k++)if(_lTop[k]<=Lcur)top=k; if(top<1)top=1; if(_lastTop<0||top>_lastTop){_trans.fill(0); _lastTop=top;}else if(top<_lastTop){_wavePhase=0; const alpha=_alphaAt(theta); for(let k=_lastTop;k>top;k--){const foil=_isFoil(k); for(let i=0;i<3;i++){const F=frames[i],sec=sectionLoop(F,_lc[k]),half=apexAngle(_lc[k])/2,rr=sectionRadius(_lc[k]),axIn=[-F.ax[0],-F.ax[1],-F.ax[2]]; const pick=()=>{const aa=-half+Math.random()*2*half; const rd=rr*Math.sqrt(Math.random()); return [sec.C[0]+vCo(aa)*rd*F.p[0]+vSi(aa)*rd*F.q[0],sec.C[1]+vCo(aa)*rd*F.p[1]+vSi(aa)*rd*F.q[1],sec.C[2]+vCo(aa)*rd*F.p[2]+vSi(aa)*rd*F.q[2]];}; if(foil){for(let n=0;n<FRAG_PER_LAYER;n++)throwParticles(pick(),SPEC_CHARGED,vizLive.speedScale,alpha,axIn); for(let n=0;n<N_PER_LAYER;n++)throwParticles(pick(),SPEC_NEUTRON,1,alpha,axIn);}else{for(let n=0;n<VAPOUR_PER_LAYER;n++)throwParticles(pick(),SPEC_VAPOUR,vizLive.speedScale,alpha,axIn);}} if(foil&&k-1>=0)_trans[k-1]=1;} _lastTop=top;} let burnArea=0; const cs=new THREE.Color(); for(let i=0;i<3;i++){const A=vizArms[i]; if(!A)continue; const F=frames[i],st=A.stack,M=st.M; const lam=Math.abs(F.ax[0]*_LDIRU[0]+F.ax[1]*_LDIRU[1]+F.ax[2]*_LDIRU[2]); const shA=0.76+0.24*lam,shW=shA*0.90,shF=shA*0.72; const vpl6=6*M; for(let k=0;k<_NL;k++){const base=k*vpl6*3; if(k>top){for(let v=0;v<vpl6;v++){st.pos[base+v*3]=apexX; st.pos[base+v*3+1]=st.pos[base+v*3+2]=0; st.col[base+v*3]=st.col[base+v*3+1]=st.col[base+v*3+2]=0;} continue;} const hT=0.5*SLAB_FILL*(_lTop[k]-_lBot[k]); const secA=sectionLoop(F,Math.max(1e-3,_lc[k]+hT)),secF=sectionLoop(F,Math.max(1e-3,_lc[k]-hT)); let blow=1; if(_isDock[k])cs.copy(_cDock); else if(_isFoil(k))cs.copy(_cFoil); else{cs.copy(_cIce).lerp(_cHot,_trans[k]); blow=1+1.35*_trans[k]*_trans[k];} if(_wavePhase>=0){const u=_wavePhase<0.5?(1-_wavePhase/0.5):((_wavePhase-0.5)/0.5); const wl=_Lmin+(Lcur-_Lmin)*u; const d=Math.abs(_lc[k]-wl)/Math.max(1e-6,0.17*Lcur); if(d<1)cs.lerp(_cWave,(1-d*d)*0.55);} const cr=cs.r*blow,cg=cs.g*blow,cb=cs.b*blow; const gl=0.90+0.16*vClamp(_lc[k]/Math.max(1e-6,_L0),0,1,0); const put=(row,i,P,sh)=>{const o=base+(row*M+i)*3; st.pos[o]=P[0]; st.pos[o+1]=P[1]; st.pos[o+2]=P[2]; st.col[o]=cr*sh; st.col[o+1]=cg*sh; st.col[o+2]=cb*sh;}; for(let v=0;v<M;v++){const sheen=v===0||v===M-1?0.80:0.80+0.34*vSi(vClamp((v-1)/Math.max(1,M-3),0,1,0.5)*vPI); const gA=gl*sheen,gW=gl*sheen; put(0,v,secA.C,shA*gl*0.86); put(1,v,secA.loop[v],shA*gA); put(2,v,secA.loop[v],shW*gW); put(3,v,secF.loop[v],shW*gW*0.94); put(4,v,secF.loop[v],shF*gA*0.94); put(5,v,secF.C,shF*gl*0.86);}} pushGeo(st); if(top>=0){const half=apexAngle(_lc[top])/2,rr=sectionRadius(_lc[top]); burnArea+=half*rr*rr;}} vizLive.tiltDeg=theta*180/vPI; vizLive.apexDeg=apexAngle(Lcur)*180/vPI; vizLive.burnArea=burnArea; vizLive.converging=_wavePhase>=0; const Lreal=vizLive.poleL0m*(Lcur/Math.max(1e-6,_L0)); vizLive.rtMs=2*Lreal/V_BAR*1000; vizLive.clMs=LAM_PITCH/V_CLOSE*1000; vizLive.shotHz=1/Math.max(1e-9,2*Lreal/V_BAR+LAM_PITCH/V_CLOSE); vizLive.layers=top+1; vizLive.aperDeg=_alphaAt(theta)*180/vPI; vizLive.colEff=_colAt(theta); vizApexLight.position.set(apexX-0.3,0,0); if(vizDisk){vizDisk.position.x=_baseX+_baseR*0.30; vizDisk.scale.set(1,vClamp(0.5*0.45/Math.max(1e-6,vizLive.mScale),0.055,0.42,0.11)/(_baseR*0.11),1);} const _uy=new THREE.Vector3(0,1,0); for(let i=0;i<vizHinges.length;i++){const ca=vCo(vizHinges[i].a),sa=vSi(vizHinges[i].a); vizHinges[i].grp.quaternion.setFromUnitVectors(_uy,new THREE.Vector3(0,-sa,ca));} const lDock=_lc[1]; for(let i=0;i<3;i++){const F=frames[i],Fb=frames[(i+1)%3]; placeStrut(vizTethers[i],[F.pin[0]+F.ax[0]*lDock,F.pin[1]+F.ax[1]*lDock,F.pin[2]+F.ax[2]*lDock],[Fb.pin[0]+Fb.ax[0]*lDock,Fb.pin[1]+Fb.ax[1]*lDock,Fb.pin[2]+Fb.ax[2]*lDock],_baseR*0.028); const hk=vizHooks[i]; if(hk){_hz.set(0,-vSi(_armAng[i]),vCo(_armAng[i])); _hx.set(-F.ax[0],-F.ax[1],-F.ax[2]); _hy.crossVectors(_hz,_hx).normalize(); _hm.makeBasis(_hx.normalize(),_hy,_hz); hk.quaternion.setFromRotationMatrix(_hm); hk.position.fromArray(F.pin);} const H=vizHinges[i]; if(H)H.grp.position.fromArray(F.pin);} return apexX;}
+function updateFragments(dt){for(let j=0;j<N_FRAG;j++){frag.pos[j*3]+=frag.vel[j*3]*dt; frag.pos[j*3+1]+=frag.vel[j*3+1]*dt; frag.pos[j*3+2]+=frag.vel[j*3+2]*dt; if(frag.life[j]<=-12){frag.col[j*3]=frag.col[j*3+1]=frag.col[j*3+2]=0; continue;} frag.life[j]-=dt; if(frag.spec[j]!==SPEC_NEUTRON){const w=Math.min(1,dt/TURN_TAU); const sx=frag.vel[j*3],sy=frag.vel[j*3+1],sz=frag.vel[j*3+2]; frag.vel[j*3]+=(frag.tgt[j*3]-sx)*w; frag.vel[j*3+1]+=(frag.tgt[j*3+1]-sy)*w; frag.vel[j*3+2]+=(frag.tgt[j*3+2]-sz)*w; const cur=Math.hypot(frag.vel[j*3],frag.vel[j*3+1],frag.vel[j*3+2])||1e-9; const want=Math.hypot(frag.tgt[j*3],frag.tgt[j*3+1],frag.tgt[j*3+2]); const kf=want/cur; frag.vel[j*3]*=kf; frag.vel[j*3+1]*=kf; frag.vel[j*3+2]*=kf;} const age=frag.life[j]>0?(1-Math.max(0,frag.life[j])/frag.span[j]):1; let c,f; if(frag.life[j]<=0){frag.col[j*3]=frag.col[j*3+1]=frag.col[j*3+2]=0;}else if(frag.spec[j]===SPEC_NEUTRON){c=_cScratch.setRGB(0.82,0.90,1.0); f=1-age; frag.col[j*3]=c.r*f; frag.col[j*3+1]=c.g*f; frag.col[j*3+2]=c.b*f;}else if(frag.spec[j]===SPEC_VAPOUR){c=plumeColor(0.28+age*0.68); f=0.8; frag.col[j*3]=c.r*f; frag.col[j*3+1]=c.g*f; frag.col[j*3+2]=c.b*f;}else{c=plumeColor(age); f=1; frag.col[j*3]=c.r*f; frag.col[j*3+1]=c.g*f; frag.col[j*3+2]=c.b*f;}} vizJetGeo.attributes.position.needsUpdate=true; vizJetGeo.attributes.color.needsUpdate=true;}
+function vizLoop(now){requestAnimationFrame(vizLoop); if(!vizReady)return; const dt=Math.min(0.033,(now-_vLTs)/1000); _vLTs=now; vizAnimTime+=dt; const cyc=vizLive.cycleSec,tot=START_DWELL+cyc+HOLD_SEC; const tc=vizAnimTime%tot; let Lnow; if(tc<START_DWELL){Lnow=_L0; vizLive.opening=tc/START_DWELL; vizLive.expired=false;}else if(tc<START_DWELL+cyc){const L2=_L0*_L0-(_L0*_L0-_Lmin*_Lmin)*((tc-START_DWELL)/cyc); Lnow=Math.sqrt(Math.max(_Lmin*_Lmin,L2)); vizLive.opening=1; vizLive.expired=false;}else{Lnow=_Lmin; vizLive.opening=1; vizLive.expired=true;} vizLive.poleL=Lnow; layoutCandle(dt); const pulse=0.75+0.25*vSi(vizAnimTime*9); vizApexLight.intensity=(2.4+1.4*pulse)*vizLive.intensity; updateFragments(dt); vizJetMat.size=(0.300+0.090*pulse)*(0.80+0.4*vizLive.intensity); const el=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;}; el('viz-tiling',vizLive.apexDeg.toFixed(1)+'\u00b0'); el('viz-tilt',vizLive.tiltDeg.toFixed(1)+'\u00b0'); el('viz-aspect',vizLive.aspect.toFixed(1)); el('viz-mr',vizLive.trueMR>=1000?vizLive.trueMR.toExponential(2)+(vizLive.clamped?' (clamped)':''):vizLive.trueMR.toFixed(1)+(vizLive.clamped?' (clamped)':'')); el('viz-esc',vizLive.aperDeg.toFixed(1)+'\u00b0 / '+vizLive.colEff.toFixed(3)); vizRen.render(vizScene,vizCam);}
+function retuneGeometry(blockLength,massRatio,veKms,thrustKN){const faceW=Math.sqrt(Math.max(1e-9,blockLength>0?blockLength/8:10)); const slender=vClamp(blockLength/faceW,0.2,4000,7.3); vizLive.slender=slender; const aspect=vClamp(4.4+3.4*Math.log10(slender),5.0,15.0,8.0); vizLive.aspect=aspect; _candL0=_baseR*aspect; _frontX=_candL0/2; _baseX=_frontX; _L0=Math.hypot(_candL0,_baseR); const reach=Math.sqrt(Math.max(1e-4,_baseR*_baseR-_dCent*_dCent)); _Lmin=reach*ARM_REACH_FRAC; _Lreach=reach; BURN_FRAC_MIN=vClamp(_Lmin/_L0,0.004,0.7,0.08); const trueMR=vClamp(massRatio,1.05,6000,4); vizLive.trueMR=trueMR; _MR=vClamp(trueMR,1.05,6,4); vizLive.clamped=trueMR>6.05; _kCG=Math.log(_MR)/Math.max(1e-6,_L0-_Lmin); _cCG=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_kCG*Math.exp(_kCG*_L0)); _cCT=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_L0); buildPhiTable(); _kG=Math.log(_MR)/Math.max(1e-9,phiInt(_L0)); _W0=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_kG*_L0*_MR); _rTipCG=sectionRadius(_L0); _rEndCG=sectionRadius(_Lsec); const hRoot=Math.max(1e-4,apexAngle(_Lsec)/2); _dCent=(2/3)*_rEndCG*Math.sin(hRoot)/hRoot; profileRipples(); buildLaminations(); const sig=aspect.toFixed(4)+'|'+_MR.toFixed(4); if(sig!==_geoSig){_geoSig=sig; _lastTop=-1; _trans.fill(0); if(vizSetCamDist)vizSetCamDist(_candL0*2.05+8);} vizLive.intensity=Math.max(0.35,Math.min(1.6,0.35+0.28*Math.log10(thrustKN+10))); vizLive.speedScale=Math.max(0.45,Math.min(2.2,0.45+0.42*Math.log10(veKms+10))); vizLive.poleL0m=Math.max(1,blockLength); vizLive.cycleSec=Math.max(4.5,Math.min(11,4.5+1.9*Math.log10(Math.max(0.1,blockLength/100)+1))); vizLive.mScale=blockLength/Math.max(1e-6,_L0-_Lmin);}
+window.updateVizFromParams=function(p){if(!p||!vizReady)return; const blockLen=vClamp(p.blockLength||50,0.5,50000,50); const veKms=vClamp((p.ve||10000)/1000,0.5,300000,10); const thrustKN=vClamp((p.F||1000)/1000,0.01,1e9,1); const massRatio=vClamp(p.R||4,1.01,50000,4); document.getElementById('viz-ve').textContent=veKms.toFixed(0); document.getElementById('viz-thrust').textContent=thrustKN>=1e6?(thrustKN/1e6).toFixed(2)+' GN':thrustKN>=1e3?(thrustKN/1e3).toFixed(1)+' MN':thrustKN.toFixed(0)+' kN'; document.getElementById('viz-burn').textContent=p.burnTime?(p.burnTime/86400).toFixed(2)+' d':'—'; retuneGeometry(blockLen,massRatio,veKms,thrustKN);};
+document.addEventListener('DOMContentLoaded',function(){setTimeout(initViz,300);});
+})();
+</script>
+</body>
+</html>
