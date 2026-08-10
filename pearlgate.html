@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Input Constrained Mission Requirements Calculator — v8 (K solved)</title>
+<style>
+* { box-sizing: border-box; }
+body { background:#000; color:#0f0; font-family:'Courier New',monospace; padding:16px 20px; margin:0; font-size:15px; line-height:1.5; }
+.container { max-width:900px; margin:0 auto; }
+h1 { font-size:20px; font-weight:normal; margin:0 0 4px 0; border-bottom:1px solid #0f03; padding-bottom:5px; }
+h1 .sub { display:block; font-size:13px; color:#0f08; margin-top:4px; }
+.top-note { color:#0f06; font-size:13px; margin-bottom:12px; padding:4px 0 6px 0; border-bottom:1px solid #0f02; }
+.mode-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; padding:6px 0 10px 0; border-bottom:1px solid #0f03; margin-bottom:4px; }
+.mode-row label { min-width:90px; }
+.mode-row select { background:transparent; color:#0f0; border:1px solid #0f04; padding:3px 8px; font-family:inherit; font-size:15px; outline:none; cursor:pointer; flex:1; min-width:180px; }
+.mode-row select option { background:#111; color:#0f0; }
+.clear-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0 8px 0; border-bottom:1px solid #0f03; margin-bottom:4px; gap:12px; flex-wrap:wrap; }
+.clear-btn { background:transparent; color:#0f0; border:1px solid #0f04; padding:4px 14px; font-family:inherit; font-size:13px; cursor:pointer; border-radius:2px; }
+.clear-btn:hover { background:#0f04; border-color:#0f0; }
+.dof { font-size:13px; color:#0f08; }
+.dof b { color:#0f0; }
+.dof.bad b { color:#f80; }
+.row { display:flex; flex-direction:column; padding:2px 0 0 0; border-bottom:1px solid #0f03; margin-bottom:2px; }
+.row-inner { display:flex; gap:8px; align-items:center; padding:3px 0; flex-wrap:wrap; }
+.row .label { min-width:160px; flex-shrink:0; }
+.row input[type=number], .row input[type=text], .row select { flex:1; background:transparent; border:1px solid #0f04; color:#0f0; padding:3px 8px; font-family:inherit; font-size:15px; outline:none; min-width:60px; }
+.row select option { background:#111; color:#0f0; }
+.row input:focus, .row select:focus { border-color:#0f0; background:#0f01; }
+.row input:disabled { opacity:.4; border-color:#0f03; cursor:not-allowed; }
+.row-inner input[type=checkbox] { flex:0 0 auto; width:15px; height:15px; margin:0 2px 0 0; accent-color:#0f0; cursor:pointer; }
+.row-inner label.tog { min-width:0; cursor:pointer; user-select:none; }
+.row.off { opacity:.55; }
+.preset-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:8px 0; border-bottom:1px solid #0f03; }
+.preset-row .plab { color:#0f07; font-size:13px; margin-right:2px; }
+.preset-btn { background:transparent; color:#0f0; border:1px solid #0f04; padding:4px 12px; font-family:inherit; font-size:13px; cursor:pointer; border-radius:2px; white-space:nowrap; }
+.preset-btn:hover { background:#0f04; border-color:#0f0; }
+.preset-btn.rdv { border-color:#0f07; }
+.advice { border:1px dashed #0f06; background:#0f01; color:#0f0b; padding:7px 11px; margin:8px 0; font-size:13px; border-radius:3px; line-height:1.6; }
+.advice b { color:#0f0; }
+.preset-note { color:#0f07; font-size:12px; line-height:1.65; padding:6px 0 8px 0; border-bottom:1px solid #0f02; min-height:20px; }
+.row input.pinned { border-color:#f80; background:#0f02; color:#fc6; }
+.row input.derived { color:#0f0; border-color:#0f03; opacity:.92; }
+.row .unit { min-width:36px; flex-shrink:0; text-align:right; color:#0f08; font-weight:bold; }
+.row .formula { font-size:12px; color:#0f06; padding-left:170px; padding-bottom:2px; min-height:18px; word-break:break-word; }
+.row .formula.active { color:#0f0a; }
+.output-row { border-bottom:1px solid #0f05; background:#0f01; }
+.output-row .label { color:#0f08; }
+.output-row input { border-color:#0f06; }
+.lock-btn { cursor:pointer; user-select:none; font-size:16px; padding:2px 5px; border-radius:4px; background:#0f02; border:1px solid transparent; min-width:26px; text-align:center; }
+.lock-btn:hover { background:#0f04; border-color:#0f0; }
+.lock-btn.locked { color:#f80; border-color:#f80; }
+.footer-note { margin-top:14px; color:#0f06; font-size:12px; border-top:1px solid #0f02; padding-top:8px; line-height:1.7; }
+.warning { color:#ff0; background:#0f02; padding:6px 10px; border:1px solid #ff04; border-radius:3px; margin:8px 0; font-size:13px; }
+.verdict { margin:10px 0; padding:8px 12px; border:1px solid #0f06; border-radius:3px; background:#0f01; font-size:14px; }
+.verdict.ok { border-color:#0f0; }
+.verdict.no { border-color:#f80; color:#fc6; }
+.verdict b { display:block; font-size:16px; margin-bottom:3px; }
+.sect { color:#0f08; font-size:12px; letter-spacing:.12em; text-transform:uppercase; margin:14px 0 4px 0; border-bottom:1px solid #0f02; padding-bottom:3px; }
+table.mini { width:100%; border-collapse:collapse; font-size:13px; margin:4px 0 2px 0; }
+table.mini td, table.mini th { padding:3px 6px; border-bottom:1px solid #0f02; text-align:left; font-weight:normal; }
+table.mini th { color:#0f07; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+table.mini td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+table.mini tr:last-child td { border-bottom:none; }
+.bar { height:7px; background:#0f02; border-radius:2px; overflow:hidden; min-width:60px; }
+.bar>span { display:block; height:100%; background:#0f0; }
+.legend { font-size:11px; color:#0f06; margin-top:5px; line-height:1.6; }
+#viz3d { height:460px; background:#05070f; border:1px solid #0f04; border-radius:3px; overflow:hidden; cursor:grab; margin:8px 0; touch-action:none; }
+#viz3d:active { cursor:grabbing; }
+.viz-legend { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:11px; color:#0f07; margin-top:6px; }
+.viz-legend span { display:flex; align-items:center; gap:5px; }
+.viz-legend i { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.viz-hint { font-size:11px; color:#0f07; margin-top:6px; border-top:1px solid #0f02; padding-top:5px; }
+@media(max-width:760px){ .row .formula { padding-left:0; } #viz3d { height:56vh; min-height:340px; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Input Constrained Mission Requirements Calculator
+  <span class="sub">v8 (K solved) &mdash; PEARL-GATE against the published record: seven missions, one fission-fragment engine</span></h1>
+
+<div class="top-note">
+  <b>Above.</b> Ten variables, five constraints, so <b>five degrees of freedom</b>. Pin any five and the rest are derived.
+  Typing in a field pins it. Pinned fields are amber and are never overwritten; derived fields are green.
+  Pin fewer than five and the unresolved ones stay blank rather than being guessed.<br>
+  <b>Below.</b> The mission layer says what exhaust velocity and mass flow the trajectory needs.
+  The design layer takes those and asks what fuel, ablator and radiator actually deliver them, on a ledger that closes exactly.
+  It reports; it does not veto. Heat rejection, not &Delta;v, is usually what binds.<br>
+  <b>Switches.</b> Every mechanism can be turned off, so a design buildable today can be compared against the limit case.
+  Off is never a disabled term &mdash; it is a definite physical statement, named on each row.
+  <br><b>Fusion secondary:</b> when enabled, you set the <b>LiD fraction &phi;</b> of the ablator; the tool solves for the ablator‑to‑fuel ratio K needed to match the exhaust velocity.
+</div>
+
+<div class="mode-row">
+  <label>Burn profile</label>
+  <select id="modeSelect">
+    <option value="burncoast" selected>Burn &ndash; coast &nbsp;(flyby: accelerate once, never slow down)</option>
+    <option value="rendezvous">Accel burn &ndash; coast &ndash; decel burn &nbsp;(arrive at rest)</option>
+  </select>
+</div>
+
+<div class="preset-row">
+  <span class="plab">Presets</span>
+  <button class="preset-btn" id="pNSWR">NSWR</button>
+  <button class="preset-btn" id="pComet">NSW Comet</button>
+  <button class="preset-btn rdv" id="pPearl">PEARL-GATE 42&nbsp;t &#8635;</button>
+  <button class="preset-btn" id="pOrion">Interstellar Orion</button>
+  <button class="preset-btn rdv" id="pPearl3">PEARL-GATE 980&nbsp;t &#8635;</button>
+  <button class="preset-btn" id="pDaedalus">Daedalus</button>
+  <button class="preset-btn rdv" id="pIcarus">Icarus Firefly &#8635;</button>
+  <button class="preset-btn rdv" id="pLongshot">Longshot &#8635;</button>
+</div>
+<div class="preset-note" id="presetNote">Ordered by exhaust velocity, 1.575 %c to 4.8174 %c. &#8635; marks a rendezvous. A preset loads the mission only &mdash; the reactor, foil and radiator below stay as you left them, so every mission is judged against the same engine.</div>
+
+<div class="clear-row">
+  <span class="dof" id="dofNote">&mdash;</span>
+  <span>
+    <button class="clear-btn" id="unpinAllBtn">unpin all</button>
+    <button class="clear-btn" id="clearAllBtn">clear unpinned</button>
+  </span>
+</div>
+
+<div id="warningArea" class="warning" style="display:none;"></div>
+
+<div class="sect">Trajectory</div>
+<div class="row" id="row-dist"><div class="row-inner"><span class="label">Distance</span><input type="number" id="dist" step="any" /><span class="unit">AU</span><span class="lock-btn" data-target="dist">&#128275;</span></div><div class="formula" id="formula-dist"></div></div>
+<div class="row" id="row-time"><div class="row-inner"><span class="label">Transit time</span><input type="number" id="time" step="any" /><span class="unit">yr</span><span class="lock-btn" data-target="time">&#128275;</span></div><div class="formula" id="formula-time"></div></div>
+<div class="row" id="row-v_avg"><div class="row-inner"><span class="label">Average speed</span><input type="number" id="v_avg" step="any" /><span class="unit">c</span><span class="lock-btn" data-target="v_avg">&#128275;</span></div><div class="formula" id="formula-v_avg"></div></div>
+<div class="row" id="row-frac"><div class="row-inner"><span class="label">Burn fraction</span><input type="number" id="frac" step="any" min="0" max="100" /><span class="unit">%</span><span class="lock-btn" data-target="frac">&#128275;</span></div><div class="formula" id="formula-frac"></div></div>
+<div class="row" id="row-dv"><div class="row-inner"><span class="label">Peak speed &beta;</span><input type="number" id="dv" step="any" /><span class="unit">c</span><span class="lock-btn" data-target="dv">&#128275;</span></div><div class="formula" id="formula-dv"></div></div>
+
+<div class="sect">Mass</div>
+<div class="row" id="row-dry"><div class="row-inner"><span class="label">Dry mass</span><input type="number" id="dry" step="any" /><span class="unit">t</span><span class="lock-btn" data-target="dry">&#128275;</span></div><div class="formula" id="formula-dry"></div></div>
+<div class="row" id="row-wet"><div class="row-inner"><span class="label">Wet mass</span><input type="number" id="wet" step="any" /><span class="unit">t</span><span class="lock-btn" data-target="wet">&#128275;</span></div><div class="formula" id="formula-wet"></div></div>
+<div class="row" id="row-prop"><div class="row-inner"><span class="label">Propellant mass</span><input type="number" id="prop" step="any" /><span class="unit">t</span><span class="lock-btn" data-target="prop">&#128275;</span></div><div class="formula" id="formula-prop"></div></div>
+<div class="row" id="row-ratio"><div class="row-inner"><span class="label">Mass ratio</span><input type="number" id="ratio" step="any" /><span class="unit"></span><span class="lock-btn" data-target="ratio">&#128275;</span></div><div class="formula" id="formula-ratio"></div></div>
+
+<div class="sect">Exhaust</div>
+<div class="row" id="row-exh"><div class="row-inner"><span class="label">Exhaust v&#8337;</span><input type="number" id="exh" step="any" /><span class="unit">%c</span><span class="lock-btn" data-target="exh">&#128275;</span></div><div class="formula" id="formula-exh"></div></div>
+
+<div class="sect">Derived from the trajectory</div>
+<div class="row output-row"><div class="row-inner"><span class="label">Burn-leg mean speed</span><input type="text" id="bmean" readonly /><span class="unit">c</span></div><div class="formula" id="formula-bmean"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Burn duration (coord.)</span><input type="text" id="burndur" readonly /><span class="unit">yr</span></div><div class="formula" id="formula-burndur"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Burn duration (proper)</span><input type="text" id="burnprop" readonly /><span class="unit">yr</span></div><div class="formula" id="formula-burnprop"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Mass flow rate</span><input type="text" id="massflow" readonly /><span class="unit">kg/s</span></div><div class="formula" id="formula-massflow"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Thrust</span><input type="text" id="thrust" readonly /><span class="unit" id="thrustUnit">N</span></div><div class="formula" id="formula-thrust"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Initial g&#8209;force</span><input type="text" id="gforce" readonly /><span class="unit">g</span></div><div class="formula" id="formula-gforce"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Peak g&#8209;force (burnout)</span><input type="text" id="gpeak" readonly /><span class="unit">g</span></div><div class="formula" id="formula-gpeak"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Rapidity budget w</span><input type="text" id="rap" readonly /><span class="unit">c</span></div><div class="formula" id="formula-rap"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">&Delta;v (coordinate)</span><input type="text" id="dvcoord" readonly /><span class="unit">c</span></div><div class="formula" id="formula-dvcoord"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Accel : decel burn</span><input type="text" id="split" readonly /><span class="unit"></span></div><div class="formula" id="formula-split"></div></div>
+
+<div class="sect">Design &mdash; the nuclide</div>
+<div class="row"><div class="row-inner"><span class="label">Fuel</span><select id="nuclide">
+  <option value="th232" selected>Th-232 &nbsp;(via U-233 breeding)</option>
+  <option value="u233">U-233</option>
+  <option value="u235">U-235</option>
+  <option value="pu239">Pu-239</option>
+  <option value="cfd3">CfD&#8323;</option>
+  <option value="custom">Custom &mdash; set Q and share by hand</option>
+</select></div><div class="formula active" id="formula-nuclide"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Fission yield Q</span><input type="number" id="qfis" step="any" value="7.9018e13" /><span class="unit">J/kg</span></div><div class="formula active">energy released per kg of fuel actually fissioned &mdash; nuclear data, not a design choice</div></div>
+<div class="row"><div class="row-inner"><span class="label">Fragment share of Q</span><input type="number" id="share" step="any" value="84.211" /><span class="unit">%</span></div><div class="formula active">how much of the yield leaves as fragment motion &mdash; also nuclear data</div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Fragment speed v_ff</span><input type="text" id="oVff" readonly /><span class="unit">%c</span></div><div class="formula" id="formula-oVff"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Burnup</span><input type="number" id="burnup" step="any" value="99" /><span class="unit">%</span></div><div class="formula active" id="formula-burnup">fraction of loaded fuel that fissions &mdash; the rest joins the jet as mass</div></div>
+<div class="row"><div class="row-inner"><span class="label">Neutral (n+&gamma;) share</span><input type="number" id="ngFrac" step="any" value="7" /><span class="unit">%</span></div><div class="formula active">of released energy, emitted isotropically &mdash; half meets the block</div></div>
+<div class="row"><div class="row-inner"><span class="label">Delayed decay heat</span><input type="number" id="decFrac" step="any" value="7" /><span class="unit">%</span></div><div class="formula active">of released energy, from fission products left behind</div></div>
+
+<div class="sect">Design &mdash; fusion secondary (optional)</div>
+<div class="row" id="row-sFus"><div class="row-inner"><input type="checkbox" id="sFus" /><label class="tog" for="sFus">Fusion secondary</label></div><div class="formula active" id="formula-sFus"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Fusion fuel Y_fus</span><input type="number" id="yfus" step="any" value="2.702e14" /><span class="unit">J/kg</span></div><div class="formula active">full-burn specific yield of the secondary &mdash; YOUR figure, from your own hydro work</div></div>
+<div class="row"><div class="row-inner"><span class="label">Burn parameter H_B</span><input type="number" id="hb" step="any" value="35" /><span class="unit">g/cm&sup2;</span></div><div class="formula active">fuel property: D-T ~7, catalysed &#8310;LiD ~35, D-&sup3;He ~60</div></div>
+<div class="row"><div class="row-inner"><span class="label">Uncompressed density &rho;&#8320;</span><input type="number" id="rho0" step="any" value="0.9" /><span class="unit">g/cm&sup3;</span></div><div class="formula"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Uncompressed radius R&#8320;</span><input type="number" id="r0" step="any" value="1" /><span class="unit">cm</span></div><div class="formula"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Compression ratio C</span><input type="number" id="compC" step="any" value="100" /><span class="unit">&times;</span><button class="clear-btn" id="deriveC">derive from v&#8337;</button></div><div class="formula active" id="formula-compC">YOUR value &mdash; the tool derives burnup from it. The button inverts the same relation at K = 0; it never derives a compression from any device data.</div></div>
+<div class="row"><div class="row-inner"><span class="label">LiD fraction of ablator &phi;</span><input type="number" id="phiIn" step="any" value="100" min="0" max="100" /><span class="unit">%</span></div><div class="formula active" id="formula-phiIn">fraction of the ablator that is 6LiD fusion fuel; K is solved to match v&#8337;</div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Compressed &rho;R</span><input type="text" id="oRhoR" readonly /><span class="unit">g/cm&sup2;</span></div><div class="formula" id="formula-oRhoR"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Fusion burnup</span><input type="text" id="oFusF" readonly /><span class="unit">%</span></div><div class="formula" id="formula-oFusF"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Effective fusion yield</span><input type="text" id="oYeff" readonly /><span class="unit" id="oYeffU">J/kg</span></div><div class="formula" id="formula-oYeff"></div></div>
+
+<div class="sect">Design &mdash; mechanisms, each switchable</div>
+<div class="row" id="row-sFrag"><div class="row-inner"><input type="checkbox" id="sFrag" checked /><label class="tog" for="sFrag">Fragment escape realism</label></div><div class="formula active" id="formula-sFrag"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Foil areal density</span><input type="number" id="foilSig" step="any" value="1" /><span class="unit">mg/cm&sup2;</span></div><div class="formula active" id="formula-foilSig"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Range in fuel</span><input type="number" id="rngFuel" step="any" value="3" /><span class="unit">mg/cm&sup2;</span></div><div class="formula active">a fragment cannot outrun its own range; thicker foil fissions more and exhausts slower</div></div>
+<div class="row" id="row-sMhd"><div class="row-inner"><input type="checkbox" id="sMhd" checked /><label class="tog" for="sMhd">MHD redirection</label></div><div class="formula active" id="formula-sMhd"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Redirection &epsilon;</span><input type="number" id="mhd" step="any" value="99" /><span class="unit">%</span></div><div class="formula active">aft fraction &xi; = &frac12;(1+&epsilon;) of whatever escaped the foil</div></div>
+<div class="row" id="row-sAbl"><div class="row-inner"><input type="checkbox" id="sAbl" checked /><label class="tog" for="sAbl">Ablator</label></div><div class="formula active" id="formula-sAbl"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Ablator enthalpy h</span><input type="number" id="hion" step="any" value="8.34" /><span class="unit">GJ/kg</span></div><div class="formula active">paid before any of the deposit becomes jet kinetic energy</div></div>
+<div class="row"><div class="row-inner"><span class="label">Range in ablator</span><input type="number" id="rngAbl" step="any" value="1.5" /><span class="unit">mg/cm&sup2;</span></div><div class="formula active">with the range in fuel, sets the least ablator that can stop the inbound half</div></div>
+<div class="row" id="row-sEta"><div class="row-inner"><input type="checkbox" id="sEta" checked /><label class="tog" for="sEta">Marshak coupling</label></div><div class="formula active" id="formula-sEta"></div></div>
+<div class="row"><div class="row-inner"><span class="label">How &eta; is chosen</span><select id="etaMode"><option value="solve" selected>Solve for the least &eta; that fits the allowance</option><option value="pin">Pin to the value below</option></select></div><div class="formula active" id="formula-etaMode"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Marshak coupling &eta;</span><input type="number" id="eta" step="any" value="99" /><span class="unit">%</span></div><div class="formula active">P_abl = &eta;&middot;P_dep; the remainder (1&minus;&eta;) has nowhere to go but the radiator</div></div>
+<div class="row" id="row-sRad"><div class="row-inner"><input type="checkbox" id="sRad" checked /><label class="tog" for="sRad">Radiator</label></div><div class="formula active" id="formula-sRad"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Radiator allowance</span><input type="number" id="radShare" step="any" value="1" /><span class="unit">%</span></div><div class="formula active">of dry mass &mdash; the radiator is deducted from the dry mass, not added to it</div></div>
+<div class="row"><div class="row-inner"><span class="label">Film thickness &tau;</span><input type="number" id="filmTh" step="any" value="1" /><span class="unit">&micro;m</span></div><div class="formula active">self-radiating film: the radiator IS the structure, no pumps, no working fluid</div></div>
+<div class="row"><div class="row-inner"><span class="label">Film density &rho;</span><input type="number" id="filmRho" step="any" value="8000" /><span class="unit">kg/m&sup3;</span></div><div class="formula"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Film temperature</span><input type="number" id="filmT" step="any" value="800" /><span class="unit">K</span></div><div class="formula"></div></div>
+<div class="row"><div class="row-inner"><span class="label">Emissivity &epsilon;_r</span><input type="number" id="filmE" step="any" value="0.9" /><span class="unit"></span></div><div class="formula active" id="formula-filmE">&kappa; = &rho;&tau; / (2&middot;&epsilon;_r&middot;&sigma;&middot;T&#8308;)</div></div>
+
+<div class="sect">Design &mdash; other channels</div>
+<div class="row"><div class="row-inner"><span class="label">Decay heat to matrix</span><input type="number" id="decayCap" step="any" value="95" /><span class="unit">%</span></div><div class="formula active">of retained decay heat absorbed by the ablator</div></div>
+<div class="row"><div class="row-inner"><span class="label">Decay heat to hull</span><input type="number" id="decayShip" step="any" value="0.01" /><span class="unit">%</span></div><div class="formula active">of retained decay heat reaching the structure &mdash; goes to the radiator</div></div>
+
+<div class="sect">Design &mdash; what it takes</div>
+<div id="verdictBox" class="verdict"><b id="verdictHead">&mdash;</b><span id="verdictText"></span></div>
+<div class="advice" id="adviceBox" style="display:none;"></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Fragments clearing foil</span><input type="text" id="oEsc" readonly /><span class="unit">%</span></div><div class="formula" id="formula-oEsc"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Exhaust v&#8337; achieved</span><input type="text" id="oVe" readonly /><span class="unit">%c</span></div><div class="formula" id="formula-oVe"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Solved &eta;</span><input type="text" id="oEta" readonly /><span class="unit">%</span></div><div class="formula" id="formula-oEta"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Ablator : fuel K</span><input type="text" id="oK" readonly /><span class="unit"></span></div><div class="formula" id="formula-oK"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">&phi; used</span><input type="text" id="oPhi" readonly /><span class="unit">%</span></div><div class="formula" id="formula-oPhi"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Least K for &phi; &le; 100%</span><input type="text" id="oKneed" readonly /><span class="unit"></span></div><div class="formula" id="formula-oKneed"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Fuel loaded</span><input type="text" id="oFuel" readonly /><span class="unit">t</span></div><div class="formula" id="formula-oFuel"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Ablator loaded</span><input type="text" id="oAblM" readonly /><span class="unit">t</span></div><div class="formula" id="formula-oAblM"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Ablator jet speed</span><input type="text" id="oVp" readonly /><span class="unit">km/s</span></div><div class="formula" id="formula-oVp"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Fission power released</span><input type="text" id="oPrel" readonly /><span class="unit" id="oPrelU">W</span></div><div class="formula" id="formula-oPrel"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Deposited on the block</span><input type="text" id="oPdep" readonly /><span class="unit" id="oPdepU">W</span></div><div class="formula" id="formula-oPdep"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Carried off by ablator</span><input type="text" id="oPabl" readonly /><span class="unit" id="oPablU">W</span></div><div class="formula" id="formula-oPabl"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Radiator load</span><input type="text" id="oRadL" readonly /><span class="unit" id="oRadLU">W</span></div><div class="formula" id="formula-oRadL"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Radiator mass</span><input type="text" id="oRadM" readonly /><span class="unit">t</span></div><div class="formula" id="formula-oRadM"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Radiator area</span><input type="text" id="oRadA" readonly /><span class="unit">m&sup2;</span></div><div class="formula" id="formula-oRadA"></div></div>
+<div class="row output-row"><div class="row-inner"><span class="label">Ledger residual</span><input type="text" id="oResid" readonly /><span class="unit"></span></div><div class="formula" id="formula-oResid"></div></div>
+
+<div class="sect">Where the released energy goes</div>
+<table class="mini" id="ledgerTable"><tr><td>&mdash;</td></tr></table>
+<div class="legend">Only the nine final fates partition the released power; they sum to 100% exactly. The first group splits that same power by origin, and the middle group is heat routed onto the block on its way to a final fate &mdash; both are views of energy counted once below, not extra energy. Each split's second term is formed by subtraction from its parent, so the partition closes by construction.</div>
+
+<div class="sect">Heat management trade surface &mdash; &eta; needed</div>
+<table class="mini" id="surface"><tr><td>&mdash;</td></tr></table>
+<div class="legend" id="surfaceNote"></div>
+
+<div class="sect">Levers &mdash; each +10%, effect on radiator load</div>
+<table class="mini" id="levers"><tr><td>&mdash;</td></tr></table>
+
+<div class="sect">Ablation visualisation &mdash; candle &amp; exhaust plume</div>
+<div class="row"><div class="row-inner"><span class="label">Burn face area</span><input type="number" id="vizArea" step="any" min="0.1" value="100" /><span class="unit">m&sup2;</span></div><div class="formula active" id="formula-vizArea">geometry only &mdash; sets the candle's slenderness in the view, not the mission</div></div>
+<div id="viz3d"></div>
+<div class="viz-legend">
+  <span><i style="background:#bfe6ff"></i>pykrete poles</span>
+  <span><i style="background:#fff6d8"></i>burn faces</span>
+  <span><i style="background:#ffe07a"></i>fissile foil</span>
+  <span><i style="background:#9fb0c4"></i>docking / tethers</span>
+  <span><i style="background:#8e9cab"></i>shield disk</span>
+  <span><i style="background:#d2e6ff"></i>neutrons</span>
+  <span><i style="background:#48e6ff"></i>charged jet + vapour</span>
+</div>
+<div class="viz-hint">
+  candle aspect <span id="viz-aspect">&mdash;</span> &middot; mass ratio <span id="viz-mr">&mdash;</span> &middot;
+  v<sub>e</sub> <span id="viz-ve">&mdash;</span> km/s &middot; thrust <span id="viz-thrust">&mdash;</span> &middot;
+  burn <span id="viz-burn">&mdash;</span><br>
+  tepee tilt <span id="viz-tilt">&mdash;</span> &middot; apex <span id="viz-tiling">&mdash;</span> &middot;
+  escaping <span id="viz-esc">&mdash;</span><br>
+  drag to orbit &middot; scroll to zoom &middot; three converging poles retreat as the block burns; particles coast at constant speed in vacuum
+</div>
+
+<div class="footer-note">
+  Relativistic throughout, and the burn runs at <b>constant thrust with constant mass flow</b>, not at constant proper acceleration.
+  Both give the same rapidity w = v&#8337;&middot;lnR, but under constant thrust the ship is heaviest when it is slowest, so the velocity
+  history is convex and the burn leg covers materially less ground &mdash; about 22% less at R = 4. That is why the burn-leg mean speed
+  &beta;&#772;_burn is integrated rather than assumed.<br>
+  v&#772; = f&middot;&beta;&#772;_burn(&beta;, v&#8337;) + (1&minus;f)&middot;&beta; &nbsp;&middot;&nbsp; &beta; = tanh(k&#8315;&sup1;&middot;v&#8337;&middot;lnR/c) &nbsp;&middot;&nbsp; F = &#7745;&middot;v&#8337; &nbsp;&middot;&nbsp; &kappa; = &rho;&tau;/(2&epsilon;&sigma;T&#8308;)<br>
+  A flyby spends atanh(&beta;) once, a rendezvous twice, so at equal burn fraction the rendezvous costs exactly double the rapidity.
+  The two are not otherwise mirror images: the braking leg runs light and quick, so it spends a larger share of its time at speed and
+  &beta;&#772;_burn is higher for a rendezvous than for a flyby at the same &beta;.<br>
+  c = 63,241.077 AU/yr = 299,792,458 m/s &middot; Julian year = 3.15576&times;10&#8311; s &middot; g&#8320; = 9.80665 m/s&sup2; &middot; &sigma; = 5.670374419&times;10&#8315;&#8312; W/m&sup2;K&#8308;.
+  All figures to six significant figures.
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+// ===========================================================================
+// PHYSICS CORE  —  shared verbatim between the headless test and the page.
+//
+// Two layers, deliberately separate:
+//
+//   MISSION LAYER  (constraint graph, 10 variables, 5 constraints, 5 DOF)
+//     Pin any five, the rest are derived. No ordering, no "last touched".
+//
+//   DESIGN LAYER   (energy ledger, thermal)
+//     Takes the solved mission and asks what reactor and radiator deliver it.
+//     It REPORTS. It does not gate the mission solver.
+//
+// Relativity: constant thrust with constant rest-mass flow, not constant proper
+// acceleration. The rapidity is the same either way (w = v_e lnR) but the
+// velocity history is convex, so the burn leg covers materially less ground.
+// ===========================================================================
+var C_AU_YR = 63241.077, C_MPS = 299792458, YR = 3.15576e7, G0 = 9.80665;
+var SB = 5.670374419e-8;
+var SIG = 6;                 // one significant-figure setting for the whole file
+var EFFMAX = 99.999999;      // no efficiency may reach exactly 100%
+
+// --- burn-leg kinematics ---------------------------------------------------
+// Constant thrust F, constant loaded rest-mass flow. Ship mass-energy
+// M(zeta) = M0 exp(-zeta/k), k = v_e/c, a = 1/k. Proper time dtau = (T0/k)
+// exp(-a zeta) dzeta, coordinate time dt = cosh(zeta) dtau, distance
+// dx = c sinh(zeta) dtau. Both integrals are closed form; the 1/(a^2-1)
+// prefactor cancels in the ratio.
+//
+//   I_c = ( a - gamma(a+beta)/Rleg ) / (a^2-1)
+//   I_s = ( 1 - gamma(1+a beta)/Rleg ) / (a^2-1)      Rleg = exp(a atanh beta)
+//
+// burnMean  = I_s/I_c = mean coordinate speed over the burn leg, in c.
+// burnGamma = a I_c Rleg/(Rleg-1) = mean Lorentz factor over the burn leg
+//             (coordinate burn time / proper burn time).
+//
+// Rleg is the PER-BURN mass ratio. A flyby's single burn and a rendezvous's
+// accel burn are the same manoeuvre with the same Rleg = exp(a atanh beta), so
+// both shape functions are profile-independent; only the total mass ratio
+// carries the factor k.
+function burnShape(beta, kve, kProf) {
+    if (!(beta > 0 && beta < 1) || !(kve > 0 && kve < 1)) return null;
+    var a = 1 / kve, Z = Math.atanh(beta), u = a * Z;
+    if (!(u > 0) || !isFinite(u)) return null;
+    var q = Math.exp(-u);                       // 1/Rleg, always <= 1: no overflow
+    var ch = Math.cosh(Z), sh = Math.sinh(Z);
+    var A, B, R;
+    if (u < 0.05) {
+        // Rleg -> 1. The closed forms below are O(u^2) differences of O(1)
+        // quantities there and cancel catastrophically, so integrate directly:
+        // Z is tiny, the integrand is smooth, Simpson is exact to rounding.
+        var N = 400, h = Z / N, jm = 0, sm = 0, jp = 0, sp = 0;
+        for (var i = 0; i <= N; i++) {
+            var z = i * h, w = (i === 0 || i === N) ? 1 : (i % 2 ? 4 : 2);
+            var cz = Math.cosh(z), sz = Math.sinh(z), em = Math.exp(-a * z), ep = Math.exp(a * z);
+            jm += w * cz * em; sm += w * sz * em; jp += w * cz * ep; sp += w * sz * ep;
+        }
+        var f3 = h / 3; jm *= f3; sm *= f3; jp *= f3; sp *= f3;
+        if (kProf === 2) { R = q * q === 0 ? Infinity : 1 / (q * q); A = jm + jp * q * q; B = sm + sp * q * q; }
+        else { R = 1 / q; A = jm; B = sm; }
+    } else if (kProf === 2) {
+        // Two burns of mass ratio 1/q each. The braking leg is NOT the mirror of
+        // the accelerating leg: it runs light and quick, so it spends a larger
+        // share of its time fast. Summing the two legs, the cosh/sinh cross
+        // terms cancel and what is left is cancellation-free.
+        R = 1 / (q * q);
+        A = (a * (1 - q * q) - 2 * q * sh) / (a * a - 1);
+        B = (1 - 2 * q * ch + q * q) / (a * a - 1);
+    } else {
+        R = 1 / q;
+        A = (a - (a * ch + sh) * q) / (a * a - 1);
+        B = (1 - (ch + a * sh) * q) / (a * a - 1);
+    }
+    if (!(A > 0) || !(B > 0)) return null;
+    return { mean: B / A, gamma: Math.max(1, a * A * R / (R - 1)), A: A, B: B, R: R };
+}
+function burnMean(beta, kve, k) { var s = burnShape(beta, kve, k); return s ? s.mean : null; }
+function burnGamma(beta, kve, k) { var s = burnShape(beta, kve, k); return s ? s.gamma : 1; }
+
+// v_bar = f * burnMean + (1-f) * beta
+function bracket(beta, f, kve, k) {
+    if (!(beta > 0 && beta < 1) || !(f >= 0 && f <= 1)) return null;
+    if (f === 0) return beta;
+    var m = burnMean(beta, kve, k); if (m === null) return null;
+    return f * m + (1 - f) * beta;
+}
+function solveBeta(vavg, f, kve, k) {
+    if (!(vavg > 0 && vavg < 1)) return null;
+    var lo = 1e-15, hi = 1 - 1e-15;
+    var top = bracket(hi, f, kve, k); if (top === null || top < vavg) return null;
+    for (var i = 0; i < 200; i++) { var m = 0.5 * (lo + hi); var b = bracket(m, f, kve, k); if (b === null || b < vavg) lo = m; else hi = m; }
+    var r = 0.5 * (lo + hi); return (r > 0 && r < 1) ? r : null;
+}
+function solveFrac(vavg, beta, kve, k) {
+    if (!(vavg > 0 && vavg < 1) || !(beta > 0 && beta < 1)) return null;
+    var A = burnMean(beta, kve, k); if (A === null) return null;
+    if (Math.abs(A - beta) < 1e-18) return null;
+    var f = (vavg - beta) / (A - beta);
+    return (f >= 0 && f <= 1) ? f * 100 : null;
+}
+// v_bar rises monotonically with v_e (a slower exhaust means a bigger mass
+// ratio, which front-loads the mass and flattens the early burn).
+function solveExhFromBracket(vavg, beta, f, k) {
+    if (!(vavg > 0 && vavg < 1) || !(beta > 0 && beta < 1) || !(f > 0 && f <= 1)) return null;
+    var lo = 1e-12, hi = 1 - 1e-12;
+    var fhi = bracket(beta, f, hi, k); if (fhi === null || fhi < vavg) return null;
+    var flo = bracket(beta, f, lo, k); if (flo !== null && flo > vavg) return null;
+    for (var i = 0; i < 200; i++) { var m = 0.5 * (lo + hi); var v = bracket(beta, f, m, k); if (v === null || v < vavg) lo = m; else hi = m; }
+    var kk = 0.5 * (lo + hi); return (kk > 0 && kk < 1) ? kk * 100 : null;
+}
+
+var VARS = ['dry', 'wet', 'ratio', 'prop', 'dist', 'time', 'v_avg', 'dv', 'frac', 'exh'];
+var DOF = 5;
+
+function makeConstraints(KPROF) {
+    return [
+        {
+            id: 'C1', label: 'wet = dry + propellant', vars: ['wet', 'dry', 'prop'],
+            solve: { wet: v => v.dry + v.prop, dry: v => v.wet - v.prop, prop: v => v.wet - v.dry },
+            txt: { wet: 'dry + propellant', dry: 'wet \u2212 propellant', prop: 'wet \u2212 dry' }
+        },
+        {
+            id: 'C2', label: 'ratio = wet / dry', vars: ['ratio', 'wet', 'dry'],
+            solve: { ratio: v => v.wet / v.dry, wet: v => v.dry * v.ratio, dry: v => v.wet / v.ratio },
+            txt: { ratio: 'wet / dry', wet: 'dry \u00d7 ratio', dry: 'wet / ratio' }
+        },
+        {
+            id: 'C3', label: 'v\u0304 = D / (c\u00b7T)', vars: ['v_avg', 'dist', 'time'],
+            solve: { v_avg: v => v.dist / (C_AU_YR * v.time), dist: v => C_AU_YR * v.v_avg * v.time, time: v => v.dist / (C_AU_YR * v.v_avg) },
+            txt: { v_avg: 'D / (c\u00b7T)', dist: 'c\u00b7v\u0304\u00b7T', time: 'D / (c\u00b7v\u0304)' }
+        },
+        {
+            id: 'C4', label: 'v\u0304 = f\u00b7\u03b2\u0304_burn(\u03b2,v\u2091) + (1\u2212f)\u03b2', vars: ['v_avg', 'dv', 'frac', 'exh'],
+            solve: {
+                v_avg: v => bracket(v.dv, v.frac / 100, v.exh / 100, KPROF()),
+                dv: v => solveBeta(v.v_avg, v.frac / 100, v.exh / 100, KPROF()),
+                frac: v => solveFrac(v.v_avg, v.dv, v.exh / 100, KPROF()),
+                exh: v => solveExhFromBracket(v.v_avg, v.dv, v.frac / 100, KPROF())
+            },
+            txt: {
+                v_avg: 'f\u00b7\u03b2\u0304_burn + (1\u2212f)\u03b2  \u2014 constant thrust, convex burn',
+                dv: 'solved from v\u0304, f and v\u2091',
+                frac: '(v\u0304 \u2212 \u03b2) / (\u03b2\u0304_burn \u2212 \u03b2)',
+                exh: 'solved from v\u0304, \u03b2 and f'
+            }
+        },
+        {
+            id: 'C5', label: 'v\u2091 = c\u00b7k\u00b7atanh(\u03b2)/lnR', vars: ['exh', 'dv', 'ratio'],
+            solve: {
+                exh: v => (KPROF() * Math.atanh(v.dv) / Math.log(v.ratio)) * 100,
+                dv: v => Math.tanh((v.exh / 100) * Math.log(v.ratio) / KPROF()),
+                ratio: v => Math.exp(KPROF() * Math.atanh(v.dv) / (v.exh / 100))
+            },
+            txt: {
+                exh: () => 'k\u00b7atanh(\u03b2) / ln(R) \u00d7 100,  k = ' + KPROF(),
+                dv: () => 'tanh(v\u2091\u00b7lnR/(k\u00b7c)),  k = ' + KPROF(),
+                ratio: () => 'exp(k\u00b7atanh(\u03b2)/(v\u2091/c)),  k = ' + KPROF()
+            }
+        }
+    ];
+}
+
+function valid(k, x) {
+    if (!isFinite(x)) return false;
+    if (k === 'dv' || k === 'v_avg') return x > 0 && x < 1;
+    if (k === 'exh') return x > 0 && x < 100;
+    if (k === 'frac') return x >= 0 && x <= 100;
+    if (k === 'ratio') return x > 1;
+    return x > 0;
+}
+
+
+// The propagation rule "solve when exactly one variable is unknown" cannot break
+// a CYCLE: two constraints sharing the same two unknowns each see two, forever.
+// This graph has exactly two such cycles. Both are closed here, and both run
+// inside the propagation loop so whatever they unlock feeds onward.
+function cyclePass(v, derived, why, blocked, CONSTRAINTS, disp) {
+    var moved = false;
+
+    // Cycle 1 - C1 and C2 share {dry, wet}. Pinning propellant and mass ratio
+    // leaves both constraints with two unknowns, though the pair is determined:
+    // dry = m_p/(R-1). This is the case that left the mass rows blank.
+    if (v.dry === undefined && v.wet === undefined && v.prop > 0 && v.ratio > 1) {
+        var dry1 = v.prop / (v.ratio - 1), wet1 = dry1 + v.prop;
+        if (valid('dry', dry1) && valid('wet', wet1)) {
+            v.dry = dry1; derived.dry = true; why.dry = 'm\u209a / (R \u2212 1) \u2014 solved jointly with wet mass';
+            v.wet = wet1; derived.wet = true; why.wet = 'dry + propellant \u2014 solved jointly with dry mass';
+            moved = true;
+        }
+    }
+
+    // Cycle 2 - C4 and C5 share {dv, exh}.
+    if (!moved || true) {
+    // C4 and C5 share both dv and exh. If the pins leave that pair unknown,
+        // neither constraint ever has exactly one unknown and propagation stalls
+        // forever with two blanks. Close the cycle directly: pick beta, let C5 give
+        // v_e, and drive C4's v-bar to target. Monotone in beta, so bisection is safe.
+            if (v.dv === undefined && v.exh === undefined &&
+            v.ratio > 1 && v.v_avg > 0 && v.v_avg < 1 && v.frac !== undefined) {
+            var kk = KPROF_OF(CONSTRAINTS), lnR = Math.log(v.ratio), f4 = v.frac / 100;
+            var vbarOf = function (b) {
+                if (!(b > 0 && b < 1)) return null;
+                var kve = kk * Math.atanh(b) / lnR;
+                if (!(kve > 0 && kve < 1)) return null;
+                return bracket(b, f4, kve, kk);
+            };
+            // v_e = k atanh(beta)/lnR reaches c at beta = tanh(lnR/k); past that the
+            // exhaust would be superluminal, so that is the bracket, not beta -> 1.
+            var bMax = Math.tanh(lnR / kk);
+            var lo4 = 1e-12, hi4 = Math.min(1 - 1e-12, bMax * (1 - 1e-12)), okHi = vbarOf(hi4);
+            if (okHi !== null && okHi >= v.v_avg) {
+                for (var i4 = 0; i4 < 200; i4++) {
+                    var m4 = 0.5 * (lo4 + hi4), y4 = vbarOf(m4);
+                    if (y4 === null || y4 < v.v_avg) lo4 = m4; else hi4 = m4;
+                }
+                var b4 = 0.5 * (lo4 + hi4), e4 = kk * Math.atanh(b4) / lnR * 100;
+                if (valid('dv', b4) && valid('exh', e4)) {
+                    v.dv = b4; derived.dv = true; why.dv = 'solved jointly with v\u2091 from R, v\u0304 and f';
+                    v.exh = e4; derived.exh = true; why.exh = 'solved jointly with \u03b2 from R, v\u0304 and f';
+                }
+            } else {
+                blocked.dv = 'no \u03b2 below tanh(lnR/k) = ' + disp(bMax) + ' c averages ' + disp(v.v_avg) + ' c at this burn fraction; past that the exhaust would exceed c.';
+            }
+        }
+
+    }
+    if (v.dv !== undefined && v.exh !== undefined && blocked.dv) delete blocked.dv;
+    return moved || (v.dv !== undefined && v.exh !== undefined);
+}
+
+function KPROF_OF(CONSTRAINTS){ var t=CONSTRAINTS[4].txt.exh(); return /k = 2/.test(t)?2:1; }
+function solveAll(pinned, CONSTRAINTS, disp) {
+    var v = {}, derived = {}, why = {}, blocked = {};
+    for (var i = 0; i < VARS.length; i++) { var k = VARS[i]; if (pinned[k] !== undefined && pinned[k] !== null && isFinite(pinned[k])) v[k] = pinned[k]; }
+    var changed = true, guard = 0;
+    while (changed && guard++ < 60) {
+        changed = false;
+        for (var ci = 0; ci < CONSTRAINTS.length; ci++) {
+            var c = CONSTRAINTS[ci];
+            var unk = c.vars.filter(function (x) { return v[x] === undefined; });
+            if (unk.length !== 1) continue;
+            var t = unk[0], val;
+            try { val = c.solve[t](v); } catch (e) { val = null; }
+            if (val === null || val === undefined || !valid(t, val)) { blocked[t] = diagnose(t, v, val, disp); continue; }
+            v[t] = val; derived[t] = true; why[t] = (typeof c.txt[t] === 'function') ? c.txt[t]() : c.txt[t]; changed = true;
+        }
+        var before = 0; for (var bk0 in v) before++;
+        cyclePass(v, derived, why, blocked, CONSTRAINTS, disp);
+        var after = 0; for (var bk1 in v) after++;
+        if (after > before) changed = true;
+    }
+    var residuals = [];
+    for (var cj = 0; cj < CONSTRAINTS.length; cj++) {
+        var cc = CONSTRAINTS[cj];
+        if (cc.vars.some(function (x) { return v[x] === undefined; })) continue;
+        var f0 = cc.vars[0], e;
+        try { e = cc.solve[f0](v); } catch (err) { continue; }
+        if (e === null || !isFinite(e)) continue;
+        var rel = Math.abs(e - v[f0]) / Math.max(Math.abs(v[f0]), 1e-30);
+        if (rel > 1e-6) residuals.push(cc);
+    }
+    return { values: v, derived: derived, why: why, residuals: residuals, blocked: blocked, unresolved: VARS.filter(function (k) { return v[k] === undefined; }) };
+}
+
+function diagnose(t, v, val, disp) {
+    if (t === 'frac' && v.v_avg > 0 && v.dv > 0 && v.dv < 1 && v.exh > 0) {
+        var lo = burnMean(v.dv, v.exh / 100, 1), hi = v.dv;
+        if (lo === null) return 'the exhaust velocity leaves no valid burn leg at this \u03b2.';
+        if (v.v_avg > hi) return 'no burn fraction can do this: \u03b2 = ' + disp(v.dv) + ' c is below the average speed ' + disp(v.v_avg) + ' c. Peak speed must exceed the average.';
+        if (v.v_avg < lo) return 'no burn fraction can do this: burning the whole way (f = 100%) a peak of ' + disp(v.dv) + ' c still averages ' + disp(lo) + ' c, above the ' + disp(v.v_avg) + ' c required. Lower \u03b2.';
+        return 'out of range for a burn fraction between 0 and 100%.';
+    }
+    if (t === 'dv' && v.v_avg > 0) return 'no peak speed reaches an average of ' + disp(v.v_avg) + ' c at this burn fraction and exhaust velocity \u2014 ' + (v.v_avg >= 1 ? 'the average is at or above c.' : 'try a larger burn fraction or a faster exhaust.');
+    if (t === 'exh') return 'no exhaust velocity below c gives this average \u2014 under constant thrust the burn leg is convex, so v\u0304 cannot exceed f\u00b7\u03b2/2 + (1\u2212f)\u03b2.';
+    if (t === 'ratio') return 'mass ratio would be at or below 1 \u2014 the exhaust is too fast for this \u0394v to need propellant.';
+    if (val !== null && val !== undefined && isFinite(val)) return 'solved as ' + disp(val) + ', which is outside the physical range.';
+    return 'the pinned values leave this with no valid solution.';
+}
+
+// ===========================================================================
+// DESIGN LAYER
+//
+// Ledger discipline: every split's SECOND term is formed by subtraction from
+// its parent, so the channels partition the released power exactly and the
+// residual is zero by construction rather than by luck.
+//
+// v4: the fragment speed is no longer an input. Q and the fragment share are
+// nuclear data; v_ff FOLLOWS from them. There is no engineering act that makes
+// fission fragments leave faster, so there must be no control that pretends
+// otherwise. What IS an engineering choice is how much of that speed survives
+// the foil the fragment was born in — that is the realism model below.
+// ===========================================================================
+
+// E_fis and fragment KE in MeV per fission; A in amu. Q and the share follow.
+var NUCLIDES = {
+    th232: { name: 'Th-232', A: 232, Efis: 190.0, Efrag: 160.0 },
+    u233:  { name: 'U-233',  A: 233, Efis: 197.9, Efrag: 168.2 },
+    u235:  { name: 'U-235',  A: 235, Efis: 202.5, Efrag: 169.1 },
+    pu239: { name: 'Pu-239', A: 239, Efis: 207.1, Efrag: 175.8 },
+    // CfD3 is a compound, not a nuclide: A is the formula-unit mass of Cf-252
+    // plus three deuterons, and the yield covers fission plus whatever the
+    // deuterium contributes. Efrag is set so v_ff comes out at 4.502 %c exactly;
+    // the share is held at 84% for consistency with the entries above.
+    cfd3:  { name: 'CfD\u2083',  A: 258.0423, Efis: 290.42463, Efrag: 243.95669 }
+};
+var AMU_MEV = 931.494;
+
+function nuclideData(key) {
+    var n = NUCLIDES[key]; if (!n) return null;
+    var Q = n.Efis / (n.A * AMU_MEV) * C_MPS * C_MPS;
+    return { name: n.name, Q: Q, share: n.Efrag / n.Efis };
+}
+// v_ff is derived, never set: q_FF = share*Q = (gamma-1)c^2.
+function vffFromYield(Q, share) {
+    var g = 1 + share * Q / (C_MPS * C_MPS);
+    if (!(g > 1)) return 0;
+    return Math.sqrt(Math.max(0, 1 - 1 / (g * g)));
+}
+
+// --- foil self-absorption --------------------------------------------------
+// Fissions uniform through a foil of areal density sigma_f; fragment range in
+// fuel R. A fragment born at depth x leaving at angle mu traverses x/cos(mu),
+// and under constant dE/dx emerges with E/E0 = 1 - (x/R)/cos(mu), or not at
+// all. Isotropic emission, both faces. With a = x/R, per face:
+//   number   g_N = (1-a)/2
+//   energy   g_E = [(1-a) + a ln a]/2
+//   momentum g_P = (1/2) integral_a^1 sqrt(1 - a/c) dc      (p ~ sqrt(E))
+// averaged over depth and doubled for the second face:
+//   X = (2/rho) integral_0^min(rho,1) g_X(a) da,   rho = sigma_f/R
+// rho -> 0 gives 1,1,1: the infinitely thin foil that loses nothing. That is
+// the limit v3 assumed everywhere, and it has no engineering path.
+function escapeStats(rho) {
+    if (!(rho > 0)) return { fN: 1, fE: 1, fP: 1, rho: 0 };
+    var top = Math.min(rho, 1), N = 4000, h = top / N;
+    var sN = 0, sE = 0, sP = 0;
+    for (var i = 0; i <= N; i++) {
+        var a = i * h, w = (i === 0 || i === N) ? 1 : (i % 2 ? 4 : 2);
+        var gN, gE, gP;
+        if (a <= 0) { gN = 0.5; gE = 0.5; gP = 0.5; }
+        else if (a >= 1) { gN = 0; gE = 0; gP = 0; }
+        else {
+            gN = (1 - a) / 2;
+            gE = ((1 - a) + a * Math.log(a)) / 2;
+            // integral_a^1 sqrt(1-a/c) dc = W - (a/2) ln((1+W)/(1-W)), W = sqrt(1-a).
+            // Since (1-W)(1+W) = a exactly, the log is written as 2ln(1+W) - ln a,
+            // which stays accurate as a -> 0 where the raw form divides by zero.
+            var W = Math.sqrt(1 - a);
+            gP = 0.5 * (W - a * (Math.log(1 + W) - 0.5 * Math.log(a)));
+        }
+        sN += w * gN; sE += w * gE; sP += w * gP;
+    }
+    var f = (h / 3) * (2 / rho);
+    var cl = function (x) { return Math.min(Math.max(x, 0), 1); };
+    return { fN: cl(sN * f), fE: cl(sE * f), fP: cl(sP * f), rho: rho };
+}
+
+// ---------------------------------------------------------------------------
+// COMPRESSION CHAIN  (transform only)
+//
+// The user supplies the compression ratio C their own hydro work supports. This
+// code does not derive C and holds no secondary-design data; it only carries C
+// forward to a burnup and an effective yield by textbook inertial-confinement
+// relations. Every number here is an OUTPUT of the user's C, never a source of it.
+//
+//   rhoR = rho0 * R0 * C^(2/3)             compress the volume by C: density up
+//                                          by C, radius down by C^(1/3)
+//   f_fus = rhoR / (rhoR + H_B)            standard ICF burn-fraction fit
+//   Y_eff = Y_fus * f_fus                  fusion energy actually released per kg
+//
+// H_B is the fuel's burn parameter (g/cm^2): D-T ~7, catalysed 6LiD ~35,
+// D-3He ~60. It is a property of the fuel the user names, not of any device.
+function fusionBurnup(C, rho0_gcc, R0_cm, HB_gcm2) {
+    if (!(C >= 1) || !(rho0_gcc > 0) || !(R0_cm > 0) || !(HB_gcm2 > 0)) return { rhoR: 0, f: 0 };
+    var rhoR = rho0_gcc * R0_cm * Math.pow(C, 2 / 3);
+    return { rhoR: rhoR, f: rhoR / (rhoR + HB_gcm2) };
+}
+
+// Invert the compression chain: given a target exhaust velocity, find the least
+// compression that reaches it.
+//
+// CONVENTION: K = 0, i.e. no ablator dilution. This matters, because C and K
+// BOTH move v_e and the question is otherwise underdetermined - many (C,K) pairs
+// hit the same v_e. Solving at K = 0 asks "what compression does the fuel alone
+// need", which is the least-mass reading and the one that matches how a working
+// point is normally set. It is also a clean monotone bisection: v_e at K = 0
+// rises with C without a turning point, so no peak-finding is needed and the
+// answer never depends on the search path.
+//
+// The caller supplies Y_fus, H_B, rho0, R0. This routine derives nothing about
+// any device; it only inverts the same rhoR/burnup relation used forward.
+function veAtZeroK(D, mdot, C, eta, esc) {
+    var fb = fusionBurnup(C, D.rho0, D.r0, D.hb);
+    var Dc = {};
+    for (var k in D) Dc[k] = D[k];
+    Dc.fusYeff = D.yfus * fb.f;
+    return { ve: reactor(Dc, mdot, 0, eta, esc).ve, f: fb.f, rhoR: fb.rhoR };
+}
+
+function solveCompression(D, mdot, veTarget, eta, esc, Cmax) {
+    if (!D.fusOn) return null;
+    if (!(veTarget > 0 && isFinite(veTarget)) || !(mdot > 0 && isFinite(mdot))) return null;
+    Cmax = Cmax || 1e5;
+
+    var vAt1 = veAtZeroK(D, mdot, 1, eta, esc).ve;
+    if (vAt1 >= veTarget) {
+        var z = veAtZeroK(D, mdot, 1, eta, esc);
+        return { C: 1, f: z.f, rhoR: z.rhoR, ve: z.ve, reason: 'uncompressed' };
+    }
+    var vMax = veAtZeroK(D, mdot, Cmax, eta, esc).ve;
+    if (vMax < veTarget) {
+        var zm = veAtZeroK(D, mdot, Cmax, eta, esc);
+        return { C: null, f: zm.f, rhoR: zm.rhoR, ve: zm.ve, reason: 'unreachable', Cmax: Cmax };
+    }
+    var lo = 1, hi = Cmax;
+    for (var i = 0; i < 200; i++) {
+        var m = 0.5 * (lo + hi);
+        if (veAtZeroK(D, mdot, m, eta, esc).ve < veTarget) lo = m; else hi = m;
+    }
+    var C = 0.5 * (lo + hi), zz = veAtZeroK(D, mdot, C, eta, esc);
+    return { C: C, f: zz.f, rhoR: zz.rhoR, ve: zz.ve, reason: 'solved' };
+}
+
+// Invert for the secondary's share of the ablator.
+//
+// The secondary rides the ABLATOR stream, so it displaces inert matrix, not
+// fuel. Inert matrix releases nothing, so the secondary has no energy debt to
+// repay: v_e rises monotonically with phi from the first per cent, and there is
+// no break-even burnup. What binds instead is simply whether the required phi
+// exceeds 100% - a wholly lithium-deuteride ablator is the ceiling.
+//
+// Because phi now carries the job of matching the mission's exhaust velocity, K
+// is an input rather than a solved quantity whenever the secondary is on.
+function solvePhi(D, mdot, veReq, eta, K, esc) {
+    var at = function (phi) {
+        var Dp = {}; for (var k in D) Dp[k] = D[k];
+        Dp.phiSec = phi;
+        return reactor(Dp, mdot, K, eta, esc).ve;
+    };
+    var v0 = at(0);
+    if (v0 >= veReq) return { phi: 0, ve: v0, reason: 'none' };
+    var v1 = at(1);
+    // A hair of rounding at the exact boundary must not read as impossible:
+    // phi = 1 is a legitimate answer, not a failure.
+    if (v1 < veReq * (1 - 1e-9)) return { phi: null, ve: v1, reason: 'ceiling' };
+    if (v1 <= veReq * (1 + 1e-12)) return { phi: 1, ve: v1, reason: 'solved' };
+    var lo = 0, hi = 1;
+    for (var i = 0; i < 200; i++) { var m = 0.5 * (lo + hi); if (at(m) < veReq) lo = m; else hi = m; }
+    var phi = 0.5 * (lo + hi);
+    return { phi: phi, ve: at(phi), reason: 'solved' };
+}
+
+// The least ablator ratio at which a wholly lithium-deuteride ablator (phi = 1)
+// can still reach the required exhaust velocity. Below this K there is simply
+// not enough ablator mass to carry enough secondary, whatever the compression.
+// Reported alongside K so the stopping-range floor default never silently
+// strands the design.
+function solveKforPhi(D, mdot, veReq, eta, esc, Kfloor, Kceil) {
+    Kfloor = Kfloor || 0; Kceil = Kceil || 1e4;
+    var atFull = function (K) {
+        var Dp = {}; for (var k in D) Dp[k] = D[k];
+        Dp.phiSec = 1;
+        return reactor(Dp, mdot, K, eta, esc).ve;
+    };
+    if (atFull(Kfloor) >= veReq) return { K: Kfloor, reason: 'floor already suffices' };
+    if (atFull(Kceil) < veReq) return { K: null, ve: atFull(Kceil), reason: 'unreachable at any K' };
+    var lo = Kfloor, hi = Kceil;
+    for (var i = 0; i < 200; i++) { var m = 0.5 * (lo + hi); if (atFull(m) < veReq) lo = m; else hi = m; }
+    return { K: 0.5 * (lo + hi), reason: 'solved' };
+}
+
+function filmKappa(rho, tau_um, T, emis) {
+    var sa = rho * tau_um * 1e-6;
+    var flux = 2 * emis * SB * Math.pow(T, 4);
+    return { kappa: sa / flux * 1e6, flux: flux, areal: sa };
+}
+
+// The single gate. The verdict banner, the trade surface and the lever table
+// all call this. In v3 only the banner checked, so the levers could quote a
+// number obtained by stepping off the edge of the physics while the banner
+// still read "Closes". Any table that reports a design must first ask this.
+// Single-pass fission burnup cannot exceed what the foil's own thickness allows:
+// a fragment deposits its fission-inducing flux over ~one range, so a foil of
+// rho ranges thick self-fissions at most a fraction ~ (1 - exp(-rho)) of a thick
+// target. This is a CEILING the model should not silently exceed.
+function burnupCeiling(rho_ranges) {
+    if (!(rho_ranges > 0)) return 0;
+    return 1 - Math.exp(-rho_ranges);
+}
+
+function feasible(D) {
+    if (!(D.share > 0 && D.share < 1)) return 'fragment share of the yield must lie strictly between 0 and 100%';
+    if (D.share > 0.95) return 'fragment share of ' + (D.share * 100).toFixed(3) + '% exceeds what fission delivers';
+    if (1 - D.share - D.ngFrac - D.decFrac < 0) return 'fragment, neutral and decay shares sum past 100% of the yield';
+    if (!(D.qfis > 0)) return 'fission yield must be positive';
+    if (!(D.burnup > 0)) return 'burnup must be positive';
+    return null;
+}
+
+function reactor(D, mdot, K, eta, esc) {
+    esc = esc || (D.fragReal ? escapeStats(D.foilSig / Math.max(D.rngFuel, 1e-12)) : { fN: 1, fE: 1, fP: 1, rho: 0 });
+    if (!D.ablOn) { K = 0; eta = 0; }
+    var mff = mdot / (1 + K), mAbl = mdot - mff;
+    var b = D.burnup, xi = D.mhdOn ? 0.5 * (1 + D.eps) : 0.5;
+    var vff = vffFromYield(D.qfis, D.share);
+    var gFF = 1 / Math.sqrt(1 - vff * vff), qFF = (gFF - 1) * C_MPS * C_MPS;
+
+    var mFis = b * mff, mUnfis = mff - mFis;
+    var pRel = mFis * D.qfis;
+    var pFF = D.share * pRel, pNG = D.ngFrac * pRel, pDec = D.decFrac * pRel;
+    var pOth = pRel - pFF - pNG - pDec;
+
+    var pFFfree = esc.fE * pFF, pFFfoil = pFF - pFFfree;
+    var pFFout = xi * pFFfree, pFFdep = pFFfree - pFFout;
+    var pNGdep = 0.5 * pNG, pNGout = pNG - pNGdep;
+    var aftNum = xi * esc.fN;
+    var pDecEmb = (1 - aftNum) * pDec, pDecGone = pDec - pDecEmb;
+    var pDecHull = D.decayShip * pDecEmb, pDecRem = pDecEmb - pDecHull;
+    var pDecMat = D.decayCap * pDecRem, pDecVoid = pDecRem - pDecMat;
+
+    var pDep = pFFfoil + pFFdep + pNGdep + pDecMat;
+    var pAbl = D.ablOn ? eta * pDep : 0, pRes = pDep - pAbl;
+
+    var mEscAft = aftNum * mFis;
+    var mJet = mAbl + mUnfis + (mFis - mEscAft);
+    // Fusion secondary: user-supplied effective yield (J/kg of secondary) is
+    // extra specific energy on the expelled jet mass. It raises the jet speed
+    // without touching v_ff (nuclear data) or the fission ledger. Gated wholly
+    // by the caller's compression figure; zero when the secondary is off.
+    // The secondary is part of the ABLATOR stream, not a separate mass and not
+    // the fuel: a fraction phiSec of the ablator is 6LiD, the rest inert matrix.
+    // So the fusion energy rides only the ablator mass actually loaded, and with
+    // no ablator there is no secondary and no fusion at all.
+    var mSec = (D.phiSec > 0 ? D.phiSec * mAbl : 0);
+    var fusP = (D.fusYeff > 0 ? D.fusYeff * mSec : 0);   // W added to the jet
+    var spec = mJet > 0 ? (pAbl + fusP) / mJet : 0;
+    var pSubl, jetKE, gP, vp;
+    if (mJet <= 0) { pSubl = pAbl; jetKE = fusP; gP = 1; vp = 0; }
+    else if (spec <= D.hion) { pSubl = mJet * D.hion; jetKE = (pAbl + fusP) - pSubl; if (jetKE < 0) { pSubl = pAbl + fusP; jetKE = 0; } gP = jetKE > 0 ? 1 + jetKE / (mJet * C_MPS * C_MPS) : 1; vp = gP > 1 ? C_MPS * Math.sqrt(Math.max(0, 1 - 1 / (gP * gP))) : 0; }
+    else { pSubl = mJet * D.hion; jetKE = (pAbl + fusP) - pSubl; gP = 1 + jetKE / (mJet * C_MPS * C_MPS); vp = C_MPS * Math.sqrt(Math.max(0, 1 - 1 / (gP * gP))); }
+
+    var thrust = xi * esc.fP * mFis * gFF * (vff * C_MPS) + mJet * gP * vp;
+    // jetKE now includes fusP, which is NOT part of pRel (it is external fusion
+    // energy). Add it to the released side so the ledger balances what actually
+    // entered the jet. The fission partition is unchanged; fusP is a clean add.
+    var released2 = pRel + fusP;
+    var ledger = ((pFFout + pNGout) + (pDecGone + pDecVoid)) + ((pSubl + jetKE) + (pRes + pDecHull)) + pOth;
+
+    return {
+        mff: mff, mAbl: mAbl, mFis: mFis, mUnfis: mUnfis, mJet: mJet, K: K, esc: esc,
+        vff: vff, gFF: gFF, qFF: qFF, share: D.share, xi: xi, aftNum: aftNum,
+        pRel: pRel, pFF: pFF, pNG: pNG, pDec: pDec, pOth: pOth,
+        pFFfoil: pFFfoil, pFFfree: pFFfree, pFFout: pFFout, pFFdep: pFFdep,
+        pNGout: pNGout, pNGdep: pNGdep,
+        pDecEmb: pDecEmb, pDecGone: pDecGone, pDecHull: pDecHull, pDecMat: pDecMat, pDecVoid: pDecVoid,
+        pDep: pDep, pAbl: pAbl, pRes: pRes, pSubl: pSubl, jetKE: jetKE,
+        spec: spec, gP: gP, vp: vp,
+        thrust: thrust, ve: mdot > 0 ? thrust / mdot : 0, fusP: fusP, mSec: mSec,
+        ledgerResid: (pRel + fusP) - ledger, pJet: pFFout + jetKE
+    };
+}
+
+// With the ablator off there is no K to tune, so v_e is whatever the reactor
+// gives. It does not depend on mass flow: every power and every mass scales
+// together, so the ratio is fixed by the nuclide, burnup, epsilon and the foil.
+function reactorVe(D) { return reactor(D, 1, 0, 0).ve; }
+
+// Solve K to match a given veReq, handling the non-monotonic case when fusion
+// is present. Returns the SMALLEST K (least ablator mass) that meets veReq.
+function solveK(D, mdot, veReq, eta, esc) {
+    if (!D.ablOn) return 0;
+    // v_e(K) is NOT monotone once a fusion secondary is present. With pure
+    // fission fragments it falls with K (ablator dilutes the fast jet). With a
+    // secondary it first RISES - the fixed fusion pool rides the growing jet
+    // mass - then falls once dilution wins, so the curve is unimodal with an
+    // interior peak. Locate the peak by golden-section, then solve whichever
+    // flank the target sits on. When reachable, return the SMALLEST K that meets
+    // veReq (least ablator mass, which also maximises headroom).
+    var veAt = function (K) { return reactor(D, mdot, K, eta, esc).ve; };
+    var lo = 0, hi = 1e5;
+    // golden-section search for the maximum of veAt on [lo, hi]
+    var gr = 0.6180339887498949;
+    var a = lo, b = hi, c = b - gr * (b - a), d = a + gr * (b - a);
+    for (var i = 0; i < 100; i++) {
+        if (veAt(c) > veAt(d)) { b = d; } else { a = c; }
+        c = b - gr * (b - a); d = a + gr * (b - a);
+    }
+    var Kpeak = 0.5 * (a + b), vPeak = veAt(Kpeak);
+    var v0 = veAt(0);
+    if (vPeak < veReq) {
+        // peak still short of target: unreachable at any K. Return the peak so
+        // the caller sees the closest approach and flags the shortfall.
+        return (vPeak >= v0) ? Kpeak : 0;
+    }
+    // Two flanks can satisfy veReq: the rising flank (K in [0,Kpeak]) and the
+    // falling flank (K in [Kpeak, hi]). The pinned v_e is a REQUIREMENT the
+    // exhaust must at least meet; among feasible K the design choice is the one
+    // that pins v_e exactly, so the mission's momentum bookkeeping holds. Prefer
+    // the rising-flank (smaller K, less mass) solution when it exists, else the
+    // falling flank. When v0 already exceeds veReq and the curve only falls from
+    // there (pure fission), the exact match is on the falling flank.
+    var vHi = veAt(hi);
+    // rising flank: solve in [0, Kpeak] if the target is crossed there
+    if (v0 < veReq && vPeak >= veReq) {
+        var klo = 0, khi = Kpeak;
+        for (var j = 0; j < 200; j++) { var m = 0.5 * (klo + khi); if (veAt(m) < veReq) klo = m; else khi = m; }
+        return 0.5 * (klo + khi);
+    }
+    // falling flank: solve in [Kpeak, hi] if the target is crossed there
+    if (vPeak >= veReq && vHi <= veReq) {
+        var flo = Kpeak, fhi = hi;
+        for (var q = 0; q < 200; q++) { var m3 = 0.5 * (flo + fhi); if (veAt(m3) > veReq) flo = m3; else fhi = m3; }
+        return 0.5 * (flo + fhi);
+    }
+    // v0 >= veReq and curve rises first (fusion): zero is the least-K match only
+    // if v0 == veReq; otherwise the exact match is on the falling flank past the
+    // peak. But zero already exceeds the requirement, which is acceptable
+    // (surplus v_e is an advantage), so return 0 as the minimum-mass feasible K.
+    return 0;
+}
+
+function solveEta(D, mdot, veReq, allowKg, kappa, esc) {
+    if (!D.ablOn || !D.etaOn) return null;
+    var margin = 1e-6, eta = 0.99, K = null, r = null;
+    var Pcap = allowKg * (1 - margin) / kappa * 1e6;
+    for (var i = 0; i < 24; i++) {
+        K = solveK(D, mdot, veReq, eta, esc); if (K === null) return null;
+        r = reactor(D, mdot, K, eta, esc);
+        var room = Pcap - r.pDecHull;
+        if (!(room > 0)) return null;
+        var need = 1 - room / r.pDep;
+        var e2 = Math.min(Math.max(need, 0), EFFMAX / 100);
+        if (Math.abs(e2 - eta) <= 1e-15) { eta = e2; break; }
+        eta = e2;
+    }
+    for (var j = 0; j < 40; j++) {
+        K = solveK(D, mdot, veReq, eta, esc); if (K === null) return null;
+        r = reactor(D, mdot, K, eta, esc);
+        if (kappa * (r.pRes + r.pDecHull) / 1e6 <= allowKg) return { eta: eta, K: K };
+        var up = 1 - (1 - eta) * 0.5;
+        if (!(up > eta) || up > EFFMAX / 100) return null;
+        eta = up;
+    }
+    return null;
+}
+
+
+
+// ===========================================================================
+// UI
+// ===========================================================================
+var PROFILE='burncoast';
+var KPROF=function(){return PROFILE==='rendezvous'?2:1;};
+var CONSTRAINTS=makeConstraints(KPROF);
+
+function disp(x){ if(x===undefined||x===null||!isFinite(x))return '';
+  var a=Math.abs(x);
+  if(a!==0&&(a<1e-5||a>=1e12))return x.toExponential(SIG);
+  var s=x.toPrecision(SIG); if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,''); return s; }
+var SIPRE=[[1e24,'Y'],[1e21,'Z'],[1e18,'E'],[1e15,'P'],[1e12,'T'],[1e9,'G'],[1e6,'M'],[1e3,'k'],[1,'']];
+function siFmt(x,unit){ if(!isFinite(x)||x<=0)return['',unit];
+  for(var i=0;i<SIPRE.length;i++){ if(x>=SIPRE[i][0]) return [disp(x/SIPRE[i][0]),SIPRE[i][1]+unit]; }
+  return [x.toExponential(SIG-1),unit]; }
+function siStr(x,unit){ var p=siFmt(x,unit); return p[0]===''?'\u2014':p[0]+' '+p[1]; }
+function effpct(x){ var v=Math.min(x*100,EFFMAX);
+  if(v>=99.9999) return v.toFixed(6).replace(/0+$/,'').replace(/\.$/,'');
+  if(v>=99.99) return v.toFixed(4);
+  if(v>=99) return v.toFixed(3);
+  return disp(v); }
+
+var $=function(id){return document.getElementById(id);};
+var EL={}, FEL={}, pinned={};
+for(var vi=0;vi<VARS.length;vi++){ var vk=VARS[vi]; EL[vk]=$(vk); FEL[vk]=$('formula-'+vk); pinned[vk]=false; }
+var modeSelect=$('modeSelect'), warningArea=$('warningArea'), dofNote=$('dofNote');
+var num=function(id){ var v=parseFloat($(id).value); return isFinite(v)?v:0; };
+
+function readPinned(){ var p={};
+  for(var i=0;i<VARS.length;i++){ var k=VARS[i]; if(!pinned[k])continue;
+    var raw=EL[k].value.trim(); if(raw==='')continue; var n=parseFloat(raw); if(isNaN(n))continue; p[k]=n; }
+  return p; }
+
+function readDesign(){
+  var frac01=function(id,cap){ return Math.min(Math.max(num(id),0),cap===undefined?EFFMAX:cap)/100; };
+  var nk=$('nuclide').value, nd=(nk==='custom')?null:nuclideData(nk);
+  return { nuclide:nk,
+           qfis: nd?nd.Q:Math.max(num('qfis'),1),
+           share: nd?nd.share:Math.min(Math.max(num('share'),0),100)/100,
+           burnup:Math.min(Math.max(num('burnup'),0),100)/100,
+           ngFrac:frac01('ngFrac',100), decFrac:frac01('decFrac',100),
+           eps:frac01('mhd'), decayCap:frac01('decayCap'), decayShip:frac01('decayShip',100),
+           hion:Math.max(num('hion'),0)*1e9,
+           foilSig:Math.max(num('foilSig'),0), rngFuel:Math.max(num('rngFuel'),1e-9),
+           kStop:Math.max(num('rngAbl'),0)/Math.max(num('rngFuel'),1e-9),
+           fragReal:$('sFrag').checked, mhdOn:$('sMhd').checked, ablOn:$('sAbl').checked,
+           etaOn:$('sAbl').checked&&$('sEta').checked, radOn:$('sRad').checked,
+           etaMode:$('etaMode').value, eta:frac01('eta'),
+           radShare:Math.min(Math.max(num('radShare'),1e-6),100)/100,
+           filmRho:Math.max(num('filmRho'),1), filmTh:Math.max(num('filmTh'),1e-6),
+           filmT:Math.max(num('filmT'),1), filmE:Math.min(Math.max(num('filmE'),0.01),1),
+           fusOn:$('sFus').checked, yfus:Math.max(num('yfus'),0), hb:Math.max(num('hb'),1e-6),
+           rho0:Math.max(num('rho0'),1e-6), r0:Math.max(num('r0'),1e-6), compC:Math.max(num('compC'),1),
+           phiSec:Math.min(Math.max(num('phiIn'),0),100)/100 };
+}
+
+function setFormula(k,t){ var el=FEL[k]; if(!el)return; el.textContent=t||''; el.classList.toggle('active',!!t); }
+function setOut(id,txt,formula){ var el=$(id); if(el)el.value=(txt===null||txt===undefined)?'':txt;
+  var f=$('formula-'+id); if(f){ f.textContent=formula||''; f.classList.toggle('active',!!formula); } }
+
+var suppress=false;
+function compute(){
+  if(suppress)return;
+  PROFILE=modeSelect.value;
+  for(var i=0;i<VARS.length;i++){ var k=VARS[i]; if(pinned[k]&&EL[k].value.trim()==='') setPin(k,false); }
+  var R=solveAll(readPinned(),CONSTRAINTS,disp);
+
+  suppress=true;
+  for(var j=0;j<VARS.length;j++){
+    var kk=VARS[j], el=EL[kk];
+    if(pinned[kk]){ el.classList.add('pinned'); el.classList.remove('derived');
+      setFormula(kk,'\ud83d\udd12 pinned \u2014 the solver will not change this'); }
+    else { el.classList.remove('pinned'); el.classList.add('derived');
+      var v=R.values[kk]; el.value=(v===undefined)?'':disp(v);
+      setFormula(kk, v!==undefined ? (R.why[kk]||'') : (R.blocked[kk]?('\u26a0 '+R.blocked[kk]):'')); }
+  }
+  suppress=false;
+
+  var nPinned=0;
+  for(var m=0;m<VARS.length;m++){ if(pinned[VARS[m]]&&EL[VARS[m]].value.trim()!=='')nPinned++; }
+  var short=DOF-nPinned;
+  dofNote.className='dof'+(short!==0?' bad':'');
+  dofNote.innerHTML = short>0 ? 'pinned <b>'+nPinned+'</b> of '+DOF+' \u2014 pin <b>'+short+'</b> more to determine the rest'
+    : short<0 ? 'pinned <b>'+nPinned+'</b> of '+DOF+' \u2014 over-determined by <b>'+(-short)+'</b>'
+    : 'pinned <b>'+nPinned+'</b> of '+DOF+' \u2014 fully determined';
+
+  var msgs=[];
+  if(R.residuals.length) msgs.push('Inconsistent: '+R.residuals.map(function(c){return c.label;}).join('; ')+'. Unpin one of those to resolve it.');
+  for(var bk in R.blocked){ if(R.values[bk]===undefined) msgs.push(bk+': '+R.blocked[bk]); }
+  var stillUnknown=R.unresolved.filter(function(k){return !R.blocked[k];});
+  if(stillUnknown.length&&short>0) msgs.push('Not yet determined: '+stillUnknown.join(', ')+'.');
+  warningArea.style.display=msgs.length?'block':'none';
+  warningArea.textContent=msgs.join('  ');
+
+  mission(R.values);
+}
+
+// --- mission-layer derived quantities --------------------------------------
+var LAST=null,_ablWasOff=false,LAST_ETA=0;
+function mission(v){
+  var k=KPROF();
+  var haveBurn=(v.dv>0&&v.dv<1&&v.exh>0&&v.exh<100&&v.time>0&&v.frac!==undefined);
+  var shape=haveBurn?burnShape(v.dv,v.exh/100,k):null;
+
+  if(shape){ setOut('bmean',disp(shape.mean),'\u222b over the burn leg at constant thrust \u2014 '+
+      disp(100*shape.mean/v.dv)+'% of the peak speed \u03b2'); }
+  else setOut('bmean',null,'');
+
+  var tbCoord=(haveBurn&&v.frac>0)?v.time*(v.frac/100)*YR:null;
+  var gbar=shape?shape.gamma:1;
+  var tbProper=tbCoord!==null?tbCoord/gbar:null;
+  setOut('burndur', tbCoord!==null?disp(tbCoord/YR):null, tbCoord!==null?('f \u00b7 T'):'');
+  setOut('burnprop', tbProper!==null?disp(tbProper/YR):null,
+      tbProper!==null?('f \u00b7 T / \u03b3\u0304,  \u03b3\u0304 = '+disp(gbar)+' averaged over the burn'):'');
+
+  var mdot=null,F=null;
+  if(tbProper>0&&v.prop>0){ mdot=v.prop*1000/tbProper;
+    setOut('massflow',disp(mdot),'m\u209a / \u03c4_burn \u2014 loaded rest mass, measured in the ship frame'); }
+  else setOut('massflow',null,'');
+
+  if(mdot>0&&v.exh>0&&v.exh<100){ F=mdot*(v.exh/100)*C_MPS;
+    var fp=siFmt(F,'N'); $('thrust').value=fp[0]; $('thrustUnit').textContent=fp[1];
+    setFormulaFor('thrust','\u1e41 \u00b7 v\u2091 \u2014 the loaded mass carries the exhaust mass-energy, so no \u03b3\u2091 here');
+  } else { $('thrust').value=''; $('thrustUnit').textContent='N'; setFormulaFor('thrust',''); }
+
+  if(F>0&&v.wet>0) setOut('gforce',disp(F/(v.wet*1000*G0)),'F / (m_wet \u00b7 g\u2080)'); else setOut('gforce',null,'');
+  if(F>0&&v.dry>0) setOut('gpeak',disp(F/(v.dry*1000*G0)),'F / (m_dry \u00b7 g\u2080) \u2014 thrust is constant, mass is not'); else setOut('gpeak',null,'');
+
+  if(v.dv>0&&v.dv<1){
+    var w=k*Math.atanh(v.dv);
+    setOut('rap',disp(w),'k\u00b7atanh(\u03b2), k = '+k+' \u2014 '+
+      (k===2?'accelerate to \u03b2, then back to rest':'accelerate to \u03b2 and stay there')+
+      '. This is the \u0394v the rocket equation spends: v\u2091\u00b7lnR = '+disp(w*C_MPS/1000)+' km/s');
+    setOut('dvcoord',disp(Math.tanh(w)),'c\u00b7tanh(w/c) = '+disp(Math.tanh(w)*C_MPS/1000)+
+      ' km/s \u2014 the speed the rapidity reaches if spent one way. '+
+      (k===1
+        ? 'For a flyby that is the peak speed \u03b2 itself, since atanh is spent once and undone once; it is below the rapidity only because rapidity is not a speed.'
+        : 'Below the rapidity, and below 2\u03b2 = '+disp(2*v.dv)+' c as well, because velocities do not add.'));
+  } else { setOut('rap',null,''); setOut('dvcoord',null,''); }
+
+  if(k===2&&shape&&tbCoord>0&&v.ratio>1){
+    var q=1/Math.pow(v.ratio,0.5), a=100/v.exh;
+    var Z=Math.atanh(v.dv);
+    var Jm=(a-(a*Math.cosh(Z)+Math.sinh(Z))*q)/(a*a-1);
+    var fA=Jm/shape.A, fD=1-fA;
+    setOut('split',disp(fA*100)+' : '+disp(fD*100),
+      disp(tbCoord*fA/YR)+' yr accelerating, '+disp(tbCoord*fD/YR)+
+      ' yr braking \u2014 equal rapidity each, but the braking leg is lighter and quicker');
+  } else if(tbCoord>0){ setOut('split','single burn','flyby \u2014 no braking burn'); }
+  else setOut('split',null,'');
+
+  LAST={v:v,mdot:mdot,F:F,tbProper:tbProper,ve:(v.exh>0?(v.exh/100)*C_MPS:null)};
+  design();
+  if(typeof window.updateViz==='function')
+    window.updateViz({R:v.ratio, ve:(v.exh>0?(v.exh/100)*C_MPS:null), F:F,
+                      burnS:(tbCoord>0?tbCoord:null), propT:v.prop});
+}
+function setFormulaFor(id,t){ var f=$('formula-'+id); if(f){ f.textContent=t||''; f.classList.toggle('active',!!t); } }
+
+// --- design layer ----------------------------------------------------------
+function clearDesign(msg){
+  var ids=['oEsc','oVe','oEta','oK','oFuel','oAblM','oVp','oPrel','oPdep','oPabl','oRadL','oRadM','oRadA','oResid','oRhoR','oFusF','oYeff','oPhi','oKneed'];
+  for(var i=0;i<ids.length;i++) setOut(ids[i],null,'');
+  $('adviceBox').style.display='none';
+  $('ledgerTable').innerHTML='<tr><td>\u2014</td></tr>';
+  $('surface').innerHTML='<tr><td>\u2014</td></tr>';
+  $('surfaceNote').textContent='';
+  $('levers').innerHTML='<tr><td>\u2014</td></tr>';
+  $('verdictBox').className='verdict';
+  $('verdictHead').textContent='\u2014';
+  $('verdictText').textContent=msg||'';
+}
+
+function design(){
+  var D=readDesign();
+  // switch dependencies: coupling is a property of the ablator, so it cannot
+  // outlive it. Everything else is independent.
+  $('sEta').disabled=!D.ablOn;
+  // Switching the ablator off forces the coupling off, since coupling into a jet
+  // that does not exist is meaningless. Switching it back on must hand the
+  // coupling back, or the ablator silently returns crippled.
+  if(!D.ablOn&&$('sEta').checked){ $('sEta').checked=false; D.etaOn=false; }
+  if(D.ablOn&&!$('sEta').checked&&_ablWasOff){ $('sEta').checked=true; D.etaOn=true; }
+  _ablWasOff=!D.ablOn;
+  $('eta').disabled=(D.etaMode==='solve')||!D.etaOn;
+  $('etaMode').disabled=!D.etaOn;
+  $('mhd').disabled=!D.mhdOn;
+  $('foilSig').disabled=!D.fragReal;
+  ['hion','rngAbl'].forEach(function(id){ $(id).disabled=!D.ablOn; });
+  ['radShare','filmTh','filmRho','filmT','filmE'].forEach(function(id){ $(id).disabled=!D.radOn; });
+  var custom=(D.nuclide==='custom');
+  $('qfis').disabled=!custom; $('share').disabled=!custom;
+  if(!custom){ $('qfis').value=disp(D.qfis); $('share').value=disp(D.share*100); }
+  ['sFrag','sMhd','sAbl','sEta','sRad'].forEach(function(id){
+    var r=$('row-'+id); if(r)r.classList.toggle('off',!$(id).checked); });
+
+  var vff=vffFromYield(D.qfis,D.share);
+  setOut('oVff',disp(vff*100),'v_ff follows from q_FF = share \u00b7 Q = (\u03b3\u22121)c\u00b2 \u2014 '+
+    'nothing an engineer does makes fragments leave faster');
+  setFormulaFor('nuclide', custom
+    ? 'Q and the share are yours to set, but v_ff still follows from them \u2014 the pair cannot be made inconsistent'
+    : nuclideData(D.nuclide).name+': Q and fragment share are nuclear data, so v_ff is fixed at '+disp(vff*100)+' %c');
+  var esc=D.fragReal?escapeStats(D.foilSig/D.rngFuel):{fN:1,fE:1,fP:1,rho:0};
+  setFormulaFor('sFrag', D.fragReal
+    ? 'ON \u2014 fragments lose energy crossing the foil they were born in. \u03c1 = \u03c3_f/R = '+disp(esc.rho)+
+      ', so '+disp(esc.fN*100)+'% clear it carrying '+disp(esc.fE*100)+'% of the energy and '+disp(esc.fP*100)+'% of the momentum'
+    : 'OFF \u2014 every fragment escapes at full birth energy. A limit case with no known engineering path: it needs a foil of zero thickness');
+  setFormulaFor('foilSig', D.fragReal
+    ? 'fissions are uniform through it; at '+disp(D.rngFuel)+' mg/cm\u00b2 range this foil is '+disp(esc.rho)+' ranges thick'
+    : 'not used while fragment escape realism is off');
+  setFormulaFor('sMhd', D.mhdOn ? 'ON \u2014 coils redirect the forward half, \u03be = \u00bd(1+\u03b5)'
+    : 'OFF \u2014 bare isotropic split, \u03be = \u00bd. Half the escaping fragments simply leave forwards. Buildable today');
+  setFormulaFor('sAbl', D.ablOn ? 'ON \u2014 pykrete ablates into a jet, carrying deposited heat away as motion'
+    : 'OFF \u2014 no ablator, no jet. The whole deposit has nowhere to go but the radiator, and v\u2091 becomes an output of the reactor');
+  setFormulaFor('sEta', D.etaOn ? 'ON \u2014 P_abl = \u03b7\u00b7P_dep'
+    : (D.ablOn?'OFF \u2014 \u03b7 = 0: none of the deposit couples into the jet':'unavailable: there is no ablator to couple into'));
+  setFormulaFor('sRad', D.radOn ? 'ON \u2014 self-radiating film, sized by \u03ba and deducted from dry mass'
+    : 'OFF \u2014 no radiator exists, so any radiator load at all is unmanaged');
+  var fk=filmKappa(D.filmRho,D.filmTh,D.filmT,D.filmE);
+  setFormulaFor('filmE','\u03ba = \u03c1\u03c4 / (2\u00b7\u03b5_r\u00b7\u03c3\u00b7T\u2074) = '+disp(fk.kappa)+
+    ' kg/MW \u2014 '+disp(fk.areal)+' kg/m\u00b2 radiating '+disp(fk.flux)+' W/m\u00b2 from both faces');
+  setFormulaFor('etaMode', D.etaMode==='solve'
+    ? 'the least coupling whose uncoupled remainder still fits the radiator allowance'
+    : 'the value below is used as given');
+
+  // --- fusion secondary: user's compression -> burnup -> effective yield ----
+  var fus={rhoR:0,f:0,Yeff:0};
+  if(D.fusOn){
+    var fb=fusionBurnup(D.compC,D.rho0,D.r0,D.hb);
+    fus.rhoR=fb.rhoR; fus.f=fb.f; fus.Yeff=D.yfus*fb.f;
+    setOut('oRhoR',disp(fb.rhoR),'\u03c1\u2080\u00b7R\u2080\u00b7C^(2/3) \u2014 '+disp(D.rho0)+'\u00b7'+disp(D.r0)+'\u00b7'+disp(D.compC)+'^(2/3)');
+    setOut('oFusF',disp(fb.f*100),'\u03c1R / (\u03c1R + H_B) \u2014 '+
+      (fb.f>=0.31?'past the 31% break-even, so the secondary adds net exhaust velocity':'below the 31% break-even, so the secondary still dilutes'));
+    var yp=siFmt(fus.Yeff,'J/kg'); $('oYeff').value=yp[0]; $('oYeffU').textContent=yp[1];
+    setFormulaFor('oYeff','Y_fus \u00b7 f = the fusion energy actually coupled per kg of secondary');
+  } else {
+    ['oRhoR','oFusF','oYeff'].forEach(function(id){ setOut(id,null,''); });
+  }
+  setFormulaFor('sFus', D.fusOn
+    ? 'ON \u2014 the secondary adds '+siStr(fus.Yeff,'J/kg')+' to the jet at your compression C = '+disp(D.compC)+
+      '. v_ff is unchanged; this is coupled energy, gated entirely by your own hydro figure.'
+    : 'OFF \u2014 pure fission-fragment engine. Switch on to fold a compressed fusion secondary into the exhaust.');
+  // burnup-ceiling flag: a foil rho ranges thick cannot self-fission past this
+  var rhoRanges=D.fragReal?D.foilSig/D.rngFuel:Infinity;
+  var bCeil=D.fragReal?burnupCeiling(rhoRanges):1;
+  setFormulaFor('burnup', (D.fragReal&&D.burnup>bCeil*1.0001)
+    ? '\u26a0 '+disp(D.burnup*100)+'% exceeds the '+disp(bCeil*100)+'% a foil '+disp(rhoRanges)+
+      ' ranges thick can self-fission in one pass \u2014 thin foil and high burnup are inconsistent'
+    : 'fraction of loaded fuel that fissions \u2014 the rest joins the jet as mass'+
+      (D.fragReal?' (ceiling '+disp(bCeil*100)+'% at this foil)':''));
+
+  D.fusYeff=(D.fusOn?fus.Yeff:0);
+  var gate=feasible(D);
+  if(gate){ clearDesign('Inconsistent nuclear data: '+gate+'.'); return; }
+
+  // The refusal. With no ablator there is no K to tune, so v_e stops being
+  // something the mission may pin and becomes an output of the reactor. Rather
+  // than quietly unpinning what you pinned, say so and give the value.
+  if(!D.ablOn&&pinned.exh){
+    var veR=reactorVe(D);
+    clearDesign('The ablator is off, so there is no fuel:ablator ratio left to tune and v\u2091 is an output of the reactor, not a mission input. '+
+      'This reactor delivers '+disp(veR/C_MPS*100)+' %c ('+disp(veR/1000)+' km/s). Unpin Exhaust v\u2091 above and pin Peak speed \u03b2 '+
+      'or Mass ratio in its place \u2014 the mission needs five pins either way. The trajectory will then say what v\u2091 it wants, '+
+      'and this panel will say whether the reactor can give it.');
+    return;
+  }
+
+  if(!LAST||!(LAST.mdot>0)||!(LAST.ve>0)||!(LAST.tbProper>0)||!(LAST.v.dry>0)){
+    clearDesign('Pin enough of the mission above to fix propellant mass, burn fraction and exhaust velocity.');
+    return;
+  }
+  var mdot=LAST.mdot, veReq=LAST.ve, tau=LAST.tbProper, mdry=LAST.v.dry*1000;
+  var allow=D.radOn?mdry*D.radShare:0;
+
+  var eta,K,note='',veShort=null,phiRes=null,kNeed=null;
+  if(D.ablOn&&D.fusOn){
+    // Secondary present: φ is user input; we solve K to match v_e.
+    // D.phiSec is already read from the input field.
+    eta=D.etaOn?(D.etaMode==='pin'?D.eta:EFFMAX/100):0;
+    if(D.etaOn&&D.etaMode==='solve'&&D.radOn){
+      var sF=solveEta(D,mdot,veReq,allow,fk.kappa,esc); if(sF) eta=sF.eta;
+    }
+    K=solveK(D,mdot,veReq,eta,esc);
+    if(K===null){ K=0; veShort=reactor(D,mdot,0,eta,esc).ve; }
+    // compute Kfloor and kNeed for information only
+    var Kfloor=D.kStop*(1-(D.mhdOn?0.5*(1+D.eps):0.5));
+    kNeed=solveKforPhi(D,mdot,veReq,eta,esc,Kfloor,1e4);
+    // If K is found but the requested φ is not physically possible, report.
+    // But since we solved K for given φ, it is fine.
+  } else if(!D.ablOn){
+    eta=0; K=0;
+    var veAch=reactorVe(D);
+    if(veAch<veReq*(1-1e-6)) veShort=veAch;
+    var veOverOff=(veAch>veReq*(1+1e-6))?veAch:null;
+  } else if(D.etaOn&&D.etaMode==='solve'&&D.radOn){
+    var s=solveEta(D,mdot,veReq,allow,fk.kappa,esc);
+    if(!s){
+      var probe=solveK(D,mdot,veReq,EFFMAX/100,esc);
+      if(probe===null){ eta=EFFMAX/100; K=0; veShort=reactor(D,mdot,0,eta,esc).ve; }
+      else { eta=EFFMAX/100; K=probe; note='no \u03b7 below 100% fits the allowance \u2014 shown at the cap'; }
+    } else { eta=s.eta; K=s.K; }
+  } else {
+    eta=D.etaOn?D.eta:0;
+    K=solveK(D,mdot,veReq,eta,esc);
+    // Unreachable v_e is a result worth showing, not a reason to blank the page:
+    // the shortfall is exactly what the comparison is for.
+    if(K===null){ K=0; veShort=reactor(D,mdot,0,eta,esc).ve; }
+  }
+  // After solving K, compute the reactor with that K and the (possibly solved) eta.
+  var r=reactor(D,mdot,K,eta,esc);
+  // General closure check, both directions.
+  if(D.ablOn&&r.ve<veReq*(1-1e-6)) veShort=r.ve;
+  var veOver=(D.ablOn&&r.ve>veReq*(1+1e-6))?r.ve:null;
+  var radLoad=r.pRes+r.pDecHull;
+  var radMass=D.radOn?fk.kappa*radLoad/1e6:0;
+  var radArea=D.radOn?radLoad/fk.flux:0;
+  var Kmin=D.ablOn?D.kStop*(1-r.xi):0;
+
+  if(D.ablOn&&D.fusOn){
+    // φ is already set; output it.
+    setOut('oPhi', disp(D.phiSec*100),
+      'user-set LiD fraction of the ablator; K is solved to match v\u2091');
+    setOut('oKneed', (kNeed&&kNeed.K!==null)?disp(kNeed.K):'\u2014',
+      (kNeed&&kNeed.K!==null)
+        ? (K>=kNeed.K?'\u2713 your K = '+disp(K)+' is above it':'\u26a0 your K = '+disp(K)+' is below it, so no \u03c6 can close this')
+        : 'no K up to 10\u2074 closes it at this compression \u2014 raise C');
+  } else {
+    setOut('oPhi',null,'');
+    setOut('oKneed',null,'');
+  }
+  // Kin input is removed; we only output oK.
+  setOut('oEsc', D.fragReal?disp(esc.fN*100):'100',
+    D.fragReal?('carrying '+disp(esc.fE*100)+'% of the birth energy and '+disp(esc.fP*100)+'% of the momentum')
+              :'realism off \u2014 the zero-thickness-foil limit');
+  setOut('oVe', disp(r.ve/C_MPS*100),
+    veShort!==null ? '\u26a0 the trajectory asks for '+disp(veReq/C_MPS*100)+' %c and the reactor gives only '+disp(veShort/C_MPS*100)+' %c'
+                   : (veOver!==null
+                      ? 'the reactor delivers '+disp(r.ve/C_MPS*100)+' %c, above the '+disp(veReq/C_MPS*100)+
+                        ' %c pinned \u2014 surplus exhaust velocity, with K already at zero. Raise the pin to spend it.'
+                      : 'matches what the trajectory asks for, by construction of K'));
+  setOut('oEta', D.etaOn?effpct(eta):'0', note||(D.etaOn
+    ? (D.etaMode==='solve'&&D.radOn?'least coupling that keeps the radiator inside '+disp(allow/1000)+' t':'pinned')
+    : 'coupling switched off \u2014 the whole deposit goes to the radiator'));
+  setOut('oK', D.ablOn?disp(K):'0', D.ablOn
+    ? ('ablator per unit fuel, solved so the exhaust reaches '+disp(veReq/1000)+
+       ' km/s \u2014 stopping range needs at least '+disp(Kmin)+
+       (K>=Kmin?' \u2713':(veShort!==null?' \u26a0 below the floor':' \u2014 not needed: the fusion secondary carries the jet')))
+    : 'no ablator aboard');
+  setOut('oFuel',disp(r.mff*tau/1000),'\u1e41_fuel \u00b7 \u03c4_burn \u2014 of which '+disp(r.mFis*tau/1000)+' t fissions');
+  setOut('oAblM',disp(r.mAbl*tau/1000),'\u1e41_abl \u00b7 \u03c4_burn \u2014 fuel + ablator = '+disp((r.mff+r.mAbl)*tau/1000)+' t, the propellant mass exactly');
+  setOut('oVp',disp(r.vp/1000), r.vp>0
+    ? 'from '+siStr(r.spec,'J/kg')+' per kg of jet, after paying the '+disp(D.hion/1e9)+' GJ/kg enthalpy'
+    : (D.ablOn?'the deposit does not clear the ablator enthalpy \u2014 no jet':'no ablator, so no jet'));
+  var put=function(id,uid,val,unit,f){ var p=siFmt(val,unit); $(id).value=p[0]; $(uid).textContent=p[1]; setFormulaFor(id,f); };
+  put('oPrel','oPrelU',r.pRel,'W','\u1e41_fis \u00b7 Q');
+  put('oPdep','oPdepU',r.pDep,'W','self-absorbed in foil + stopped fragments + half the neutrals + matrix-absorbed decay');
+  put('oPabl','oPablU',r.pAbl,'W',D.etaOn?'\u03b7 \u00b7 P_dep \u2014 sublimation plus jet kinetic energy':'nothing couples into the jet');
+  put('oRadL','oRadLU',radLoad,'W','(1\u2212\u03b7)\u00b7P_dep + decay heat intercepted by the hull');
+  setOut('oRadM',D.radOn?disp(radMass/1000):'0', D.radOn
+    ? '\u03ba \u00b7 P_rad \u2014 allowance '+disp(allow/1000)+' t, spare '+disp((allow-radMass)/1000)+' t'
+    : 'no radiator \u2014 '+siStr(radLoad,'W')+' is unmanaged');
+  setOut('oRadA',D.radOn?disp(radArea):'0', D.radOn?('P_rad / flux \u2014 a square '+disp(Math.sqrt(radArea))+' m on a side'):'');
+  var ulpBase=r.pRel+(r.fusP||0);
+  var ulp=ulpBase>0?Math.abs(r.ledgerResid)/ulpBase/2.220446049250313e-16:0;
+  setOut('oResid', r.ledgerResid===0?'0':disp(ulp)+' \u03b5',
+    r.ledgerResid===0
+      ? 'independent sum of the disjoint channels reproduces the released power bit for bit'
+      : (ulp<=100
+         ? 'independent sum of the disjoint channels, closing to '+disp(ulp)+' machine epsilon \u2014 rounding, not physics'
+         : '\u26a0 the channels do not sum to the released power'));
+
+  var grpA=[['\u2014 fragment kinetic energy',r.pFF],['\u2014 neutral (n+\u03b3) yield',r.pNG],
+            ['\u2014 delayed decay heat',r.pDec],['\u2014 neutrinos and remainder',r.pOth]];
+  var grpB=[['\u2014 fragment energy lost in foil',r.pFFfoil],['\u2014 fragments stopped in block',r.pFFdep],
+            ['\u2014 neutrals meeting the block',r.pNGdep],['\u2014 decay heat absorbed by matrix',r.pDecMat]];
+  var grpC=[['Fragments escaping aft',r.pFFout,'thrust'],['Neutrals escaping',r.pNGout,'lost'],
+            ['Decay heat leaving with fragments',r.pDecGone,'lost'],['Decay heat radiated direct',r.pDecVoid,'radiated'],
+            ['Decay heat intercepted by hull',r.pDecHull,'RADIATOR'],['Neutrinos and remainder',r.pOth,'escapes'],
+            ['Ablator sublimation',r.pSubl,'phase change'],['Ablator jet kinetic energy',r.jetKE,'thrust'],
+            ['Uncoupled remainder (1\u2212\u03b7)',r.pRes,'RADIATOR']];
+  // Percentages are of the TOTAL energy entering the jet accounting, which with
+  // the fusion secondary on is fission + coupled fusion. Using pRel alone makes
+  // the jet rows sum past 100%. The fusion energy is a labelled row of its own.
+  var relTot=r.pRel+(r.fusP||0);
+  var pc=function(x){ return relTot>0?disp(100*x/relTot)+' %':'\u2014'; };
+  var html='<tr><th>Channel</th><th class="num">Power</th><th class="num">of released</th><th>Fate</th></tr>';
+  html+='<tr><td><b>Total into jet accounting</b></td><td class="num"><b>'+siStr(relTot,'W')+'</b></td><td class="num"><b>100 %</b></td><td>fission + fusion</td></tr>';
+  html+='<tr><td>&mdash; released by fission</td><td class="num">'+siStr(r.pRel,'W')+'</td><td class="num">'+pc(r.pRel)+'</td><td>by origin</td></tr>';
+  if((r.fusP||0)>0) html+='<tr><td>&mdash; coupled fusion secondary</td><td class="num">'+siStr(r.fusP,'W')+'</td><td class="num">'+pc(r.fusP)+'</td><td>external, into jet</td></tr>';
+  for(var q=0;q<grpA.length;q++) html+='<tr><td>'+grpA[q][0]+'</td><td class="num">'+siStr(grpA[q][1],'W')+'</td><td class="num">'+pc(grpA[q][1])+'</td><td></td></tr>';
+  html+='<tr><td><b>Routed onto the block</b></td><td class="num"><b>'+siStr(r.pDep,'W')+'</b></td><td class="num"><b>'+pc(r.pDep)+'</b></td><td>intermediate, not a fate</td></tr>';
+  for(var q2=0;q2<grpB.length;q2++) html+='<tr><td>'+grpB[q2][0]+'</td><td class="num">'+siStr(grpB[q2][1],'W')+'</td><td class="num">'+pc(grpB[q2][1])+'</td><td></td></tr>';
+  var sumC=0; for(var q3=0;q3<grpC.length;q3++) sumC+=grpC[q3][1];
+  html+='<tr><td><b>Final fates</b></td><td class="num"><b>'+siStr(sumC,'W')+'</b></td><td class="num"><b>'+pc(sumC)+'</b></td><td>these, and only these, partition</td></tr>';
+  for(var q4=0;q4<grpC.length;q4++) html+='<tr><td>'+grpC[q4][0]+'</td><td class="num">'+siStr(grpC[q4][1],'W')+'</td><td class="num">'+pc(grpC[q4][1])+'</td><td>'+grpC[q4][2]+'</td></tr>';
+  $('ledgerTable').innerHTML=html;
+
+  // trade surface. Runs the same gate as the banner; a pair that breaks the
+  // physics is reported as broken, never as a number.
+  if(D.ablOn&&D.etaOn&&D.radOn){
+    var kappas=[fk.kappa*100,fk.kappa*10,fk.kappa*3,fk.kappa,fk.kappa/3,fk.kappa/10].filter(function(x){return isFinite(x)&&x>0;});
+    var epsList=[0,50,90,99,99.99];
+    var srows='<tr><th>\u03ba kg/MW</th>';
+    for(var e0=0;e0<epsList.length;e0++) srows+='<th class="num">\u03b5='+epsList[e0]+'%</th>';
+    srows+='</tr>';
+    var best=null;
+    for(var ki=0;ki<kappas.length;ki++){
+      var kp=kappas[ki];
+      srows+='<tr><td>'+disp(kp)+(Math.abs(kp-fk.kappa)<fk.kappa*1e-9?' \u2190':'')+'</td>';
+      for(var ei=0;ei<epsList.length;ei++){
+        var D2={}; for(var pk in D)D2[pk]=D[pk]; D2.eps=Math.min(epsList[ei],EFFMAX)/100;
+        if(feasible(D2)){ srows+='<td class="num">breaks</td>'; continue; }
+        var sol=solveEta(D2,mdot,veReq,allow,kp,esc);
+        if(!sol){ srows+='<td class="num">\u2014</td>'; continue; }
+        var nines=sol.eta<=0?0:-Math.log10(Math.max(1-sol.eta,1e-16));
+        if(best===null||nines<best.n) best={k:kp,e:epsList[ei],n:nines,eta:sol.eta};
+        srows+='<td class="num">'+(sol.eta<=0?'any \u03b7':effpct(sol.eta)+' %')+'</td>';
+      }
+      srows+='</tr>';
+    }
+    $('surface').innerHTML=srows;
+    $('surfaceNote').textContent=best
+      ? 'Lower is easier; a dash means no coupling below 100% fits the allowance at that pair, "breaks" means the pair is not physical. Easiest here: \u03ba = '+
+        disp(best.k)+' kg/MW at \u03b5 = '+best.e+'%, needing \u03b7 = '+effpct(best.eta)+'% ('+disp(best.n)+' nines). The arrow marks the design\u2019s own \u03ba.'
+      : 'No combination on this ladder fits the allowance.';
+  } else {
+    $('surface').innerHTML='<tr><td>\u2014</td></tr>';
+    $('surfaceNote').textContent='The trade surface maps \u03b7 against \u03ba and \u03b5, so it needs the ablator, the coupling and the radiator all switched on.';
+  }
+
+  // levers, each gated
+  var leverIds=[['foilSig','Foil areal density'],['rngFuel','Fragment range in fuel'],['burnup','Burnup'],
+    ['ngFrac','Neutral share'],['decFrac','Decay heat'],['mhd','MHD redirection \u03b5'],
+    ['hion','Ablator enthalpy'],['decayCap','Matrix absorption'],['decayShip','Hull interception'],
+    ['filmT','Film temperature'],['filmTh','Film thickness']];
+  var res=[];
+  for(var li=0;li<leverIds.length;li++){
+    var id=leverIds[li][0], el=$(id), old=el.value, rel=null, why='';
+    if(el.disabled){ res.push([leverIds[li][1],null,'switched off']); continue; }
+    try{
+      el.value=String(parseFloat(old)*1.1);
+      var D3=readDesign();
+      var g3=feasible(D3);
+      if(g3){ why='breaks the physics'; }
+      else {
+        var esc3=D3.fragReal?escapeStats(D3.foilSig/D3.rngFuel):{fN:1,fE:1,fP:1,rho:0};
+        var fk3=filmKappa(D3.filmRho,D3.filmTh,D3.filmT,D3.filmE);
+        var K3=solveK(D3,mdot,veReq,eta,esc3);
+        if(K3===null){ why='no solution'; }
+        else { var r3=reactor(D3,mdot,K3,eta,esc3);
+          var m3=D3.radOn?fk3.kappa*(r3.pRes+r3.pDecHull)/1e6:0;
+          rel=(m3-radMass)/Math.max(radMass,1e-30); }
+      }
+    } finally { el.value=old; }
+    res.push([leverIds[li][1],rel,why]);
+  }
+  var maxAbs=1e-30;
+  for(var mi=0;mi<res.length;mi++){ if(res[mi][1]!==null) maxAbs=Math.max(maxAbs,Math.abs(res[mi][1])); }
+  res.sort(function(a,b){ return (b[1]===null?-1:Math.abs(b[1]))-(a[1]===null?-1:Math.abs(a[1])); });
+  var lhtml='<tr><th>Lever, +10%</th><th class="num">\u0394 radiator mass</th><th></th></tr>';
+  for(var ri=0;ri<res.length;ri++){
+    var nm=res[ri][0], rl=res[ri][1];
+    var txt=(rl===null)?(res[ri][2]||'no solution'):(Math.abs(rl)<1e-12?'\u2014':(rl>0?'+':'')+disp(rl*100)+' %');
+    var w=(rl===null)?0:Math.abs(rl)/maxAbs*100;
+    lhtml+='<tr><td>'+nm+'</td><td class="num">'+txt+'</td><td><div class="bar"><span style="width:'+w.toFixed(2)+'%"></span></div></td></tr>';
+  }
+  $('levers').innerHTML=lhtml;
+
+  // --- exhaust-velocity headroom -------------------------------------------
+  // A large K is the solver loading ablator mass for the sole purpose of
+  // dragging a fast exhaust back down to a v_e the mission pinned. That is not
+  // pure waste - the ablator turns deposited heat into jet momentum - but if
+  // the pin is soft it is throwing away the one quantity the vehicle exists to
+  // maximise. Say what raising the pin would buy, and what it would cost.
+  var adv=$('adviceBox'); adv.style.display='none';
+  if(D.ablOn&&!D.fusOn&&pinned.exh&&K>1){
+    var veMax=reactor(D,mdot,0,eta,esc).ve;
+    if(veMax>veReq*1.001){
+      var vePct=veMax/C_MPS*100;
+      var p2=readPinned(); p2.exh=vePct;
+      var R2=solveAll(p2,CONSTRAINTS,disp), v2=R2.values;
+      var txt='<b>The exhaust is being slowed on purpose.</b> This reactor delivers '+disp(vePct)+
+        ' %c on fuel alone, but v\u2091 is pinned at '+disp(veReq/C_MPS*100)+' %c, so K = '+disp(K)+
+        ' t of ablator per tonne of fuel is loaded largely to drag it back down \u2014 only '+disp(Kmin)+
+        ' is needed to stop the inbound fragments. Raising the pin is almost always the better trade.';
+      if(v2.ratio>1&&v2.wet>0&&v2.dv>0){
+        var sh2=burnShape(v2.dv,vePct/100,KPROF());
+        var tb2=v2.time*(v2.frac/100)*YR, tp2=tb2/(sh2?sh2.gamma:1);
+        var md2=tp2>0?v2.prop*1000/tp2:0, F2=md2*veMax;
+        txt+='<br>Pinning '+disp(vePct)+' %c instead, on this same trajectory: mass ratio '+disp(LAST.v.ratio)+
+          ' \u2192 '+disp(v2.ratio)+', wet mass '+disp(LAST.v.wet)+' t \u2192 '+disp(v2.wet)+' t.';
+        txt+='<br><b>What it costs.</b> Mass flow falls from '+disp(mdot)+' to '+disp(md2)+
+          ' kg/s, so thrust falls from '+siStr(LAST.F,'N')+' to '+siStr(F2,'N')+
+          ' (F = \u1e41\u00b7v\u2091), and the deposit is spread over less ablator, so waste heat per kg of propellant rises.';
+      }
+      adv.innerHTML=txt; adv.style.display='block';
+    }
+  }
+
+  var problems=[];
+  if(veShort!==null) problems.push('the reactor delivers '+disp(veShort/C_MPS*100)+' %c but the trajectory needs '+disp(veReq/C_MPS*100)+' %c');
+  // The stopping-range floor only bites when ablator is meant to stop fragments.
+  // If v_e is already met (no shortfall) the design is feasible regardless of K;
+  // a zero-K solution with the fusion secondary carrying the jet is not a fault.
+  if(D.ablOn&&K<Kmin&&veShort!==null) problems.push('ablator ratio '+disp(K)+' is below the '+disp(Kmin)+' stopping-range floor');
+  if(D.ablOn&&D.etaOn&&!(r.vp>0)) problems.push('the deposit does not clear the ablator enthalpy, so there is no jet');
+  if(D.radOn&&radMass>allow) problems.push('radiator needs '+disp(radMass/1000)+' t against a '+disp(allow/1000)+' t allowance');
+  if(!D.radOn&&radLoad>0) problems.push(siStr(radLoad,'W')+' of waste heat with no radiator to reject it');
+  var ok=problems.length===0;
+  $('verdictBox').className='verdict '+(ok?'ok':'no');
+  $('verdictHead').textContent=ok?'Closes \u2014 heat managed':'Does not close';
+  var modeStr=(D.fragReal?'foil realism on':'FOIL REALISM OFF \u2014 limit case')+', '+
+              (D.mhdOn?'\u03b5 = '+effpct(D.eps)+'%':'no MHD')+', '+
+              (D.ablOn?'ablator on':'no ablator')+', '+
+              (D.etaOn?'\u03b7 = '+effpct(eta)+'%':'no coupling')+', '+
+              (D.radOn?'radiator on':'no radiator');
+  $('verdictText').textContent=ok
+    ? 'Wet mass '+disp(LAST.v.wet)+' t on '+disp(LAST.v.prop)+' t of propellant, '+disp(r.mff*tau/1000)+
+      ' t of it fuel. Radiator '+disp(radMass/1000)+' t inside the '+disp(allow/1000)+' t allowance, rejecting '+
+      siStr(radLoad,'W')+' from '+disp(radArea)+' m\u00b2 of film. ['+modeStr+']'
+    : problems.join('; ')+'. ['+modeStr+']';
+}
+
+// --- pinning ---------------------------------------------------------------
+function setPin(k,on){ pinned[k]=on;
+  var btn=document.querySelector('.lock-btn[data-target="'+k+'"]');
+  if(btn){ btn.textContent=on?'\ud83d\udd12':'\ud83d\udd13'; btn.classList.toggle('locked',on); } }
+var locks=document.querySelectorAll('.lock-btn');
+for(var li2=0;li2<locks.length;li2++){ (function(btn){
+  btn.addEventListener('click',function(){ var k=btn.getAttribute('data-target'); setPin(k,!pinned[k]); compute(); });
+})(locks[li2]); }
+for(var vj=0;vj<VARS.length;vj++){ (function(k){
+  EL[k].addEventListener('input',function(){ if(suppress)return; if(!pinned[k])setPin(k,true); compute(); });
+  EL[k].addEventListener('change',function(){ if(suppress)return; compute(); });
+})(VARS[vj]); }
+var designIds=['nuclide','qfis','share','burnup','ngFrac','decFrac','mhd','decayCap','decayShip','hion',
+  'rngAbl','rngFuel','foilSig','sFrag','sMhd','sAbl','sEta','sRad','etaMode','eta','radShare','filmTh','filmRho','filmT','filmE',
+  'sFus','yfus','hb','rho0','r0','compC','phiIn'];
+for(var di=0;di<designIds.length;di++){ var de=$(designIds[di]); if(!de)continue;
+  de.addEventListener('input',design); de.addEventListener('change',design); }
+$('eta').addEventListener('input',function(){ $('etaMode').value='pin'; });
+var areaEl=$('vizArea');
+if(areaEl){ areaEl.addEventListener('input',compute); areaEl.addEventListener('change',compute); }
+modeSelect.addEventListener('change',compute);
+$('unpinAllBtn').addEventListener('click',function(){ for(var i=0;i<VARS.length;i++)setPin(VARS[i],false); compute(); });
+$('clearAllBtn').addEventListener('click',function(){ suppress=true;
+  for(var i=0;i<VARS.length;i++){ if(!pinned[VARS[i]]) EL[VARS[i]].value=''; } suppress=false; compute(); });
+
+// --- derive the compression ratio from the exhaust velocity ----------------
+// Inverts the SAME rhoR/burnup relation the forward path uses, at K = 0. The
+// result is a compression the user's own Y_fus and H_B imply for a v_e they
+// pinned; nothing here originates a device figure.
+$('deriveC').addEventListener('click',function(){
+  var note=function(txt){ var f=$('formula-compC'); if(f){ f.textContent=txt; f.classList.add('active'); } };
+  var D=readDesign();
+  if(!D.fusOn){ note('\u26a0 switch the fusion secondary on first \u2014 with no secondary there is nothing to compress.'); return; }
+  if(!LAST||!(LAST.mdot>0)||!(LAST.ve>0)||!(LAST.v.dry>0)){
+    note('\u26a0 pin enough of the mission first \u2014 deriving C needs a mass flow and an exhaust velocity.'); return;
+  }
+  var esc=D.fragReal?escapeStats(D.foilSig/D.rngFuel):{fN:1,fE:1,fP:1,rho:0};
+  // eta is re-solved as C changes, and C depends on eta, so iterate the pair to a
+  // fixed point. Without this the answer depends on whatever C was in the box.
+  var fkC=filmKappa(D.filmRho,D.filmTh,D.filmT,D.filmE);
+  var allowC=D.radOn?LAST.v.dry*1000*D.radShare:0;
+  var etaIt=(D.etaOn?(D.etaMode==='pin'?D.eta:EFFMAX/100):0), res=null;
+  for(var it=0;it<12;it++){
+    res=solveCompression(D,LAST.mdot,LAST.ve,etaIt,esc);
+    if(!res||res.C===null) break;
+    var Dc={}; for(var kk in D) Dc[kk]=D[kk];
+    Dc.fusYeff=D.yfus*res.f;
+    var etaNew=etaIt;
+    if(D.etaOn&&D.etaMode==='solve'&&D.radOn){
+      var sC=solveEta(Dc,LAST.mdot,LAST.ve,allowC,fkC.kappa,esc);
+      etaNew=sC?sC.eta:EFFMAX/100;
+    } else etaNew=(D.etaOn?D.eta:0);
+    if(Math.abs(etaNew-etaIt)<=1e-12){ etaIt=etaNew; break; }
+    etaIt=etaNew;
+  }
+  if(!res){ note('\u26a0 could not invert the chain with these inputs.'); return; }
+  var circ=pinned.exh?'':' \u26a0 v\u2091 is DERIVED, not pinned, so this is circular \u2014 pin the exhaust velocity for a meaningful answer.';
+  if(res.reason==='unreachable'){
+    note('\u26a0 '+disp(LAST.ve/C_MPS*100)+' %c is out of reach: even C = '+disp(res.Cmax)+
+         ' (burnup '+disp(res.f*100)+'%) gives only '+disp(res.ve/C_MPS*100)+
+         ' %c on fuel alone. Raise Y_fus, lower H_B, or ask less of the exhaust.'+circ);
+    return;
+  }
+  if(res.reason==='uncompressed'){
+    note('\u2713 no compression needed: uncompressed fuel already gives '+disp(res.ve/C_MPS*100)+
+         ' %c, at or above the '+disp(LAST.ve/C_MPS*100)+' %c asked. C left at 1.'+circ);
+    $('compC').value='1'; design(); return;
+  }
+  suppress=true; $('compC').value=disp(res.C); suppress=false;
+  design();
+  note('\u2713 derived at K = 0: C = '+disp(res.C)+' gives \u03c1R = '+disp(res.rhoR)+
+       ' g/cm\u00b2 and '+disp(res.f*100)+'% burnup, reaching '+disp(res.ve/C_MPS*100)+
+       ' %c on fuel alone \u2014 '+(res.f>=0.31?'past':'BELOW')+' the 31% break-even.'+circ);
+});
+
+// The buttons "useKmin" and "useKneed" are removed; they are no longer relevant.
+
+// --- presets ---------------------------------------------------------------
+// Each preset is a burn profile plus exactly five pins. Which five differs by
+// what the source study actually published: where the masses are known the
+// exhaust velocity is derived and can be checked against the study's own
+// figure; where the engine is known the masses are derived instead.
+var ACEN=4.37*C_AU_YR;   // Alpha Centauri, 4.37 ly, in AU
+var PRESETS={
+ daedalus:{profile:'burncoast',
+   pins:{dist:377000,v_avg:0.119226,frac:7.62,dry:980,exh:3.18857},
+   note:'<b>Daedalus</b> (BIS, 1973\u201378) \u2014 Barnard\u2019s Star flyby, 5.96 ly in 50 years. '+
+        'Pins the mean speed, the 3.81-year boost, the 980 t dry mass and v\u2091 at 3.18857 %c. The propellant is derived, '+
+        'and returns the study\u2019s published 52,140 t \u2014 the vehicle is self-consistent under a relativistic constant-thrust model.'},
+ nswr:{profile:'burncoast',
+   pins:{dist:275100,v_avg:0.0362502,frac:0.001,dry:300,exh:1.575},
+   note:'<b>NSWR</b> (Zubrin, nuclear salt-water rocket) \u2014 your own preset. Pins the engine at 1.575 %c '+
+        'and a 300 t dry mass, so the propellant is derived rather than assumed: R comes out at 10.'},
+ comet:{profile:'burncoast',
+   pins:{dist:275100,v_avg:0.0725003,frac:0.1,dry:300,exh:1.575},
+   note:'<b>NSW Comet</b> \u2014 your own preset, the same engine over half the time. The derived wet mass lands '+
+        'at 30,295 t against the 30,300 t you had set by hand, which is the solver reproducing your figure to five digits.'},
+ longshot:{profile:'rendezvous',
+   pins:{dist:ACEN,v_avg:0.0437,frac:5,dry:30,exh:3.4871},
+   note:'<b>Longshot</b> (US Naval Academy / NASA, 1987\u201388) \u2014 rendezvous into orbit at Alpha Centauri B, '+
+        '100 years at 4.37 %c mean. Pins 30 t dry (the mass after the propulsion section is jettisoned) and v\u2091 at 3.4871 %c, '+
+        'returning the 396 t launch mass. That v\u2091 sits 7% above the published 10\u2076 s specific impulse (3.27 %c) \u2014 the price of '+
+        'modelling a staged vehicle as one stage at constant thrust; no burn fraction closes it, since even an impulsive burn needs 3.39 %c.'},
+ icarus:{profile:'rendezvous',
+   pins:{dist:ACEN,v_avg:0.0437,dry:150,dv:4.7/100,exh:3.2712},
+   note:'<b>Icarus Firefly</b> (BIS / Icarus Interstellar, 2009\u201323) \u2014 rendezvous at Alpha Centauri inside 100 years '+
+        'with a 150 t payload. Icarus never published one canonical mass table, so this pins what it did fix: the 4.7 %c peak, '+
+        'the payload, and a Daedalus-class 10\u2076 s engine. The mass ratio is the output \u2014 R \u2248 17.7, wet \u2248 2,660 t.'},
+ orion:{profile:'burncoast',
+   pins:{dist:ACEN,v_avg:0.0336154,frac:0.025,dry:100000,exh:2.42612},
+   note:'<b>Interstellar Orion</b> (Dyson, <i>Physics Today</i>, 1968) \u2014 the momentum-limited design with an ablating '+
+        'pusher plate: 400,000 t, three quarters of it bombs, 3.3 %c, ~130 years to Alpha Centauri. Burning at 1 g to 3.3 %c '+
+        'takes about 0.03 years, hence the 0.025% burn fraction. v\u2091 is pinned at 2.42612 %c \u2014 a plausible bomb-pulse exhaust \u2014 '+
+        'and the 400,000 t launch mass is returned as the derived output.'},
+ pearlgate:{profile:'rendezvous',
+   pins:{dist:474308.078,v_avg:0.077,frac:1,exh:2,dry:42},
+   note:'<b>PEARL-GATE</b> (Huppert) \u2014 the star-hop. Pins the 7.5 ly reach, because nothing closer is a real star '+
+        'system with fissile propellant to refuel from; a rendezvous, because you must stop to take it on. 7.7 %c mean is '+
+        'what material science allows, and the 2 %c exhaust is what is engineerable now on a 42 t dry mass. '+
+        'Transit time is therefore an output, not an assumption: it lands at 97.4 years, inside the 97.5 that cultural memory survives. '+
+        'Wet mass follows at 99,876 t \u2014 still under 100 kt.'},
+ pearlgate3:{profile:'rendezvous',
+   pins:{dist:269000,v_avg:0.095,frac:1,dry:980,exh:4.8174},
+   fus:{on:true,compC:1000,phiIn:67},
+   note:'<b>PEARL-GATE 980 t</b> \u2014 a heavy-payload star-hop: 269,000 AU (4.25 ly) at 0.095 c mean on a 980 t dry mass, '+
+        'with the exhaust at 4.8174 %c. Derived wet mass 52,482.9 t, mass ratio 53.554, transit 44.7744 years. '+
+        'Fission alone reaches only 3.687 %c, so this preset also switches the fusion secondary ON, at C = 1000 (72% burnup) '+
+        'and φ = 67% (the tool then solves K). Every other preset leaves the design layer exactly as you set it.'}
+};
+function loadPreset(key){
+  var p=PRESETS[key]; if(!p)return;
+  suppress=true;
+  modeSelect.value=p.profile;
+  for(var i=0;i<VARS.length;i++){ setPin(VARS[i],false); EL[VARS[i]].value=''; }
+  for(var k in p.pins){ EL[k].value=String(p.pins[k]); setPin(k,true); }
+  // A preset touches the design layer only where the mission is meaningless
+  // without it - i.e. an exhaust velocity that fission alone cannot reach.
+  if(p.fus){ $('sFus').checked=!!p.fus.on; if(p.fus.compC!==undefined) $('compC').value=String(p.fus.compC); if(p.fus.phiIn!==undefined) $('phiIn').value=String(p.fus.phiIn); }
+  suppress=false;
+  $('presetNote').innerHTML=p.note;
+  compute();
+}
+var PBTN={pDaedalus:'daedalus',pNSWR:'nswr',pComet:'comet',pLongshot:'longshot',
+          pIcarus:'icarus',pOrion:'orion',pPearl:'pearlgate',pPearl3:'pearlgate3'};
+for(var pb in PBTN){ (function(id,key){
+  var el=$(id); if(el) el.addEventListener('click',function(){ loadPreset(key); });
+})(pb,PBTN[pb]); }
+
+// --- a worked starting point ----------------------------------------------
+loadPreset('pearlgate');
+window.__calc={compute:compute,design:design,readDesign:readDesign,last:function(){return LAST;}};
+})();
+</script>
+<script>
+// ==================== 3D VISUALIZATION ENGINE ====================
+(function(){
+// If the three.js CDN is unreachable the visualisation simply does not appear;
+// it must never take the calculator down with it.
+if(typeof THREE==='undefined'){ window.updateViz=function(){}; return; }
+const vPI=Math.PI,vSi=Math.sin,vCo=Math.cos;
+let vizScene,vizCam,vizRen,vizReady=false;
+let vizApexLight,vizDisk=null,vizSetCamDist=null,_geoSig='';
+const vizTethers=[],vizHinges=[],vizHooks=[];
+let _rTipCG=1.34,_rEndCG=0.45,_cCT=1,_Lreach=1.47;
+const _Lsec=1.5*1.05;
+let _dCent=0.28;
+let vizJetGeo,vizJetMat;
+let vizKeyLight,vizAnimTime=0,_vLTs=performance.now();
+let vizArms=[];
+let _candL0=11,_frontX=_candL0/2;
+const _armAng=[0,2*vPI/3,4*vPI/3];
+const _baseR=1.50;
+let _baseX=_frontX;
+const _SQ3=Math.sqrt(3);
+let _L0=Math.hypot(_candL0,_baseR);
+const LOWPWR=(function(){try{const ua=navigator.userAgent||''; return /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(ua)||(navigator.hardwareConcurrency||8)<=4||Math.min(screen.width,screen.height)<=480;}catch(e){return false;}})();
+const _NARC=LOWPWR?12:22;
+const ARM_REACH_FRAC=0.72;
+const HOLD_SEC=4.5,START_DWELL=1.1,SLAB_FILL=0.995,FOIL_FRAC=0.075;
+let BURN_FRAC_MIN=0.08;
+let _Lmin=Math.hypot(_candL0*BURN_FRAC_MIN,_baseR);
+const _phiAt=l=>2*Math.atan(_SQ3*Math.sqrt(Math.max(0,l*l-_baseR*_baseR))/l);
+let _MR=4.0;
+const _rTip=1.34;
+const _etaAt=th=>{const c=Math.cos(th)*Math.cos(th)-0.5*Math.sin(th)*Math.sin(th); return 0.5-(3/(4*vPI))*Math.acos(Math.max(-1,Math.min(1,c)));};
+const _etaL=l=>_etaAt(Math.asin(Math.min(1,_baseR/Math.max(l,_Lsec))));
+const _alphaAt=th=>Math.acos(Math.max(-1,Math.min(1,1-2*_etaAt(th))));
+const _colAt=th=>0.5*(1+Math.cos(_alphaAt(th)));
+const _colL=l=>_colAt(Math.asin(Math.min(1,_baseR/Math.max(l,_Lsec))));
+let _kCG=Math.log(_MR)/(_L0-_Lmin);
+let _cCG=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_kCG*Math.exp(_kCG*_L0));
+const _NL=LOWPWR?22:36;
+const _isFoil=k=>(k%2)===1;
+const N_FRAG=LOWPWR?16000:60000;
+const FRAG_PER_LAYER=LOWPWR?130:400;
+const N_PER_LAYER=LOWPWR?16:40;
+const VAPOUR_PER_LAYER=LOWPWR?100:290;
+const SPEC_CHARGED=0,SPEC_NEUTRON=1,SPEC_VAPOUR=2;
+const TURN_TAU=0.05;
+const CONE_CAP=88*Math.PI/180;
+const VAP_CAP=74*Math.PI/180;
+function coneMap(d,ang){const u=Math.max(-1,Math.min(1,-d[0])); const cA=Math.cos(ang); const f=Math.pow((1-u)/2,1.15); const bt=Math.acos(Math.max(-1,Math.min(1,1-(1-cA)*f))); const tr=Math.hypot(d[1],d[2]); const ny=tr>1e-9?d[1]/tr:1,nz=tr>1e-9?d[2]/tr:0; return [-Math.cos(bt),Math.sin(bt)*ny,Math.sin(bt)*nz];}
+const vizLive={burnFrac:1,poleL:1,expired:false,opening:1,intensity:1,speedScale:1,layers:0,aperDeg:83.6,colEff:0.556,cycleSec:11,trueMR:4,aspect:7.3,slender:7.3,clamped:false,gap:0,converging:false,rtMs:0,clMs:0,shotHz:0,mDock:0,mDisk:0,mArms:0,mHard:0,mScale:1,poleL0m:1,shotIntv:1,thrustRip:0,accelRip:0,tiltDeg:0,apexDeg:120,burnArea:0};
+function vClamp(v,lo,hi,fallback){return isFinite(v)?Math.max(lo,Math.min(hi,v)):fallback;}
+const frag={pos:new Float32Array(N_FRAG*3),col:new Float32Array(N_FRAG*3),vel:new Float32Array(N_FRAG*3),life:new Float32Array(N_FRAG),span:new Float32Array(N_FRAG),tgt:new Float32Array(N_FRAG*3),spec:new Uint8Array(N_FRAG)};
+let _fragCursor=0;
+const _cGold=new THREE.Color(0xffe9b0),_cCyan=new THREE.Color(0x48e6ff),_cViolet=new THREE.Color(0x9b6bff),_cFade=new THREE.Color(0x121c3e),_cScratch=new THREE.Color();
+function plumeColor(t){t=(isFinite(t)?Math.max(0,Math.min(1,t)):0); if(t<0.12)return _cScratch.copy(_cGold).lerp(_cCyan,t/0.12); if(t<0.45)return _cScratch.copy(_cCyan).lerp(_cViolet,(t-0.12)/0.33); return _cScratch.copy(_cViolet).lerp(_cFade,(t-0.45)/0.55);}
+function throwParticles(P,spec,speedScale,alpha,axIn){const j=_fragCursor; _fragCursor=(_fragCursor+1)%N_FRAG; const u=2*Math.random()-1,ph=Math.random()*2*vPI; const sr=Math.sqrt(Math.max(0,1-u*u)); let d=[sr*vCo(ph),sr*vSi(ph),u]; let sp,b,t; if(spec===SPEC_NEUTRON){if(d[0]*axIn[0]+d[1]*axIn[1]+d[2]*axIn[2]<0)d=[-d[0],-d[1],-d[2]]; sp=3.4+Math.random()*1.4; b=d; t=d;}else{const wide=spec===SPEC_VAPOUR; const vMax=(wide?34:84)*speedScale; sp=vMax*Math.max(0.06,Math.pow(Math.random(),1/3)); const aTgt=wide?Math.min(alpha*1.35,VAP_CAP):alpha; const aBirth=Math.min(aTgt*1.40,CONE_CAP); b=coneMap(d,aBirth); t=coneMap(d,aTgt);} frag.pos[j*3]=P[0]; frag.pos[j*3+1]=P[1]; frag.pos[j*3+2]=P[2]; frag.vel[j*3]=b[0]*sp; frag.vel[j*3+1]=b[1]*sp; frag.vel[j*3+2]=b[2]*sp; frag.tgt[j*3]=t[0]*sp; frag.tgt[j*3+1]=t[1]*sp; frag.tgt[j*3+2]=t[2]*sp; frag.span[j]=spec===SPEC_NEUTRON?4+Math.random()*2:spec===SPEC_VAPOUR?40+Math.random()*35:50+Math.random()*30; const lead=spec===SPEC_NEUTRON?0:Math.random()*0.16; frag.pos[j*3]+=frag.vel[j*3]*lead; frag.pos[j*3+1]+=frag.vel[j*3+1]*lead; frag.pos[j*3+2]+=frag.vel[j*3+2]*lead; frag.life[j]=Math.max(0.05,frag.span[j]-lead); frag.spec[j]=spec;}
+function initViz(){if(vizReady)return; const container=document.getElementById('viz3d'); if(!container||typeof THREE==='undefined')return; const w=container.clientWidth,h=container.clientHeight; if(w===0||h===0)return; vizScene=new THREE.Scene(); vizScene.background=new THREE.Color(0x05070f); vizScene.fog=new THREE.FogExp2(0x05070f,0.008); vizCam=new THREE.PerspectiveCamera(38,w/h,0.2,400); vizRen=new THREE.WebGLRenderer({antialias:!LOWPWR,precision:LOWPWR?'mediump':'highp'}); vizRen.setSize(w,h); vizRen.setPixelRatio(Math.min(devicePixelRatio||1,LOWPWR?2:2.5)); container.appendChild(vizRen.domElement); vizScene.add(new THREE.AmbientLight(0x2a3760,0.7)); vizKeyLight=new THREE.DirectionalLight(0xcfe8ff,0.95); vizKeyLight.position.set(8,14,10); vizScene.add(vizKeyLight); (function(){const fill=new THREE.DirectionalLight(0x9b6bff,0.4); fill.position.set(-10,-4,-8); vizScene.add(fill);})(); vizApexLight=new THREE.PointLight(0xffe9b0,3,24,2); vizScene.add(vizApexLight); (function(){const N=900,pos=new Float32Array(N*3),col=new Float32Array(N*3); for(let i=0;i<N;i++){const r=110+Math.random()*150,th=Math.random()*vPI*2,ph=Math.acos(2*Math.random()-1); pos[i*3]=r*vSi(ph)*vCo(th); pos[i*3+1]=r*vCo(ph); pos[i*3+2]=r*vSi(ph)*vSi(th); const c=Math.random()<0.7?new THREE.Color(0xbcd6ff):(Math.random()<0.5?new THREE.Color(0xffffff):new THREE.Color(0xd8bfff)); col[i*3]=c.r*(0.5+Math.random()*0.5); col[i*3+1]=c.g*(0.5+Math.random()*0.5); col[i*3+2]=c.b*(0.5+Math.random()*0.5);} const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3)); const stars=new THREE.Points(g,new THREE.PointsMaterial({size:0.45,vertexColors:true,transparent:true,opacity:0.55,depthWrite:false})); stars.frustumCulled=false; vizScene.add(stars);})(); const _M=_NARC+3; for(let i=0;i<3;i++){const stack=makeLayerStack(_NL,_M); const mesh=new THREE.Mesh(stack.geo,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide})); mesh.frustumCulled=false; vizScene.add(mesh); vizArms.push({stack});} (function buildShield(){const rh=_baseR*0.18,ro=_baseR*1.44,hh=_baseR*0.11; const pts=[new THREE.Vector2(rh,-hh),new THREE.Vector2(ro,-hh),new THREE.Vector2(ro,hh),new THREE.Vector2(rh,hh),new THREE.Vector2(rh,-hh)]; const g=new THREE.LatheGeometry(pts,96); g.computeVertexNormals(); const col=new Float32Array(g.attributes.normal.count*3); const bc=new THREE.Color(0x8e9cab); const LDIR=[0.42,0.78,0.46]; const L=Math.hypot(LDIR[0],LDIR[1],LDIR[2]); const lu=[LDIR[0]/L,LDIR[1]/L,LDIR[2]/L]; for(let i=0;i<g.attributes.normal.count;i++){const wx=-g.attributes.normal.getY(i),wy=g.attributes.normal.getX(i),wz=g.attributes.normal.getZ(i); const lam=Math.abs(wx*lu[0]+wy*lu[1]+wz*lu[2]); col[i*3]=bc.r*(0.5+0.5*lam); col[i*3+1]=bc.g*(0.5+0.5*lam); col[i*3+2]=bc.b*(0.5+0.5*lam);} g.setAttribute('color',new THREE.BufferAttribute(col,3)); vizDisk=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide})); vizDisk.rotation.z=vPI/2; vizDisk.frustumCulled=false; vizScene.add(vizDisk);})(); for(let i=0;i<3;i++){const grp=new THREE.Group(); const mat=new THREE.MeshBasicMaterial({color:0x7f8d9c}); grp.add(new THREE.Mesh(new THREE.CylinderGeometry(_baseR*0.088,_baseR*0.088,_baseR*0.52,18),mat)); for(const sgn of[-1,1]){const ck=new THREE.Mesh(new THREE.BoxGeometry(_baseR*0.40,_baseR*0.075,_baseR*0.30),mat); ck.position.set(_baseR*0.20,sgn*_baseR*0.21,0); grp.add(ck);} grp.frustumCulled=false; vizScene.add(grp); vizHinges.push({grp,a:_armAng[i]});} for(let i=0;i<3;i++){const hk=new THREE.Mesh(new THREE.TorusGeometry(_baseR*0.165,_baseR*0.072,10,30,vPI*1.55),new THREE.MeshBasicMaterial({color:0x8b99a8})); hk.frustumCulled=false; vizScene.add(hk); vizHooks.push(hk);} const strutMat=new THREE.MeshBasicMaterial({color:0xb9cee6}); const strutGeo=new THREE.CylinderGeometry(1,1,1,8); for(let i=0;i<3;i++){const t=new THREE.Mesh(strutGeo,strutMat); t.frustumCulled=false; vizScene.add(t); vizTethers.push(t);} vizJetGeo=new THREE.BufferGeometry(); vizJetGeo.setAttribute('position',new THREE.BufferAttribute(frag.pos,3)); vizJetGeo.setAttribute('color',new THREE.BufferAttribute(frag.col,3)); vizJetMat=new THREE.PointsMaterial({size:0.32,vertexColors:true,transparent:true,opacity:1.0,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}); vizScene.add(new THREE.Points(vizJetGeo,vizJetMat)); let drag=false,mpx=0,mpy=0,theta=1.02,phi=1.42,camDist=30; vizSetCamDist=d=>{camDist=Math.max(9,Math.min(140,d)); uCam();}; function uCam(){const tx=_baseX; vizCam.position.set(tx+camDist*vSi(phi)*vCo(theta),camDist*vCo(phi),camDist*vSi(phi)*vSi(theta)); vizCam.lookAt(tx,0,0); vizKeyLight.position.copy(vizCam.position).multiplyScalar(0.35).add(new THREE.Vector3(6,12,6));} vizRen.domElement.addEventListener('pointerdown',e=>{drag=true; mpx=e.clientX; mpy=e.clientY; vizRen.domElement.setPointerCapture(e.pointerId);}); vizRen.domElement.addEventListener('pointermove',e=>{if(!drag)return; theta-=(e.clientX-mpx)*0.005; phi=Math.max(0.2,Math.min(vPI-0.2,phi-(e.clientY-mpy)*0.005)); mpx=e.clientX; mpy=e.clientY; uCam();}); vizRen.domElement.addEventListener('pointerup',()=>drag=false); vizRen.domElement.addEventListener('pointercancel',()=>drag=false); vizRen.domElement.addEventListener('wheel',e=>{e.preventDefault(); camDist=Math.max(9,Math.min(95,camDist+e.deltaY*0.03)); uCam();},{passive:false}); function fitViz(){const nw=container.clientWidth,nh=container.clientHeight; if(nw===0||nh===0)return; vizCam.aspect=nw/nh; vizCam.updateProjectionMatrix(); vizRen.setPixelRatio(Math.min(devicePixelRatio||1,LOWPWR?2:2.5)); vizRen.setSize(nw,nh);} window.addEventListener('resize',fitViz); window.addEventListener('orientationchange',fitViz); vizReady=true; uCam(); requestAnimationFrame(vizLoop);}
+function makeLayerStack(NL,M){const vpl=6*M; const pos=new Float32Array(NL*vpl*3),col=new Float32Array(NL*vpl*3); const ix=[]; for(let L=0;L<NL;L++){const b=L*vpl; for(let rI=0;rI<6;rI+=2){const r0=b+rI*M,r1=b+(rI+1)*M; for(let j=0;j<M-1;j++){const a0=r0+j,b0=a0+1,c0=r1+j,d0=c0+1; ix.push(a0,c0,b0,b0,c0,d0);}}} const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.BufferAttribute(col,3)); geo.setIndex(ix); return {geo,pos,col,M,NL};}
+const _sA=new THREE.Vector3(),_sB=new THREE.Vector3(),_sM=new THREE.Vector3(),_sD=new THREE.Vector3(),_sUp=new THREE.Vector3(0,1,0);
+const _hx=new THREE.Vector3(),_hy=new THREE.Vector3(),_hz=new THREE.Vector3(),_hm=new THREE.Matrix4();
+function placeStrut(m,a,b,rad){_sA.fromArray(a); _sB.fromArray(b); _sD.subVectors(_sB,_sA); const len=_sD.length()||1e-6; _sM.addVectors(_sA,_sB).multiplyScalar(0.5); m.position.copy(_sM); m.quaternion.setFromUnitVectors(_sUp,_sD.divideScalar(len)); m.scale.set(rad,len,rad);}
+function pushGeo(g){g.geo.attributes.position.needsUpdate=true; if(g.geo.attributes.color)g.geo.attributes.color.needsUpdate=true;}
+function vX(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function apexAngle(l){return _phiAt(Math.max(l,_Lsec));}
+let PACE_CONST_G=false;
+const _NT=192; const _PHIT=new Float64Array(_NT+1); let _kG=1,_W0=1;
+function buildPhiTable(){const h=(_L0-_Lmin)/_NT; _PHIT[0]=0; for(let i=1;i<=_NT;i++){const la=_Lmin+(i-1)*h,lb=_Lmin+i*h,lm=0.5*(la+lb); const f=x=>x/Math.max(1e-6,_colL(x)); _PHIT[i]=_PHIT[i-1]+(h/6)*(f(la)+4*f(lm)+f(lb));}}
+function phiInt(L){const t=vClamp((L-_Lmin)/Math.max(1e-9,_L0-_Lmin),0,1,0)*_NT; const i=Math.min(_NT-1,Math.floor(t)),f=t-i; return _PHIT[i]+(_PHIT[i+1]-_PHIT[i])*f;}
+function radiusCG(l){const le=Math.max(l,_Lsec); const A=_kG*(le/_colL(le))*_W0*Math.exp(_kG*phiInt(le)); return Math.sqrt(2*A/(3*_phiAt(le)));}
+function radiusCT(l){const le=Math.max(l,_Lsec); return Math.sqrt(2*_cCT*le/(3*_phiAt(le)*_colL(le)));}
+function sectionRadius(l){return PACE_CONST_G?radiusCG(l):radiusCT(l);}
+function areaAt(l){const r=sectionRadius(l); return 1.5*_phiAt(Math.max(l,_Lmin))*r*r;}
+function profileRipples(){const NV=96,NS=32; const cum=new Float64Array(NV+1); const h=(_L0-_Lmin)/NV; for(let i=1;i<=NV;i++)cum[i]=cum[i-1]+areaAt(_Lmin+(i-0.5)*h)*h; const prop=cum[NV]; const dry=prop/Math.max(1e-6,_MR-1); let fl=1e30,fh=-1e30,al=1e30,ah=-1e30; for(let i=0;i<=NS;i++){const u=i/NS,L=_Lmin+(_L0-_Lmin)*u; const F=_colL(L)*areaAt(L)/L; const a=F/(dry+cum[Math.round(u*NV)]); fl=Math.min(fl,F); fh=Math.max(fh,F); al=Math.min(al,a); ah=Math.max(ah,a);} vizLive.thrustRip=100*(fh-fl)/Math.max(1e-12,(fh+fl)/2); vizLive.accelRip=100*(ah-al)/Math.max(1e-12,(ah+al)/2);}
+function poleFrame(armAng,L,theta){const ca=vCo(armAng),sa=vSi(armAng),ct=vCo(theta),st=vSi(theta); const ax=[-ct,-st*ca,-st*sa],p=[-st,ct*ca,ct*sa]; const pin=[_baseX,_baseR*ca,_baseR*sa]; const B=[pin[0]-_dCent*p[0],pin[1]-_dCent*p[1],pin[2]-_dCent*p[2]]; return {B,pin,ax,p,q:vX(ax,p),L,tip:[B[0]+ax[0]*L,B[1]+ax[1]*L,B[2]+ax[2]*L]};}
+function sectionLoop(F,l,scale){const C=[F.B[0]+F.ax[0]*l,F.B[1]+F.ax[1]*l,F.B[2]+F.ax[2]*l]; const half=apexAngle(l)/2,r=sectionRadius(l)*(scale===undefined?1:scale); const out=[C.slice()]; for(let k=0;k<=_NARC;k++){const a=-half+(k/_NARC)*2*half; out.push([C[0]+vCo(a)*r*F.p[0]+vSi(a)*r*F.q[0],C[1]+vCo(a)*r*F.p[1]+vSi(a)*r*F.q[1],C[2]+vCo(a)*r*F.p[2]+vSi(a)*r*F.q[2]]);} out.push(out[0].slice()); return {loop:out,C};}
+const _lTop=new Float32Array(_NL),_lBot=new Float32Array(_NL),_lc=new Float32Array(_NL),_isDock=new Uint8Array(_NL);
+let _dockTop=1;
+function buildLaminations(){_lBot[0]=0; _lTop[0]=_Lmin*0.60; _lBot[1]=_Lmin*0.60; _lTop[1]=_Lmin; _isDock[0]=_isDock[1]=1; const nPair=Math.max(1,Math.floor((_NL-2)/2)); const T=(_L0-_Lmin)/nPair,tf=T*FOIL_FRAC,ts=T-tf; for(let q=0;q<nPair;q++){const b=_Lmin+q*T,ks=2+2*q,kf=3+2*q; _lBot[ks]=b; _lTop[ks]=b+ts; _lBot[kf]=b+ts; _lTop[kf]=b+T; _isDock[ks]=_isDock[kf]=0;} for(let k=0;k<_NL;k++)_lc[k]=0.5*(_lBot[k]+_lTop[k]);}
+buildLaminations();
+const _trans=new Float32Array(_NL);
+let _lastTop=-1,_wavePhase=-1,_thetaHold=0;
+const CONV_TIME=0.26,V_BAR=3190,LAM_PITCH=0.01;
+const S_SPEC=9.59e-4,M_ASSEM_KG=0.8,D_DANGER=0.005,P_FIZZLE=1e-3,SIGMA_POLE=20e6,RHO_POLE=935;
+const S_BG=M_ASSEM_KG*1000*S_SPEC,V_MIN=D_DANGER*S_BG/P_FIZZLE,V_MAX=SIGMA_POLE/(RHO_POLE*V_BAR),V_OK=V_MIN<V_MAX,V_CLOSE=V_OK?Math.sqrt(V_MIN*V_MAX):V_MAX,P_ACT=1-Math.exp(-S_BG*D_DANGER/V_CLOSE);
+const _cIce=new THREE.Color(0xa9dcff),_cHot=new THREE.Color(0xfff6e6),_cFoil=new THREE.Color(0xffd166),_cWave=new THREE.Color(0xd8f0ff),_cDock=new THREE.Color(0x9fb0c4);
+const _LDIR=[0.42,0.78,0.46]; const _LDIRL=Math.hypot(_LDIR[0],_LDIR[1],_LDIR[2]); const _LDIRU=[_LDIR[0]/_LDIRL,_LDIR[1]/_LDIRL,_LDIR[2]/_LDIRL];
+function layoutCandle(dt){const Lcur=vClamp(vizLive.poleL,_Lmin,_L0,_L0); const _den=Math.hypot(Lcur,_dCent); let thTarget=_den>=_baseR?Math.asin(vClamp(_baseR/_den,-1,1,0))-Math.atan2(_dCent,Lcur):Math.atan2(Lcur,_dCent); if(_wavePhase>=0){_wavePhase+=dt/(CONV_TIME*Math.max(0.15,Lcur/_L0)); if(_wavePhase>=1){_wavePhase=-1; _thetaHold=thTarget;}} let theta; if(vizLive.opening<1){const u=vizLive.opening,sm=u*u*(3-2*u); const num=_baseR-_baseR*0.22*(1-sm); theta=_den>=num?Math.asin(vClamp(num/_den,-1,1,0))-Math.atan2(_dCent,Lcur):Math.atan2(Lcur,_dCent); _thetaHold=theta; _wavePhase=-1;}else if(_wavePhase<0){theta=thTarget; _thetaHold=thTarget;}else if(_wavePhase<0.5){theta=_thetaHold;}else{const u=(_wavePhase-0.5)/0.5; theta=_thetaHold+(thTarget-_thetaHold)*(u*u*(3-2*u));} const apexX=_baseX-Lcur*vCo(theta); vizLive.gap=Math.max(0,_baseR-Lcur*vSi(theta)); const frames=_armAng.map(a=>poleFrame(a,Lcur,theta)); let top=-1; for(let k=0;k<_NL;k++)if(_lTop[k]<=Lcur)top=k; if(top<1)top=1; if(_lastTop<0||top>_lastTop){_trans.fill(0); _lastTop=top;}else if(top<_lastTop){_wavePhase=0; const alpha=_alphaAt(theta); for(let k=_lastTop;k>top;k--){const foil=_isFoil(k); for(let i=0;i<3;i++){const F=frames[i],sec=sectionLoop(F,_lc[k]),half=apexAngle(_lc[k])/2,rr=sectionRadius(_lc[k]),axIn=[-F.ax[0],-F.ax[1],-F.ax[2]]; const pick=()=>{const aa=-half+Math.random()*2*half; const rd=rr*Math.sqrt(Math.random()); return [sec.C[0]+vCo(aa)*rd*F.p[0]+vSi(aa)*rd*F.q[0],sec.C[1]+vCo(aa)*rd*F.p[1]+vSi(aa)*rd*F.q[1],sec.C[2]+vCo(aa)*rd*F.p[2]+vSi(aa)*rd*F.q[2]];}; if(foil){for(let n=0;n<FRAG_PER_LAYER;n++)throwParticles(pick(),SPEC_CHARGED,vizLive.speedScale,alpha,axIn); for(let n=0;n<N_PER_LAYER;n++)throwParticles(pick(),SPEC_NEUTRON,1,alpha,axIn);}else{for(let n=0;n<VAPOUR_PER_LAYER;n++)throwParticles(pick(),SPEC_VAPOUR,vizLive.speedScale,alpha,axIn);}} if(foil&&k-1>=0)_trans[k-1]=1;} _lastTop=top;} let burnArea=0; const cs=new THREE.Color(); for(let i=0;i<3;i++){const A=vizArms[i]; if(!A)continue; const F=frames[i],st=A.stack,M=st.M; const lam=Math.abs(F.ax[0]*_LDIRU[0]+F.ax[1]*_LDIRU[1]+F.ax[2]*_LDIRU[2]); const shA=0.76+0.24*lam,shW=shA*0.90,shF=shA*0.72; const vpl6=6*M; for(let k=0;k<_NL;k++){const base=k*vpl6*3; if(k>top){for(let v=0;v<vpl6;v++){st.pos[base+v*3]=apexX; st.pos[base+v*3+1]=st.pos[base+v*3+2]=0; st.col[base+v*3]=st.col[base+v*3+1]=st.col[base+v*3+2]=0;} continue;} const hT=0.5*SLAB_FILL*(_lTop[k]-_lBot[k]); const secA=sectionLoop(F,Math.max(1e-3,_lc[k]+hT)),secF=sectionLoop(F,Math.max(1e-3,_lc[k]-hT)); let blow=1; if(_isDock[k])cs.copy(_cDock); else if(_isFoil(k))cs.copy(_cFoil); else{cs.copy(_cIce).lerp(_cHot,_trans[k]); blow=1+1.35*_trans[k]*_trans[k];} if(_wavePhase>=0){const u=_wavePhase<0.5?(1-_wavePhase/0.5):((_wavePhase-0.5)/0.5); const wl=_Lmin+(Lcur-_Lmin)*u; const d=Math.abs(_lc[k]-wl)/Math.max(1e-6,0.17*Lcur); if(d<1)cs.lerp(_cWave,(1-d*d)*0.55);} const cr=cs.r*blow,cg=cs.g*blow,cb=cs.b*blow; const gl=0.90+0.16*vClamp(_lc[k]/Math.max(1e-6,_L0),0,1,0); const put=(row,i,P,sh)=>{const o=base+(row*M+i)*3; st.pos[o]=P[0]; st.pos[o+1]=P[1]; st.pos[o+2]=P[2]; st.col[o]=cr*sh; st.col[o+1]=cg*sh; st.col[o+2]=cb*sh;}; for(let v=0;v<M;v++){const sheen=v===0||v===M-1?0.80:0.80+0.34*vSi(vClamp((v-1)/Math.max(1,M-3),0,1,0.5)*vPI); const gA=gl*sheen,gW=gl*sheen; put(0,v,secA.C,shA*gl*0.86); put(1,v,secA.loop[v],shA*gA); put(2,v,secA.loop[v],shW*gW); put(3,v,secF.loop[v],shW*gW*0.94); put(4,v,secF.loop[v],shF*gA*0.94); put(5,v,secF.C,shF*gl*0.86);}} pushGeo(st); if(top>=0){const half=apexAngle(_lc[top])/2,rr=sectionRadius(_lc[top]); burnArea+=half*rr*rr;}} vizLive.tiltDeg=theta*180/vPI; vizLive.apexDeg=apexAngle(Lcur)*180/vPI; vizLive.burnArea=burnArea; vizLive.converging=_wavePhase>=0; const Lreal=vizLive.poleL0m*(Lcur/Math.max(1e-6,_L0)); vizLive.rtMs=2*Lreal/V_BAR*1000; vizLive.clMs=LAM_PITCH/V_CLOSE*1000; vizLive.shotHz=1/Math.max(1e-9,2*Lreal/V_BAR+LAM_PITCH/V_CLOSE); vizLive.layers=top+1; vizLive.aperDeg=_alphaAt(theta)*180/vPI; vizLive.colEff=_colAt(theta); vizApexLight.position.set(apexX-0.3,0,0); if(vizDisk){vizDisk.position.x=_baseX+_baseR*0.30; vizDisk.scale.set(1,vClamp(0.5*0.45/Math.max(1e-6,vizLive.mScale),0.055,0.42,0.11)/(_baseR*0.11),1);} const _uy=new THREE.Vector3(0,1,0); for(let i=0;i<vizHinges.length;i++){const ca=vCo(vizHinges[i].a),sa=vSi(vizHinges[i].a); vizHinges[i].grp.quaternion.setFromUnitVectors(_uy,new THREE.Vector3(0,-sa,ca));} const lDock=_lc[1]; for(let i=0;i<3;i++){const F=frames[i],Fb=frames[(i+1)%3]; placeStrut(vizTethers[i],[F.pin[0]+F.ax[0]*lDock,F.pin[1]+F.ax[1]*lDock,F.pin[2]+F.ax[2]*lDock],[Fb.pin[0]+Fb.ax[0]*lDock,Fb.pin[1]+Fb.ax[1]*lDock,Fb.pin[2]+Fb.ax[2]*lDock],_baseR*0.028); const hk=vizHooks[i]; if(hk){_hz.set(0,-vSi(_armAng[i]),vCo(_armAng[i])); _hx.set(-F.ax[0],-F.ax[1],-F.ax[2]); _hy.crossVectors(_hz,_hx).normalize(); _hm.makeBasis(_hx.normalize(),_hy,_hz); hk.quaternion.setFromRotationMatrix(_hm); hk.position.fromArray(F.pin);} const H=vizHinges[i]; if(H)H.grp.position.fromArray(F.pin);} return apexX;}
+function updateFragments(dt){for(let j=0;j<N_FRAG;j++){frag.pos[j*3]+=frag.vel[j*3]*dt; frag.pos[j*3+1]+=frag.vel[j*3+1]*dt; frag.pos[j*3+2]+=frag.vel[j*3+2]*dt; if(frag.life[j]<=-12){frag.col[j*3]=frag.col[j*3+1]=frag.col[j*3+2]=0; continue;} frag.life[j]-=dt; if(frag.spec[j]!==SPEC_NEUTRON){const w=Math.min(1,dt/TURN_TAU); const sx=frag.vel[j*3],sy=frag.vel[j*3+1],sz=frag.vel[j*3+2]; frag.vel[j*3]+=(frag.tgt[j*3]-sx)*w; frag.vel[j*3+1]+=(frag.tgt[j*3+1]-sy)*w; frag.vel[j*3+2]+=(frag.tgt[j*3+2]-sz)*w; const cur=Math.hypot(frag.vel[j*3],frag.vel[j*3+1],frag.vel[j*3+2])||1e-9; const want=Math.hypot(frag.tgt[j*3],frag.tgt[j*3+1],frag.tgt[j*3+2]); const kf=want/cur; frag.vel[j*3]*=kf; frag.vel[j*3+1]*=kf; frag.vel[j*3+2]*=kf;} const age=frag.life[j]>0?(1-Math.max(0,frag.life[j])/frag.span[j]):1; let c,f; if(frag.life[j]<=0){frag.col[j*3]=frag.col[j*3+1]=frag.col[j*3+2]=0;}else if(frag.spec[j]===SPEC_NEUTRON){c=_cScratch.setRGB(0.82,0.90,1.0); f=1-age; frag.col[j*3]=c.r*f; frag.col[j*3+1]=c.g*f; frag.col[j*3+2]=c.b*f;}else if(frag.spec[j]===SPEC_VAPOUR){c=plumeColor(0.28+age*0.68); f=0.8; frag.col[j*3]=c.r*f; frag.col[j*3+1]=c.g*f; frag.col[j*3+2]=c.b*f;}else{c=plumeColor(age); f=1; frag.col[j*3]=c.r*f; frag.col[j*3+1]=c.g*f; frag.col[j*3+2]=c.b*f;}} vizJetGeo.attributes.position.needsUpdate=true; vizJetGeo.attributes.color.needsUpdate=true;}
+function vizLoop(now){requestAnimationFrame(vizLoop); if(!vizReady)return; const dt=Math.min(0.033,(now-_vLTs)/1000); _vLTs=now; vizAnimTime+=dt; const cyc=vizLive.cycleSec,tot=START_DWELL+cyc+HOLD_SEC; const tc=vizAnimTime%tot; let Lnow; if(tc<START_DWELL){Lnow=_L0; vizLive.opening=tc/START_DWELL; vizLive.expired=false;}else if(tc<START_DWELL+cyc){const L2=_L0*_L0-(_L0*_L0-_Lmin*_Lmin)*((tc-START_DWELL)/cyc); Lnow=Math.sqrt(Math.max(_Lmin*_Lmin,L2)); vizLive.opening=1; vizLive.expired=false;}else{Lnow=_Lmin; vizLive.opening=1; vizLive.expired=true;} vizLive.poleL=Lnow; layoutCandle(dt); const pulse=0.75+0.25*vSi(vizAnimTime*9); vizApexLight.intensity=(2.4+1.4*pulse)*vizLive.intensity; updateFragments(dt); vizJetMat.size=(0.300+0.090*pulse)*(0.80+0.4*vizLive.intensity); const el=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;}; el('viz-tiling',vizLive.apexDeg.toFixed(1)+'\u00b0'); el('viz-tilt',vizLive.tiltDeg.toFixed(1)+'\u00b0'); el('viz-aspect',vizLive.aspect.toFixed(1)); el('viz-mr',vizLive.trueMR>=1000?vizLive.trueMR.toExponential(2)+(vizLive.clamped?' (clamped)':''):vizLive.trueMR.toFixed(1)+(vizLive.clamped?' (clamped)':'')); el('viz-esc',vizLive.aperDeg.toFixed(1)+'\u00b0 / '+vizLive.colEff.toFixed(3)); vizRen.render(vizScene,vizCam);}
+function retuneGeometry(blockLength,massRatio,veKms,thrustKN){const faceW=Math.sqrt(Math.max(1e-9,blockLength>0?blockLength/8:10)); const slender=vClamp(blockLength/faceW,0.2,4000,7.3); vizLive.slender=slender; const aspect=vClamp(4.4+3.4*Math.log10(slender),5.0,15.0,8.0); vizLive.aspect=aspect; _candL0=_baseR*aspect; _frontX=_candL0/2; _baseX=_frontX; _L0=Math.hypot(_candL0,_baseR); const reach=Math.sqrt(Math.max(1e-4,_baseR*_baseR-_dCent*_dCent)); _Lmin=reach*ARM_REACH_FRAC; _Lreach=reach; BURN_FRAC_MIN=vClamp(_Lmin/_L0,0.004,0.7,0.08); const trueMR=vClamp(massRatio,1.05,6000,4); vizLive.trueMR=trueMR; _MR=vClamp(trueMR,1.05,6,4); vizLive.clamped=trueMR>6.05; _kCG=Math.log(_MR)/Math.max(1e-6,_L0-_Lmin); _cCG=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_kCG*Math.exp(_kCG*_L0)); _cCT=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_L0); buildPhiTable(); _kG=Math.log(_MR)/Math.max(1e-9,phiInt(_L0)); _W0=3*_phiAt(_L0)*_colL(_L0)*_rTip*_rTip/(2*_kG*_L0*_MR); _rTipCG=sectionRadius(_L0); _rEndCG=sectionRadius(_Lsec); const hRoot=Math.max(1e-4,apexAngle(_Lsec)/2); _dCent=(2/3)*_rEndCG*Math.sin(hRoot)/hRoot; profileRipples(); buildLaminations(); const sig=aspect.toFixed(4)+'|'+_MR.toFixed(4); if(sig!==_geoSig){_geoSig=sig; _lastTop=-1; _trans.fill(0); if(vizSetCamDist)vizSetCamDist(_candL0*2.05+8);} vizLive.intensity=Math.max(0.35,Math.min(1.6,0.35+0.28*Math.log10(thrustKN+10))); vizLive.speedScale=Math.max(0.45,Math.min(2.2,0.45+0.42*Math.log10(veKms+10))); vizLive.poleL0m=Math.max(1,blockLength); vizLive.cycleSec=Math.max(4.5,Math.min(11,4.5+1.9*Math.log10(Math.max(0.1,blockLength/100)+1))); vizLive.mScale=blockLength/Math.max(1e-6,_L0-_Lmin);}
+// Adapter for the constraint-graph calculator: it solves R, v_e, thrust and burn
+// duration; the candle geometry additionally needs a burn-face area, which is a
+// pure geometry choice rather than a mission constraint, so it has its own input.
+window.updateViz=function(q){
+    if(!q)return;
+    const area=Math.max(parseFloat((document.getElementById('vizArea')||{}).value)||100,0.1);
+    const propKg=(q.propT&&isFinite(q.propT))?q.propT*1000:null;
+    updateVizFromParams({
+        blockLength: propKg?propKg/(935*area):50,
+        ve: q.ve, F: q.F, R: q.R, burnTime: q.burnS, area: area
+    });
+};
+function updateVizFromParams(p){if(!p||!vizReady)return; const blockLen=vClamp(p.blockLength||50,0.5,50000,50); const veKms=vClamp((p.ve||10000)/1000,0.5,300000,10); const thrustKN=vClamp((p.F||1000)/1000,0.01,1e9,1); const massRatio=vClamp(p.R||4,1.01,50000,4); const e1=document.getElementById('viz-ve'); if(e1)e1.textContent=veKms.toFixed(0); const e2=document.getElementById('viz-thrust'); if(e2)e2.textContent=thrustKN>=1e6?(thrustKN/1e6).toFixed(2)+' GN':thrustKN>=1e3?(thrustKN/1e3).toFixed(1)+' MN':thrustKN.toFixed(0)+' kN'; const e3=document.getElementById('viz-burn'); if(e3)e3.textContent=p.burnTime?(p.burnTime/86400).toFixed(2)+' d':'—'; retuneGeometry(blockLen,massRatio,veKms,thrustKN);};
+document.addEventListener('DOMContentLoaded',function(){setTimeout(initViz,300);});
+if(document.readyState!=='loading')setTimeout(initViz,300);
+})();
+
+</script>
+</body>
+</html>
